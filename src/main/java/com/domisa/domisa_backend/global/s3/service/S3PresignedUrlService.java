@@ -1,18 +1,16 @@
 package com.domisa.domisa_backend.global.s3.service;
 
+import com.domisa.domisa_backend.domain.user.entity.User;
+import com.domisa.domisa_backend.domain.user.repository.UserRepository;
 import com.domisa.domisa_backend.global.s3.config.S3Properties;
-import com.domisa.domisa_backend.global.s3.dto.DeleteS3ObjectRequest;
 import com.domisa.domisa_backend.global.s3.dto.DeleteS3ObjectResponse;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
 import com.domisa.domisa_backend.global.s3.exception.S3Exception;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
-import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -21,6 +19,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -33,30 +33,73 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 public class S3PresignedUrlService {
 
 	private static final String PROFILE_DIRECTORY = "users/profile";
-	private static final DateTimeFormatter DATE_PATH_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-	private static final DateTimeFormatter FILE_SEQUENCE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
 	private static final int MAX_EXTENSION_LENGTH = 20;
 
+	private final UserRepository userRepository;
 	private final S3Client s3Client;
 	private final S3Presigner s3Presigner;
 	private final S3Properties s3Properties;
-	private final Clock clock;
 
-	public S3PresignedUrlService(S3Client s3Client, S3Presigner s3Presigner, S3Properties s3Properties) {
-		this(s3Client, s3Presigner, s3Properties, Clock.systemUTC());
-	}
-
-	S3PresignedUrlService(S3Client s3Client, S3Presigner s3Presigner, S3Properties s3Properties, Clock clock) {
+	public S3PresignedUrlService(
+		UserRepository userRepository,
+		S3Client s3Client,
+		S3Presigner s3Presigner,
+		S3Properties s3Properties
+	) {
+		this.userRepository = userRepository;
 		this.s3Client = s3Client;
 		this.s3Presigner = s3Presigner;
 		this.s3Properties = s3Properties;
-		this.clock = clock;
 	}
 
-	public GeneratePresignedUploadUrlResponse generatePresignedUploadUrl(GeneratePresignedUploadUrlRequest request) {
+	@Transactional
+	public GeneratePresignedUploadUrlResponse createProfileImageUploadUrl(User authUser, GeneratePresignedUploadUrlRequest request) {
+		User user = getUser(authUser);
+		if (user.hasProfileImage()) {
+			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_ALREADY_EXISTS);
+		}
+		return issueProfileImageUploadUrl(user, request);
+	}
+
+	@Transactional
+	public GeneratePresignedUploadUrlResponse updateProfileImageUploadUrl(User authUser, GeneratePresignedUploadUrlRequest request) {
+		User user = getUser(authUser);
+		if (!user.hasProfileImage()) {
+			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_NOT_FOUND);
+		}
+		return issueProfileImageUploadUrl(user, request);
+	}
+
+	@Transactional
+	public DeleteS3ObjectResponse deleteProfileImage(User authUser) {
+		User user = getUser(authUser);
+		if (!user.hasProfileImage()) {
+			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_NOT_FOUND);
+		}
+
+		String objectKey = user.getProfileImageObjectKey();
+		try {
+			s3Client.deleteObject(DeleteObjectRequest.builder()
+				.bucket(s3Properties.bucket())
+				.key(objectKey)
+				.build());
+			user.setProfileImageObjectKey(null);
+			return new DeleteS3ObjectResponse(user.getId(), objectKey, true);
+		} catch (SdkException exception) {
+			throw new S3Exception(S3ErrorCode.OBJECT_DELETE_FAILED, exception);
+		}
+	}
+
+	private GeneratePresignedUploadUrlResponse issueProfileImageUploadUrl(User user, GeneratePresignedUploadUrlRequest request) {
 		MediaType mediaType = normalizeContentType(request.contentType());
 		String contentType = mediaType.toString();
-		String objectKey = buildObjectKey(request.userName(), mediaType);
+		long currentSequence = user.getProfileImageSequence() == null ? 0L : user.getProfileImageSequence();
+		long uploadSequence = currentSequence + 1;
+		user.setProfileImageSequence(uploadSequence);
+		String objectKey = buildObjectKey(user, uploadSequence, mediaType);
+		String profileImageUrl = buildObjectUrl(objectKey);
+
+		user.setProfileImageObjectKey(objectKey);
 
 		PutObjectRequest putObjectRequest = PutObjectRequest.builder()
 			.bucket(s3Properties.bucket())
@@ -71,14 +114,17 @@ public class S3PresignedUrlService {
 
 		try {
 			PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(putObjectPresignRequest);
-			Instant expiresAt = Instant.now(clock).plus(s3Properties.presignedUrlExpiration());
+			Instant expiresAt = Instant.now().plus(s3Properties.presignedUrlExpiration());
 
 			return new GeneratePresignedUploadUrlResponse(
+				user.getId(),
+				profileImageUrl,
 				s3Properties.bucket(),
 				objectKey,
 				presignedRequest.url().toString(),
 				HttpMethod.PUT.name(),
 				contentType,
+				uploadSequence,
 				expiresAt,
 				Map.of("Content-Type", contentType)
 			);
@@ -87,31 +133,23 @@ public class S3PresignedUrlService {
 		}
 	}
 
-	public DeleteS3ObjectResponse deleteObject(DeleteS3ObjectRequest request) {
-		String objectKey = normalizeObjectKey(request.objectKey());
-
-		try {
-			s3Client.deleteObject(DeleteObjectRequest.builder()
-				.bucket(s3Properties.bucket())
-				.key(objectKey)
-				.build());
-			return new DeleteS3ObjectResponse(objectKey, true);
-		} catch (SdkException exception) {
-			throw new S3Exception(S3ErrorCode.OBJECT_DELETE_FAILED, exception);
+	private User getUser(User authUser) {
+		if (authUser == null || authUser.getId() == null) {
+			throw new S3Exception(S3ErrorCode.USER_NOT_FOUND);
 		}
+		return userRepository.findById(authUser.getId())
+			.orElseThrow(() -> new S3Exception(S3ErrorCode.USER_NOT_FOUND));
 	}
 
-	private String buildObjectKey(String userName, MediaType mediaType) {
+	private String buildObjectKey(User user, long uploadSequence, MediaType mediaType) {
 		String normalizedConfiguredPrefix = normalizePrefix(s3Properties.uploadPrefix(), false);
-		String profileFileName = buildProfileFileName(userName, mediaType);
-		String datePath = LocalDate.now(clock).format(DATE_PATH_FORMATTER);
+		String profileFileName = buildProfileFileName(user, uploadSequence, mediaType);
 
 		List<String> segments = new ArrayList<>();
 		if (!normalizedConfiguredPrefix.isBlank()) {
 			segments.add(normalizedConfiguredPrefix);
 		}
 		segments.add(PROFILE_DIRECTORY);
-		segments.add(datePath);
 		segments.add(profileFileName);
 
 		return String.join("/", segments);
@@ -131,14 +169,6 @@ public class S3PresignedUrlService {
 		} catch (InvalidMediaTypeException exception) {
 			throw new S3Exception(S3ErrorCode.INVALID_CONTENT_TYPE);
 		}
-	}
-
-	private String normalizeObjectKey(String objectKey) {
-		String normalized = objectKey == null ? "" : objectKey.strip().replace('\\', '/');
-		if (normalized.isBlank() || normalized.contains("..") || normalized.startsWith("/")) {
-			throw new S3Exception(S3ErrorCode.INVALID_OBJECT_KEY);
-		}
-		return normalized.replaceAll("/+", "/");
 	}
 
 	private String normalizePrefix(String prefix, boolean required) {
@@ -178,10 +208,10 @@ public class S3PresignedUrlService {
 		return String.join("/", sanitizedSegments);
 	}
 
-	private String buildProfileFileName(String userName, MediaType mediaType) {
-		String normalizedUserName = normalizeUserName(userName);
-		String sequence = FILE_SEQUENCE_FORMATTER.format(Instant.now(clock).atZone(ZoneOffset.UTC));
-		return normalizedUserName + "-profile-" + sequence + extractExtension(mediaType);
+	private String buildProfileFileName(User user, long uploadSequence, MediaType mediaType) {
+		String normalizedName = normalizeUserName(user.getName());
+		String normalizedNickname = normalizeUserName(user.getNickname());
+		return normalizedName + "-" + normalizedNickname + "-profile-" + uploadSequence + extractExtension(mediaType);
 	}
 
 	private String extractExtension(MediaType mediaType) {
@@ -227,6 +257,13 @@ public class S3PresignedUrlService {
 			throw new S3Exception(S3ErrorCode.INVALID_USER_NAME);
 		}
 		return normalized;
+	}
+
+	private String buildObjectUrl(String objectKey) {
+		return "https://" + s3Properties.bucket()
+			+ ".s3." + s3Properties.region()
+			+ ".amazonaws.com/"
+			+ UriUtils.encodePath(objectKey, StandardCharsets.UTF_8);
 	}
 
 	private String trimSlashes(String value) {

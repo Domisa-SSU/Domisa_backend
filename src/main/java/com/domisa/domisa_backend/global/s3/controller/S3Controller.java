@@ -1,6 +1,7 @@
 package com.domisa.domisa_backend.global.s3.controller;
 
-import com.domisa.domisa_backend.global.s3.dto.DeleteS3ObjectRequest;
+import com.domisa.domisa_backend.domain.user.entity.User;
+import com.domisa.domisa_backend.global.auth.annotation.AuthUser;
 import com.domisa.domisa_backend.global.s3.dto.DeleteS3ObjectResponse;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
@@ -9,15 +10,16 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PostMapping;
 
 @Validated
 @RestController
-@RequestMapping("/api/v1/s3")
+@RequestMapping("/api/v1/users/me/profile-image")
 public class S3Controller {
 
 	private final S3PresignedUrlService s3PresignedUrlService;
@@ -26,16 +28,25 @@ public class S3Controller {
 		this.s3PresignedUrlService = s3PresignedUrlService;
 	}
 
-	@PostMapping("/presigned-urls/upload")
+	@PostMapping("/presigned-url")
 	@ResponseStatus(HttpStatus.CREATED)
-	public GeneratePresignedUploadUrlResponse generatePresignedUploadUrl(
+	public GeneratePresignedUploadUrlResponse createProfileImageUploadUrl(
+		@AuthUser User authUser,
 		@Valid @RequestBody GeneratePresignedUploadUrlRequest request
 	) {
-		return s3PresignedUrlService.generatePresignedUploadUrl(request);
+		return s3PresignedUrlService.createProfileImageUploadUrl(authUser, request);
 	}
 
-	@DeleteMapping("/objects")
-	public DeleteS3ObjectResponse deleteObject(@Valid @RequestBody DeleteS3ObjectRequest request) {
-		return s3PresignedUrlService.deleteObject(request);
+	@PutMapping("/presigned-url")
+	public GeneratePresignedUploadUrlResponse updateProfileImageUploadUrl(
+		@AuthUser User authUser,
+		@Valid @RequestBody GeneratePresignedUploadUrlRequest request
+	) {
+		return s3PresignedUrlService.updateProfileImageUploadUrl(authUser, request);
+	}
+
+	@DeleteMapping
+	public DeleteS3ObjectResponse deleteProfileImage(@AuthUser User authUser) {
+		return s3PresignedUrlService.deleteProfileImage(authUser);
 	}
 }
