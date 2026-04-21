@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 
 public enum S3ErrorCode {
 
-	INVALID_FILE_NAME(HttpStatus.BAD_REQUEST, "S3_INVALID_FILE_NAME", "유효한 파일명이 아닙니다."),
+	INVALID_USER_NAME(HttpStatus.BAD_REQUEST, "S3_INVALID_USER_NAME", "유효한 사용자 이름이 아닙니다."),
 	INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "S3_INVALID_CONTENT_TYPE", "유효한 contentType이 아닙니다."),
 	INVALID_PREFIX(HttpStatus.BAD_REQUEST, "S3_INVALID_PREFIX", "유효한 prefix가 아닙니다."),
 	INVALID_OBJECT_KEY(HttpStatus.BAD_REQUEST, "S3_INVALID_OBJECT_KEY", "유효한 objectKey가 아닙니다."),
