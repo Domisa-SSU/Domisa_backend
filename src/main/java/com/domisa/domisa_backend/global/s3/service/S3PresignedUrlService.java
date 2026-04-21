@@ -56,6 +56,11 @@ public class S3PresignedUrlService {
 	@Transactional
 	public DeleteS3ObjectResponse deleteProfileImage(User authUser) {
 		User user = getUser(authUser);
+		return deleteProfileImageByUser(user);
+	}
+
+	@Transactional
+	public DeleteS3ObjectResponse deleteProfileImageByUser(User user) {
 		if (!user.hasProfileImage()) {
 			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_NOT_FOUND);
 		}
