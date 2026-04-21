@@ -2,7 +2,6 @@ package com.domisa.domisa_backend.global.s3.controller;
 
 import com.domisa.domisa_backend.domain.user.entity.User;
 import com.domisa.domisa_backend.global.auth.annotation.AuthUser;
-import com.domisa.domisa_backend.global.s3.dto.DeleteS3ObjectResponse;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
 import com.domisa.domisa_backend.global.s3.service.S3PresignedUrlService;
@@ -37,7 +36,8 @@ public class S3Controller {
 	}
 
 	@DeleteMapping
-	public DeleteS3ObjectResponse deleteProfileImage(@AuthUser User authUser) {
-		return s3PresignedUrlService.deleteProfileImage(authUser);
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void deleteProfileImage(@AuthUser User authUser) {
+		s3PresignedUrlService.deleteProfileImage(authUser);
 	}
 }

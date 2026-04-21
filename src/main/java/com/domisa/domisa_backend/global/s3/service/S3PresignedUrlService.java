@@ -3,7 +3,6 @@ package com.domisa.domisa_backend.global.s3.service;
 import com.domisa.domisa_backend.domain.user.entity.User;
 import com.domisa.domisa_backend.domain.user.repository.UserRepository;
 import com.domisa.domisa_backend.global.s3.config.S3Properties;
-import com.domisa.domisa_backend.global.s3.dto.DeleteS3ObjectResponse;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
@@ -54,13 +53,13 @@ public class S3PresignedUrlService {
 	}
 
 	@Transactional
-	public DeleteS3ObjectResponse deleteProfileImage(User authUser) {
+	public void deleteProfileImage(User authUser) {
 		User user = getUser(authUser);
-		return deleteProfileImageByUser(user);
+		deleteProfileImageByUser(user);
 	}
 
 	@Transactional
-	public DeleteS3ObjectResponse deleteProfileImageByUser(User user) {
+	public void deleteProfileImageByUser(User user) {
 		if (!user.hasProfileImage()) {
 			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_NOT_FOUND);
 		}
@@ -72,7 +71,6 @@ public class S3PresignedUrlService {
 				.key(objectKey)
 				.build());
 			user.setProfileImageObjectKey(null);
-			return new DeleteS3ObjectResponse(user.getId(), objectKey, true);
 		} catch (SdkException exception) {
 			throw new S3Exception(S3ErrorCode.OBJECT_DELETE_FAILED, exception);
 		}
