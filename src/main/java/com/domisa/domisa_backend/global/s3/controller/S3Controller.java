@@ -1,11 +1,14 @@
 package com.domisa.domisa_backend.global.s3.controller;
 
+import com.domisa.domisa_backend.global.s3.dto.DeleteS3ObjectRequest;
+import com.domisa.domisa_backend.global.s3.dto.DeleteS3ObjectResponse;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
 import com.domisa.domisa_backend.global.s3.service.S3PresignedUrlService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -29,5 +32,10 @@ public class S3Controller {
 		@Valid @RequestBody GeneratePresignedUploadUrlRequest request
 	) {
 		return s3PresignedUrlService.generatePresignedUploadUrl(request);
+	}
+
+	@DeleteMapping("/objects")
+	public DeleteS3ObjectResponse deleteObject(@Valid @RequestBody DeleteS3ObjectRequest request) {
+		return s3PresignedUrlService.deleteObject(request);
 	}
 }
