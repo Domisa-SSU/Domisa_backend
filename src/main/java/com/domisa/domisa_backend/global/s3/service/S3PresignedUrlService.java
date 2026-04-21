@@ -8,19 +8,14 @@ import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
 import com.domisa.domisa_backend.global.s3.exception.S3Exception;
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -97,7 +92,6 @@ public class S3PresignedUrlService {
 		long uploadSequence = currentSequence + 1;
 		user.setProfileImageSequence(uploadSequence);
 		String objectKey = buildObjectKey(user, uploadSequence, mediaType);
-		String profileImageUrl = buildObjectUrl(objectKey);
 
 		user.setProfileImageObjectKey(objectKey);
 
@@ -114,19 +108,9 @@ public class S3PresignedUrlService {
 
 		try {
 			PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(putObjectPresignRequest);
-			Instant expiresAt = Instant.now().plus(s3Properties.presignedUrlExpiration());
-
 			return new GeneratePresignedUploadUrlResponse(
-				user.getId(),
-				profileImageUrl,
-				s3Properties.bucket(),
 				objectKey,
-				presignedRequest.url().toString(),
-				HttpMethod.PUT.name(),
-				contentType,
-				uploadSequence,
-				expiresAt,
-				Map.of("Content-Type", contentType)
+				presignedRequest.url().toString()
 			);
 		} catch (SdkException exception) {
 			throw new S3Exception(S3ErrorCode.PRESIGNED_URL_GENERATION_FAILED, exception);
@@ -257,13 +241,6 @@ public class S3PresignedUrlService {
 			throw new S3Exception(S3ErrorCode.INVALID_USER_NAME);
 		}
 		return normalized;
-	}
-
-	private String buildObjectUrl(String objectKey) {
-		return "https://" + s3Properties.bucket()
-			+ ".s3." + s3Properties.region()
-			+ ".amazonaws.com/"
-			+ UriUtils.encodePath(objectKey, StandardCharsets.UTF_8);
 	}
 
 	private String trimSlashes(String value) {
