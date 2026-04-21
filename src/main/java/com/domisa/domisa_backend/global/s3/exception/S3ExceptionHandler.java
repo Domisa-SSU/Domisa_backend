@@ -18,20 +18,20 @@ public class S3ExceptionHandler {
 	@ExceptionHandler(S3Exception.class)
 	public ResponseEntity<S3ErrorResponse> handleS3Exception(S3Exception exception, HttpServletRequest request) {
 		S3ErrorCode errorCode = exception.getErrorCode();
-		return ResponseEntity.status(errorCode.getHttpStatus())
-			.body(new S3ErrorResponse(
-				Instant.now(),
-				errorCode.getHttpStatus().value(),
-				errorCode.getCode(),
-				exception.getMessage(),
-				request.getRequestURI()
-			));
+		return buildErrorResponse(errorCode, exception.getMessage(), request);
 	}
 
 	@ExceptionHandler({MethodArgumentNotValidException.class, BindException.class, ConstraintViolationException.class})
 	public ResponseEntity<S3ErrorResponse> handleValidationException(Exception exception, HttpServletRequest request) {
 		String message = extractValidationMessage(exception);
-		S3ErrorCode errorCode = S3ErrorCode.INVALID_REQUEST;
+		return buildErrorResponse(S3ErrorCode.INVALID_REQUEST, message, request);
+	}
+
+	private ResponseEntity<S3ErrorResponse> buildErrorResponse(
+		S3ErrorCode errorCode,
+		String message,
+		HttpServletRequest request
+	) {
 		return ResponseEntity.status(errorCode.getHttpStatus())
 			.body(new S3ErrorResponse(
 				Instant.now(),

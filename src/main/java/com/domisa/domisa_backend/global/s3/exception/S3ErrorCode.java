@@ -1,7 +1,9 @@
 package com.domisa.domisa_backend.global.s3.exception;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+@Getter
 public enum S3ErrorCode {
 
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다."),
@@ -24,17 +26,5 @@ public enum S3ErrorCode {
 		this.httpStatus = httpStatus;
 		this.code = code;
 		this.message = message;
-	}
-
-	public HttpStatus getHttpStatus() {
-		return httpStatus;
-	}
-
-	public String getCode() {
-		return code;
-	}
-
-	public String getMessage() {
-		return message;
 	}
 }

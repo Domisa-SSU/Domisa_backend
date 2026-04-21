@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "users")
@@ -19,22 +20,19 @@ public class User {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Setter(AccessLevel.NONE)
 	private Long id;
 
 	@Column(nullable = false, length = 50)
-	@Setter
 	private String name;
 
 	@Column(nullable = false, length = 50)
-	@Setter
 	private String nickname;
 
 	@Column(length = 1024)
-	@Setter
 	private String profileImageObjectKey;
 
 	@Column(nullable = false)
-	@Setter
 	private Long profileImageSequence = 0L;
 
 	public User(String name, String nickname) {

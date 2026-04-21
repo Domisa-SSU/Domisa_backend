@@ -5,6 +5,7 @@ import com.domisa.domisa_backend.global.s3.config.S3Properties;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
 import com.domisa.domisa_backend.global.s3.exception.S3Exception;
 import java.nio.charset.StandardCharsets;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.core.exception.SdkException;
@@ -12,15 +13,11 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 
 @Service
+@RequiredArgsConstructor
 public class S3ObjectUrlService {
 
 	private final S3Client s3Client;
 	private final S3Properties s3Properties;
-
-	public S3ObjectUrlService(S3Client s3Client, S3Properties s3Properties) {
-		this.s3Client = s3Client;
-		this.s3Properties = s3Properties;
-	}
 
 	public String getProfileImageUrl(User user) {
 		if (user == null || !user.hasProfileImage()) {

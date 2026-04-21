@@ -6,6 +6,7 @@ import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
 import com.domisa.domisa_backend.global.s3.service.S3PresignedUrlService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,14 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Validated
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/users/me/profile-image")
 public class S3Controller {
 
 	private final S3PresignedUrlService s3PresignedUrlService;
-
-	public S3Controller(S3PresignedUrlService s3PresignedUrlService) {
-		this.s3PresignedUrlService = s3PresignedUrlService;
-	}
 
 	@PostMapping("/presigned-url")
 	@ResponseStatus(HttpStatus.CREATED)

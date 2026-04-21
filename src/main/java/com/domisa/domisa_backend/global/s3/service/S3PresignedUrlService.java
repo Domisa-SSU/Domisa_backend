@@ -11,6 +11,7 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 @Service
+@RequiredArgsConstructor
 public class S3PresignedUrlService {
 
 	private static final String PROFILE_DIRECTORY = "users/profile";
@@ -34,27 +36,15 @@ public class S3PresignedUrlService {
 	private final S3Presigner s3Presigner;
 	private final S3Properties s3Properties;
 
-	public S3PresignedUrlService(
-		UserRepository userRepository,
-		S3Client s3Client,
-		S3Presigner s3Presigner,
-		S3Properties s3Properties
-	) {
-		this.userRepository = userRepository;
-		this.s3Client = s3Client;
-		this.s3Presigner = s3Presigner;
-		this.s3Properties = s3Properties;
-	}
-
 	@Transactional
 	public GeneratePresignedUploadUrlResponse issueProfileImageUploadUrl(User authUser, GeneratePresignedUploadUrlRequest request) {
-		User user = getUser(authUser);
+		User user = getRequiredUser(authUser);
 		return createPresignedUploadUrl(user, request);
 	}
 
 	@Transactional
 	public void deleteProfileImage(User authUser) {
-		User user = getUser(authUser);
+		User user = getRequiredUser(authUser);
 		deleteProfileImageByUser(user);
 	}
 
@@ -78,9 +68,8 @@ public class S3PresignedUrlService {
 
 	private GeneratePresignedUploadUrlResponse createPresignedUploadUrl(User user, GeneratePresignedUploadUrlRequest request) {
 		MediaType mediaType = normalizeContentType(request.contentType());
+		long uploadSequence = getNextUploadSequence(user);
 		String contentType = mediaType.toString();
-		long currentSequence = user.getProfileImageSequence() == null ? 0L : user.getProfileImageSequence();
-		long uploadSequence = currentSequence + 1;
 		user.setProfileImageSequence(uploadSequence);
 		String objectKey = buildObjectKey(user, uploadSequence, mediaType);
 
@@ -108,12 +97,17 @@ public class S3PresignedUrlService {
 		}
 	}
 
-	private User getUser(User authUser) {
+	private User getRequiredUser(User authUser) {
 		if (authUser == null || authUser.getId() == null) {
 			throw new S3Exception(S3ErrorCode.USER_NOT_FOUND);
 		}
 		return userRepository.findById(authUser.getId())
 			.orElseThrow(() -> new S3Exception(S3ErrorCode.USER_NOT_FOUND));
+	}
+
+	private long getNextUploadSequence(User user) {
+		long currentSequence = user.getProfileImageSequence() == null ? 0L : user.getProfileImageSequence();
+		return currentSequence + 1;
 	}
 
 	private String buildObjectKey(User user, long uploadSequence, MediaType mediaType) {

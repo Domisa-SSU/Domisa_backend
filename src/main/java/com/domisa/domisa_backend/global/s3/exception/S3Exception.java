@@ -1,5 +1,8 @@
 package com.domisa.domisa_backend.global.s3.exception;
 
+import lombok.Getter;
+
+@Getter
 public class S3Exception extends RuntimeException {
 
 	private final S3ErrorCode errorCode;
@@ -17,9 +20,5 @@ public class S3Exception extends RuntimeException {
 	public S3Exception(S3ErrorCode errorCode, String message) {
 		super(message);
 		this.errorCode = errorCode;
-	}
-
-	public S3ErrorCode getErrorCode() {
-		return errorCode;
 	}
 }
