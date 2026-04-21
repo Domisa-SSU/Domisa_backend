@@ -48,21 +48,9 @@ public class S3PresignedUrlService {
 	}
 
 	@Transactional
-	public GeneratePresignedUploadUrlResponse createProfileImageUploadUrl(User authUser, GeneratePresignedUploadUrlRequest request) {
+	public GeneratePresignedUploadUrlResponse issueProfileImageUploadUrl(User authUser, GeneratePresignedUploadUrlRequest request) {
 		User user = getUser(authUser);
-		if (user.hasProfileImage()) {
-			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_ALREADY_EXISTS);
-		}
-		return issueProfileImageUploadUrl(user, request);
-	}
-
-	@Transactional
-	public GeneratePresignedUploadUrlResponse updateProfileImageUploadUrl(User authUser, GeneratePresignedUploadUrlRequest request) {
-		User user = getUser(authUser);
-		if (!user.hasProfileImage()) {
-			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_NOT_FOUND);
-		}
-		return issueProfileImageUploadUrl(user, request);
+		return createPresignedUploadUrl(user, request);
 	}
 
 	@Transactional
@@ -85,7 +73,7 @@ public class S3PresignedUrlService {
 		}
 	}
 
-	private GeneratePresignedUploadUrlResponse issueProfileImageUploadUrl(User user, GeneratePresignedUploadUrlRequest request) {
+	private GeneratePresignedUploadUrlResponse createPresignedUploadUrl(User user, GeneratePresignedUploadUrlRequest request) {
 		MediaType mediaType = normalizeContentType(request.contentType());
 		String contentType = mediaType.toString();
 		long currentSequence = user.getProfileImageSequence() == null ? 0L : user.getProfileImageSequence();
