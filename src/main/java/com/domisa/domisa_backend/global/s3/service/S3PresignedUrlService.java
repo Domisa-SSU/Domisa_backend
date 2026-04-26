@@ -178,9 +178,11 @@ public class S3PresignedUrlService {
 	}
 
 	private String buildProfileFileName(User user, long uploadSequence, MediaType mediaType) {
-		String normalizedName = normalizeUserName(user.getName());
-		String normalizedNickname = normalizeUserName(user.getNickname());
-		return normalizedName + "-" + normalizedNickname + "-profile-" + uploadSequence + extractExtension(mediaType);
+		String normalizedKakaoId = normalizeUserName(user.getKakaoId());
+		String normalizedNickname = normalizeUserName(
+			user.getNickname() == null || user.getNickname().isBlank() ? "profile" : user.getNickname()
+		);
+		return normalizedKakaoId + "-" + normalizedNickname + "-profile-" + uploadSequence + extractExtension(mediaType);
 	}
 
 	private String extractExtension(MediaType mediaType) {

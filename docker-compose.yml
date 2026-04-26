@@ -1,0 +1,11 @@
+services:
+  domisa-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: domisa-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"

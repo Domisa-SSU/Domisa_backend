@@ -2,8 +2,8 @@ package com.domisa.domisa_backend.auth.controller;
 
 import com.domisa.domisa_backend.auth.dto.LoginRequest;
 import com.domisa.domisa_backend.auth.dto.LoginResponse;
+import com.domisa.domisa_backend.auth.service.AuthCookieManager;
 import com.domisa.domisa_backend.auth.service.AuthService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +15,11 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthCookieManager authCookieManager;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, AuthCookieManager authCookieManager) {
         this.authService = authService;
+        this.authCookieManager = authCookieManager;
     }
 
     @PostMapping("/login")
@@ -29,16 +31,8 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(HttpServletResponse response) {
-        expireCookie(response, "accessToken");
-        expireCookie(response, "refreshToken");
+        authCookieManager.expireCookie(response, "accessToken");
+        authCookieManager.expireCookie(response, "refreshToken");
         return ResponseEntity.ok(Map.of("message", "Successfully logged out"));
-    }
-
-    private void expireCookie(HttpServletResponse response, String name) {
-        Cookie cookie = new Cookie(name, "");
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
     }
 }
