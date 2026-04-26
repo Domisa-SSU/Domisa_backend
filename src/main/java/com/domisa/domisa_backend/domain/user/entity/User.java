@@ -9,8 +9,10 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "users")
@@ -98,14 +100,6 @@ public class User {
 
 	public boolean hasProfileImage() {
 		return profileImageObjectKey != null && !profileImageObjectKey.isBlank();
-	}
-
-	public void setProfileImageObjectKey(String profileImageObjectKey) {
-		this.profileImageObjectKey = profileImageObjectKey;
-	}
-
-	public void setProfileImageSequence(Long profileImageSequence) {
-		this.profileImageSequence = profileImageSequence;
 	}
 
 	public Integer getAge() {

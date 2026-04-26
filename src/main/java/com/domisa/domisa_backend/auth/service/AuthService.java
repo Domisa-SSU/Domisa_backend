@@ -4,8 +4,8 @@ import com.domisa.domisa_backend.auth.dto.LoginResponse;
 import com.domisa.domisa_backend.auth.util.JwtProvider;
 import com.domisa.domisa_backend.domain.user.entity.User;
 import com.domisa.domisa_backend.domain.user.repository.UserRepository;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,13 +14,16 @@ public class AuthService {
     private final KakaoOAuthService kakaoOAuthService;
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
+    private final AuthCookieManager authCookieManager;
 
     public AuthService(KakaoOAuthService kakaoOAuthService,
                        UserRepository userRepository,
-                       JwtProvider jwtProvider) {
+                       JwtProvider jwtProvider,
+                       AuthCookieManager authCookieManager) {
         this.kakaoOAuthService = kakaoOAuthService;
         this.userRepository = userRepository;
         this.jwtProvider = jwtProvider;
+        this.authCookieManager = authCookieManager;
     }
 
     public LoginResponse login(String authorizationCode, HttpServletResponse response) {
@@ -33,10 +36,18 @@ public class AuthService {
         String accessToken = jwtProvider.createAccessToken(user.getId());
         String refreshToken = jwtProvider.createRefreshToken(user.getId());
 
-        addCookie(response, "accessToken", accessToken,
-                (int) (jwtProvider.getAccessTokenValidityMs() / 1000));
-        addCookie(response, "refreshToken", refreshToken,
-                (int) (jwtProvider.getRefreshTokenValidityMs() / 1000));
+        authCookieManager.addCookie(
+                response,
+                "accessToken",
+                accessToken,
+                Duration.ofMillis(jwtProvider.getAccessTokenValidityMs())
+        );
+        authCookieManager.addCookie(
+                response,
+                "refreshToken",
+                refreshToken,
+                Duration.ofMillis(jwtProvider.getRefreshTokenValidityMs())
+        );
 
         return new LoginResponse(
                 new LoginResponse.StatusDto(
@@ -45,16 +56,5 @@ public class AuthService {
                         user.getIsProfileCompleted()
                 )
         );
-    }
-
-    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
-        // 배포 시 아래 두 줄 주석 해제
-        // cookie.setSecure(true);
-        // cookie.setAttribute("SameSite", "Lax");
-        response.addCookie(cookie);
     }
 }
