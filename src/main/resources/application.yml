@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: domisa-backend
+  profiles:
+    active: local
