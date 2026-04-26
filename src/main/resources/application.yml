@@ -1,7 +1,6 @@
 spring:
   application:
     name: domisa-backend
-
 aws:
   s3:
     bucket: ${AWS_S3_BUCKET}
@@ -10,3 +9,5 @@ aws:
     secret-key: ${AWS_SECRET_ACCESS_KEY}
     upload-prefix: ${AWS_S3_UPLOAD_PREFIX:uploads}
     presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:PT10M}
+  profiles:
+    active: local
