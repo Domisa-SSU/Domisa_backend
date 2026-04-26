@@ -2,8 +2,8 @@ package com.domisa.domisa_backend.auth.service;
 
 import com.domisa.domisa_backend.auth.dto.LoginResponse;
 import com.domisa.domisa_backend.auth.util.JwtProvider;
-import com.domisa.domisa_backend.user.domain.User;
-import com.domisa.domisa_backend.user.repository.UserRepository;
+import com.domisa.domisa_backend.domain.user.entity.User;
+import com.domisa.domisa_backend.domain.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
