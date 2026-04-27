@@ -45,8 +45,8 @@ public class AuthService {
 		return new LoginResponse(
 			new LoginResponse.StatusDto(
 				user.getIsRegistered(),
-				user.getHasIntroduction(),
-				user.getIsProfileCompleted()
+				user.hasIntroduction(),
+				user.hasCard()
 			)
 		);
 	}

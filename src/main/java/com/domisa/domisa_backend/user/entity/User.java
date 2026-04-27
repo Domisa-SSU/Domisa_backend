@@ -1,8 +1,9 @@
 package com.domisa.domisa_backend.user.entity;
 
+import com.domisa.domisa_backend.card.entity.Card;
+import com.domisa.domisa_backend.introduction.entity.Introduction;
 import com.domisa.domisa_backend.user.type.AnimalProfile;
 import com.domisa.domisa_backend.user.type.ContactType;
-import com.domisa.domisa_backend.user.type.Mbti;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -14,6 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.*;
 
@@ -54,10 +56,6 @@ public class User {
 	@Column(name = "cookies", nullable = false)
 	private Long cookies = 0L;
 
-	@Column(name = "mbti", length = 20)
-	@Enumerated(EnumType.STRING)
-	private Mbti mbti;
-
 	@Column(name = "contact", length = 30)
 	private String contact;
 
@@ -68,11 +66,11 @@ public class User {
 	@Column(name = "invite_code", length = 20)
 	private String inviteCode;
 
-	@Column(name = "ideal_type")
-	private String idealType;
+	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+	private Card card;
 
-	@Column(name = "dating_style")
-	private String datingStyle;
+	@OneToOne(mappedBy = "participant", fetch = FetchType.LAZY)
+	private Introduction introduction;
 
 	@ElementCollection(fetch = FetchType.LAZY)
 	@CollectionTable(name = "user_my_blurs", joinColumns = @JoinColumn(name = "user_id"))
@@ -106,12 +104,6 @@ public class User {
 	@Column(name = "is_registered", nullable = false)
 	private Boolean isRegistered = false;
 
-	@Column(name = "has_introduction", nullable = false)
-	private Boolean hasIntroduction = false;
-
-	@Column(name = "is_profile_completed", nullable = false)
-	private Boolean isProfileCompleted = false;
-
 	@Column(name = "profile_image_sequence", nullable = false)
 	private Long profileImageSequence = 0L;
 
@@ -125,24 +117,6 @@ public class User {
 
 	public static User create(Long kakaoId) {
 		return new User(kakaoId);
-	}
-
-	public void registerProfile(
-		String nickname,
-		Boolean gender,
-		Long birthYear,
-		AnimalProfile animalProfile,
-		String contact,
-		String inviteCode
-	) {
-		this.nickname = nickname;
-		this.gender = gender;
-		this.birthYear = birthYear;
-		this.animalProfile = animalProfile;
-		this.contact = contact;
-		this.inviteCode = inviteCode;
-		this.isRegistered = true;
-		this.isProfileCompleted = true;
 	}
 
 	public boolean hasProfileImage() {
@@ -161,6 +135,14 @@ public class User {
 			return null;
 		}
 		return gender ? "남" : "여";
+	}
+
+	public boolean hasCard() {
+		return card != null;
+	}
+
+	public boolean hasIntroduction() {
+		return introduction != null;
 	}
 
 }
