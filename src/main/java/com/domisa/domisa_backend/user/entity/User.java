@@ -17,6 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.time.Year;
 
@@ -92,6 +93,9 @@ public class User {
 	@CollectionTable(name = "user_now_shows", joinColumns = @JoinColumn(name = "user_id"))
 	@Column(name = "target_user_id")
 	private List<Long> nowShows;
+
+	@Column(name = "shows_refresh_at")
+	private LocalDateTime showsRefreshAt;
 
 	@Column(name = "is_certificated", nullable = false)
 	private Boolean isCertificated = false;
