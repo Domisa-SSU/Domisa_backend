@@ -11,8 +11,6 @@ import org.springframework.validation.annotation.Validated;
 public record S3Properties(
 	@NotBlank String bucket,
 	@NotBlank String region,
-	@NotBlank String accessKey,
-	@NotBlank String secretKey,
 	@NotBlank String uploadPrefix,
 	@NotNull Duration presignedUrlExpiration
 ) {
