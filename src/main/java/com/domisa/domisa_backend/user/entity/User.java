@@ -1,6 +1,7 @@
 package com.domisa.domisa_backend.user.entity;
 
 import com.domisa.domisa_backend.card.entity.Card;
+import com.domisa.domisa_backend.introduction.entity.Introduction;
 import com.domisa.domisa_backend.user.type.AnimalProfile;
 import com.domisa.domisa_backend.user.type.ContactType;
 import jakarta.persistence.CollectionTable;
@@ -68,6 +69,9 @@ public class User {
 	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
 	private Card card;
 
+	@OneToOne(mappedBy = "participant", fetch = FetchType.LAZY)
+	private Introduction introduction;
+
 	@ElementCollection(fetch = FetchType.LAZY)
 	@CollectionTable(name = "user_my_blurs", joinColumns = @JoinColumn(name = "user_id"))
 	@Column(name = "target_user_id")
@@ -99,9 +103,6 @@ public class User {
 
 	@Column(name = "is_registered", nullable = false)
 	private Boolean isRegistered = false;
-
-	@Column(name = "has_introduction", nullable = false)
-	private Boolean hasIntroduction = false;
 
 	@Column(name = "profile_image_sequence", nullable = false)
 	private Long profileImageSequence = 0L;
@@ -155,6 +156,10 @@ public class User {
 
 	public boolean hasCard() {
 		return card != null;
+	}
+
+	public boolean hasIntroduction() {
+		return introduction != null;
 	}
 
 }

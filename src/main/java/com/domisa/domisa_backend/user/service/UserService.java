@@ -34,7 +34,7 @@ public class UserService {
 			),
 			new UserMeResponse.StatusDto(
 				user.getIsRegistered(),
-				user.getHasIntroduction(),
+				user.hasIntroduction(),
 				user.hasCard()
 			)
 		);
