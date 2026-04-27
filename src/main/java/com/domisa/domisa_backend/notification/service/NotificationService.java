@@ -21,10 +21,6 @@ public class NotificationService {
 	private final NotificationRepository notificationRepository;
 	private final UserRepository userRepository;
 
-	@Transactional
-	public Notification createNotification(NotificationType type, Long userId) {
-		return createNotification(type, userId, null);
-	}
 
 	@Transactional
 	public Notification createNotification(NotificationType type, Long userId, Long targetUserId) {
