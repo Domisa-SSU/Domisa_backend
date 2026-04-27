@@ -8,7 +8,6 @@ import com.domisa.domisa_backend.notification.dto.NotificationStatusResponse;
 import com.domisa.domisa_backend.notification.entity.Notification;
 import com.domisa.domisa_backend.notification.repository.NotificationRepository;
 import com.domisa.domisa_backend.notification.type.NotificationType;
-import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,16 +23,18 @@ public class NotificationService {
 
 	@Transactional
 	public Notification createNotification(NotificationType type, Long userId) {
-		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
-
-		return createNotification(type, user);
+		return createNotification(type, userId, null);
 	}
 
 	@Transactional
-	public Notification createNotification(NotificationType type, User user) {
+	public Notification createNotification(NotificationType type, Long userId, Long targetUserId) {
+		validateUserExists(userId);
+		if (targetUserId != null) {
+			validateUserExists(targetUserId);
+		}
+
 		Notification.NotificationTemplate template = createTemplate(type);
-		Notification notification = Notification.create(user, template);
+		Notification notification = Notification.create(userId, targetUserId, template);
 		return notificationRepository.save(notification);
 	}
 
@@ -44,7 +45,8 @@ public class NotificationService {
 			.stream()
 			.map(notification -> new NotificationListResponse.NotificationItem(
 				notification.getId(),
-				notification.getUser().getId(),
+				notification.getUserId(),
+				notification.getTargetUserId(),
 				notification.getType(),
 				notification.getTitle(),
 				notification.getContent(),
@@ -89,5 +91,11 @@ public class NotificationService {
 				"새로운 추천 상대를 확인해보세요."
 			);
 		};
+	}
+
+	private void validateUserExists(Long userId) {
+		if (!userRepository.existsById(userId)) {
+			throw new GlobalException(GlobalErrorCode.USER_NOT_FOUND);
+		}
 	}
 }
