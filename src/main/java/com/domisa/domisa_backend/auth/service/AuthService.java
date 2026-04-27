@@ -1,10 +1,10 @@
-package com.domisa.domisa_backend.global.auth.service;
+package com.domisa.domisa_backend.auth.service;
 
-import com.domisa.domisa_backend.domain.user.entity.User;
-import com.domisa.domisa_backend.domain.user.repository.UserRepository;
-import com.domisa.domisa_backend.global.auth.dto.LoginResponse;
-import com.domisa.domisa_backend.global.auth.jwt.JwtProvider;
-import com.domisa.domisa_backend.global.auth.oauth.KakaoOAuthService;
+import com.domisa.domisa_backend.auth.dto.LoginResponse;
+import com.domisa.domisa_backend.auth.jwt.JwtProvider;
+import com.domisa.domisa_backend.auth.oauth.KakaoOAuthService;
+import com.domisa.domisa_backend.user.entity.User;
+import com.domisa.domisa_backend.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import org.springframework.stereotype.Service;
@@ -59,5 +59,11 @@ public class AuthService {
 				user.getIsProfileCompleted()
 			)
 		);
+	}
+
+	public java.util.Map<String, String> logout(HttpServletResponse response) {
+		authCookieManager.expireCookie(response, "accessToken");
+		authCookieManager.expireCookie(response, "refreshToken");
+		return java.util.Map.of("message", "Successfully logged out");
 	}
 }

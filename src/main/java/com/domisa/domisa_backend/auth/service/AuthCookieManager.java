@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.global.auth.service;
+package com.domisa.domisa_backend.auth.service;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;

@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.domain.user.dto;
+package com.domisa.domisa_backend.user.dto;
 
 public record UserMeResponse(UserDto user, StatusDto status) {
 

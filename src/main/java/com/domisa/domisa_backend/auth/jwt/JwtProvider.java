@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.global.auth.jwt;
+package com.domisa.domisa_backend.auth.jwt;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

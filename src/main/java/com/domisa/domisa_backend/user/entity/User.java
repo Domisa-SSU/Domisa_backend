@@ -1,10 +1,14 @@
-package com.domisa.domisa_backend.domain.user.entity;
+package com.domisa.domisa_backend.user.entity;
 
-import com.domisa.domisa_backend.domain.user.command.RegisterProfileCommand;
+import com.domisa.domisa_backend.user.type.AnimalProfile;
+import com.domisa.domisa_backend.user.type.ContactType;
+import com.domisa.domisa_backend.user.type.Mbti;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -40,7 +44,8 @@ public class User {
 	private Long birthYear;
 
 	@Column(name = "animal_profile", length = 20)
-	private String animalProfile;
+	@Enumerated(EnumType.STRING)
+	private AnimalProfile animalProfile;
 
 	@Column(name = "profile", length = 200)
 	private String profile;
@@ -49,13 +54,15 @@ public class User {
 	private Long cookies = 0L;
 
 	@Column(name = "mbti", length = 20)
-	private String mbti;
+	@Enumerated(EnumType.STRING)
+	private Mbti mbti;
 
 	@Column(name = "contact", length = 30)
 	private String contact;
 
 	@Column(name = "contact_type", length = 20)
-	private String contactType;
+	@Enumerated(EnumType.STRING)
+	private ContactType contactType;
 
 	@Column(name = "invite_code", length = 20)
 	private String inviteCode;
@@ -116,13 +123,20 @@ public class User {
 		return new User(kakaoId);
 	}
 
-	public void registerProfile(RegisterProfileCommand command) {
-		this.nickname = command.nickname();
-		this.gender = command.gender();
-		this.birthYear = command.birthYear();
-		this.animalProfile = command.animalProfile();
-		this.contact = command.contact();
-		this.inviteCode = command.inviteCode();
+	public void registerProfile(
+		String nickname,
+		Boolean gender,
+		Long birthYear,
+		AnimalProfile animalProfile,
+		String contact,
+		String inviteCode
+	) {
+		this.nickname = nickname;
+		this.gender = gender;
+		this.birthYear = birthYear;
+		this.animalProfile = animalProfile;
+		this.contact = contact;
+		this.inviteCode = inviteCode;
 		this.isRegistered = true;
 		this.isProfileCompleted = true;
 	}

@@ -1,6 +1,6 @@
-package com.domisa.domisa_backend.global.auth.filter;
+package com.domisa.domisa_backend.auth.filter;
 
-import com.domisa.domisa_backend.global.auth.jwt.JwtProvider;
+import com.domisa.domisa_backend.auth.jwt.JwtProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;

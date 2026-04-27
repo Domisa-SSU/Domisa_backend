@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.global.auth.oauth;
+package com.domisa.domisa_backend.auth.oauth;
 
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;

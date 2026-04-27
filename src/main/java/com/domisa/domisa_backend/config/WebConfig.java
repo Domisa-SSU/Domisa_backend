@@ -1,6 +1,6 @@
 package com.domisa.domisa_backend.config;
 
-import com.domisa.domisa_backend.global.auth.resolver.AuthUserArgumentResolver;
+import com.domisa.domisa_backend.auth.resolver.AuthUserArgumentResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;

@@ -1,6 +1,6 @@
 package com.domisa.domisa_backend.global.s3.service;
 
-import com.domisa.domisa_backend.domain.user.entity.User;
+import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.global.s3.config.S3Properties;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
 import com.domisa.domisa_backend.global.s3.exception.S3Exception;

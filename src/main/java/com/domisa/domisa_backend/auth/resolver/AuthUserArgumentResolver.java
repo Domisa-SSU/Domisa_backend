@@ -1,8 +1,8 @@
-package com.domisa.domisa_backend.global.auth.resolver;
+package com.domisa.domisa_backend.auth.resolver;
 
-import com.domisa.domisa_backend.domain.user.entity.User;
-import com.domisa.domisa_backend.domain.user.repository.UserRepository;
-import com.domisa.domisa_backend.global.auth.annotation.AuthUser;
+import com.domisa.domisa_backend.auth.annotation.AuthUser;
+import com.domisa.domisa_backend.user.entity.User;
+import com.domisa.domisa_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;

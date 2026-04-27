@@ -1,23 +1,13 @@
 package com.domisa.domisa_backend.profile.dto;
 
-import com.domisa.domisa_backend.domain.user.command.RegisterProfileCommand;
+import com.domisa.domisa_backend.user.type.AnimalProfile;
 
 public record ProfileRegisterRequest(
         String nickName,
         Boolean gender,
         Long birthYear,
-        String animalProfile,
+        AnimalProfile animalProfile,
         String inviteCode,
         String contact
 ) {
-    public RegisterProfileCommand toCommand() {
-        return new RegisterProfileCommand(
-            nickName,
-            gender,
-            birthYear,
-            animalProfile,
-            contact,
-            inviteCode
-        );
-    }
 }
