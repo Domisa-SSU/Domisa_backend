@@ -34,14 +34,13 @@ public class ProfileService {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
-		user.registerProfile(
-			request.nickName(),
-			request.gender(),
-			request.birthYear(),
-			request.animalProfile(),
-			request.contact(),
-			request.inviteCode()
-		);
+		user.setNickname(request.nickName());
+		user.setGender(request.gender());
+		user.setBirthYear(request.birthYear());
+		user.setAnimalProfile(request.animalProfile());
+		user.setContact(request.contact());
+		user.setInviteCode(request.inviteCode());
+		user.setIsRegistered(true);
 
 		return Map.of("userId", user.getId());
 	}

@@ -119,23 +119,6 @@ public class User {
 		return new User(kakaoId);
 	}
 
-	public void registerProfile(
-		String nickname,
-		Boolean gender,
-		Long birthYear,
-		AnimalProfile animalProfile,
-		String contact,
-		String inviteCode
-	) {
-		this.nickname = nickname;
-		this.gender = gender;
-		this.birthYear = birthYear;
-		this.animalProfile = animalProfile;
-		this.contact = contact;
-		this.inviteCode = inviteCode;
-		this.isRegistered = true;
-	}
-
 	public boolean hasProfileImage() {
 		return profileImageObjectKey != null && !profileImageObjectKey.isBlank();
 	}
