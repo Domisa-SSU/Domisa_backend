@@ -61,7 +61,18 @@ public class Notification {
 		return new Notification(user, type, title, content);
 	}
 
+	public static Notification create(User user, NotificationTemplate template) {
+		return new Notification(user, template.type(), template.title(), template.content());
+	}
+
 	public void markAsRead() {
 		this.isRead = true;
+	}
+
+	public record NotificationTemplate(
+		NotificationType type,
+		String title,
+		String content
+	) {
 	}
 }
