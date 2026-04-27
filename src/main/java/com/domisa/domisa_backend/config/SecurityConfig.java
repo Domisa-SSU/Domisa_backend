@@ -1,7 +1,7 @@
 package com.domisa.domisa_backend.config;
 
-import com.domisa.domisa_backend.global.auth.filter.JwtAuthenticationFilter;
-import com.domisa.domisa_backend.global.auth.jwt.JwtProvider;
+import com.domisa.domisa_backend.auth.filter.JwtAuthenticationFilter;
+import com.domisa.domisa_backend.auth.jwt.JwtProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

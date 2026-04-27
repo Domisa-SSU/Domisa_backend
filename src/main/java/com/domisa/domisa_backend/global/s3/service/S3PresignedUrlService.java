@@ -1,7 +1,7 @@
 package com.domisa.domisa_backend.global.s3.service;
 
-import com.domisa.domisa_backend.domain.user.entity.User;
-import com.domisa.domisa_backend.domain.user.repository.UserRepository;
+import com.domisa.domisa_backend.user.entity.User;
+import com.domisa.domisa_backend.user.repository.UserRepository;
 import com.domisa.domisa_backend.global.s3.config.S3Properties;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
@@ -178,7 +178,7 @@ public class S3PresignedUrlService {
 	}
 
 	private String buildProfileFileName(User user, long uploadSequence, MediaType mediaType) {
-		String normalizedKakaoId = normalizeUserName(user.getKakaoId());
+		String normalizedKakaoId = normalizeUserName(String.valueOf(user.getKakaoId()));
 		String normalizedNickname = normalizeUserName(
 			user.getNickname() == null || user.getNickname().isBlank() ? "profile" : user.getNickname()
 		);
