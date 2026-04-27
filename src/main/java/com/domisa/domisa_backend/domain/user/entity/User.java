@@ -1,15 +1,20 @@
 package com.domisa.domisa_backend.domain.user.entity;
 
+import com.domisa.domisa_backend.domain.user.command.RegisterProfileCommand;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
+import java.util.List;
+import java.time.Year;
 
 @Getter
 @Setter
@@ -22,80 +27,104 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false, unique = true)
-	private String kakaoId;
+	@Column(name = "name", length = 20)
+	private String name;
 
-	@Column
+	@Column(name = "nickname", length = 20)
 	private String nickname;
 
-	@Column
+	@Column(name = "gender")
 	private Boolean gender;
 
-	@Column
-	private String birthYear;
+	@Column(name = "birth_year")
+	private Long birthYear;
 
-	@Column
+	@Column(name = "animal_profile", length = 20)
 	private String animalProfile;
 
-	@Column
+	@Column(name = "profile", length = 200)
+	private String profile;
+
+	@Column(name = "cookies", nullable = false)
+	private Long cookies = 0L;
+
+	@Column(name = "mbti", length = 20)
+	private String mbti;
+
+	@Column(name = "contact", length = 30)
 	private String contact;
 
-	@Column
+	@Column(name = "contact_type", length = 20)
+	private String contactType;
+
+	@Column(name = "invite_code", length = 20)
 	private String inviteCode;
 
-	@Column(nullable = false)
+	@Column(name = "ideal_type")
+	private String idealType;
+
+	@Column(name = "dating_style")
+	private String datingStyle;
+
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "user_my_blurs", joinColumns = @JoinColumn(name = "user_id"))
+	@Column(name = "target_user_id")
+	private List<Long> myBlurs;
+
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "user_my_fans", joinColumns = @JoinColumn(name = "user_id"))
+	@Column(name = "target_user_id")
+	private List<Long> myFans;
+
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "user_my_types", joinColumns = @JoinColumn(name = "user_id"))
+	@Column(name = "target_user_id")
+	private List<Long> myTypes;
+
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "user_now_shows", joinColumns = @JoinColumn(name = "user_id"))
+	@Column(name = "target_user_id")
+	private List<Long> nowShows;
+
+	@Column(name = "is_certificated", nullable = false)
+	private Boolean isCertificated = false;
+
+	@Column(name = "kakao_id", nullable = false, unique = true)
+	private Long kakaoId;
+
+	@Column(name = "is_registered", nullable = false)
 	private Boolean isRegistered = false;
 
-	@Column(nullable = false)
+	@Column(name = "has_introduction", nullable = false)
 	private Boolean hasIntroduction = false;
 
-	@Column(nullable = false)
+	@Column(name = "is_profile_completed", nullable = false)
 	private Boolean isProfileCompleted = false;
 
-	@Column(nullable = false)
-	private Integer cookieCount = 0;
-
-	@Column
-	private String referralCode;
-
-	@Column
-	private String profileImageUrl;
-
-	@Column(length = 1024)
-	private String profileImageObjectKey;
-
-	@Column(nullable = false)
+	@Column(name = "profile_image_sequence", nullable = false)
 	private Long profileImageSequence = 0L;
 
-	private User(String kakaoId) {
+	@Column(name = "profile_image_object_key", length = 1024)
+	private String profileImageObjectKey;
+
+	private User(Long kakaoId) {
 		this.kakaoId = kakaoId;
 		this.profileImageSequence = 0L;
 	}
 
-	public static User create(String kakaoId) {
+	public static User create(Long kakaoId) {
 		return new User(kakaoId);
 	}
 
-	public void registerProfile(
-		String nickname,
-		Boolean gender,
-		String birthYear,
-		String animalProfile,
-		String contact,
-		String inviteCode
-	) {
-		this.nickname = nickname;
-		this.gender = gender;
-		this.birthYear = birthYear;
-		this.animalProfile = animalProfile;
-		this.contact = contact;
-		this.inviteCode = inviteCode;
+	public void registerProfile(RegisterProfileCommand command) {
+		this.nickname = command.nickname();
+		this.gender = command.gender();
+		this.birthYear = command.birthYear();
+		this.animalProfile = command.animalProfile();
+		this.contact = command.contact();
+		this.inviteCode = command.inviteCode();
 		this.isRegistered = true;
 		this.isProfileCompleted = true;
-	}
-
-	public void completeIntroduction() {
-		this.hasIntroduction = true;
 	}
 
 	public boolean hasProfileImage() {
@@ -106,8 +135,7 @@ public class User {
 		if (birthYear == null) {
 			return null;
 		}
-		int currentYear = java.time.Year.now().getValue();
-		return currentYear - Integer.parseInt(birthYear) + 1;
+		return Year.now().getValue() - birthYear.intValue() + 1;
 	}
 
 	public String getGenderDisplay() {
@@ -116,4 +144,5 @@ public class User {
 		}
 		return gender ? "남" : "여";
 	}
+
 }

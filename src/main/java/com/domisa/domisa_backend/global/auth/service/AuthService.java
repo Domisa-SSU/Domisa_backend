@@ -31,7 +31,7 @@ public class AuthService {
 
 	public LoginResponse login(String authorizationCode, HttpServletResponse response) {
 		String kakaoAccessToken = kakaoOAuthService.getAccessToken(authorizationCode);
-		String kakaoId = kakaoOAuthService.getKakaoId(kakaoAccessToken);
+		Long kakaoId = kakaoOAuthService.getKakaoId(kakaoAccessToken);
 
 		User user = userRepository.findByKakaoId(kakaoId)
 			.orElseGet(() -> userRepository.save(User.create(kakaoId)));

@@ -48,7 +48,7 @@ public class KakaoOAuthService {
 		return (String) response.getBody().get("access_token");
 	}
 
-	public String getKakaoId(String accessToken) {
+	public Long getKakaoId(String accessToken) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setBearerAuth(accessToken);
 
@@ -61,6 +61,6 @@ public class KakaoOAuthService {
 			Map.class
 		);
 
-		return String.valueOf(response.getBody().get("id"));
+		return Long.valueOf(String.valueOf(response.getBody().get("id")));
 	}
 }

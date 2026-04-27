@@ -61,14 +61,7 @@ public class ProfileController {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
 
-        user.registerProfile(
-                request.nickName(),
-                request.gender(),
-                request.birthYear(),
-                request.animalProfile(),
-                request.contact(),
-                request.inviteCode()
-        );
+        user.registerProfile(request.toCommand());
         userRepository.save(user);
 
         return ResponseEntity.ok(Map.of("userId", user.getId()));
