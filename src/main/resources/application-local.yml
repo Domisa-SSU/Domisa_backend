@@ -6,7 +6,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:update}
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
@@ -16,7 +16,7 @@ spring:
 kakao:
   client-id: ${KAKAO_CLIENT_ID}
   client-secret: ${KAKAO_CLIENT_SECRET}
-  redirect-uri: ${KAKAO_REDIRECT_URI}
+  redirect-uri: http://localhost:3000/auth/callback
 
 jwt:
   secret: ${JWT_SECRET}
@@ -24,9 +24,4 @@ jwt:
   refresh-token-validity-in-seconds: 604800
 
 app:
-  frontend-url: ${FRONTEND_URL:https://domisalove.me}
-  auth:
-    cookie:
-      secure: ${APP_AUTH_COOKIE_SECURE:true}
-      same-site: ${APP_AUTH_COOKIE_SAME_SITE:None}
-      domain: ${APP_AUTH_COOKIE_DOMAIN:}
+  frontend-url: http://localhost:3000
