@@ -7,27 +7,17 @@ import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
 	private final KakaoOAuthService kakaoOAuthService;
 	private final UserRepository userRepository;
 	private final JwtProvider jwtProvider;
 	private final AuthCookieManager authCookieManager;
-
-	public AuthService(
-		KakaoOAuthService kakaoOAuthService,
-		UserRepository userRepository,
-		JwtProvider jwtProvider,
-		AuthCookieManager authCookieManager
-	) {
-		this.kakaoOAuthService = kakaoOAuthService;
-		this.userRepository = userRepository;
-		this.jwtProvider = jwtProvider;
-		this.authCookieManager = authCookieManager;
-	}
 
 	public LoginResponse login(String authorizationCode, HttpServletResponse response) {
 		String kakaoAccessToken = kakaoOAuthService.getAccessToken(authorizationCode);

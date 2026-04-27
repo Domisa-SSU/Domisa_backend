@@ -3,6 +3,7 @@ package com.domisa.domisa_backend.profile.controller;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterRequest;
 import com.domisa.domisa_backend.profile.service.ProfileService;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,23 +15,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/profiles")
+@RequiredArgsConstructor
 public class ProfileController {
 
-    private final ProfileService profileService;
+	private final ProfileService profileService;
 
-    public ProfileController(ProfileService profileService) {
-        this.profileService = profileService;
-    }
+	@GetMapping("/check-nickname")
+	public ResponseEntity<Map<String, Boolean>> checkNickname(@RequestParam String nickname) {
+		return ResponseEntity.ok(profileService.checkNickname(nickname));
+	}
 
-    @GetMapping("/check-nickname")
-    public ResponseEntity<Map<String, Boolean>> checkNickname(@RequestParam String nickname) {
-        return ResponseEntity.ok(profileService.checkNickname(nickname));
-    }
-
-    @PostMapping("/me")
-    public ResponseEntity<Map<String, Long>> registerProfile(
-            @AuthenticationPrincipal Long userId,
-            @RequestBody ProfileRegisterRequest request) {
-        return ResponseEntity.ok(profileService.registerProfile(userId, request));
-    }
+	@PostMapping("/me")
+	public ResponseEntity<Map<String, Long>> registerProfile(
+		@AuthenticationPrincipal Long userId,
+		@RequestBody ProfileRegisterRequest request
+	) {
+		return ResponseEntity.ok(profileService.registerProfile(userId, request));
+	}
 }

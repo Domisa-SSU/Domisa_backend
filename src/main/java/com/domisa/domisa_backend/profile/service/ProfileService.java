@@ -6,17 +6,15 @@ import com.domisa.domisa_backend.profile.dto.ProfileRegisterRequest;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class ProfileService {
 
 	private final UserRepository userRepository;
-
-	public ProfileService(UserRepository userRepository) {
-		this.userRepository = userRepository;
-	}
 
 	@Transactional(readOnly = true)
 	public Map<String, Boolean> checkNickname(String nickname) {
