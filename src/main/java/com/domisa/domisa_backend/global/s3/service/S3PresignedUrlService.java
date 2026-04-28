@@ -1,6 +1,7 @@
 package com.domisa.domisa_backend.global.s3.service;
 
 import com.domisa.domisa_backend.global.s3.config.S3Properties;
+import com.domisa.domisa_backend.global.s3.dto.CompleteProfileImageUploadRequest;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
@@ -39,6 +40,26 @@ public class S3PresignedUrlService {
 	public GeneratePresignedUploadUrlResponse issueProfileImageUploadUrl(User authUser, GeneratePresignedUploadUrlRequest request) {
 		User user = getRequiredUser(authUser);
 		return createPresignedUploadUrl(user, request);
+	}
+
+	@Transactional
+	public void completeProfileImageUpload(User authUser, CompleteProfileImageUploadRequest request) {
+		User user = getRequiredUser(authUser);
+		ProfileImage profileImage = user.getProfileImage();
+
+		if (profileImage == null || !profileImage.hasSourceKey()) {
+			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_NOT_FOUND);
+		}
+
+		String normalizedUploadKey = request.uploadKey().strip();
+		if (!profileImage.getProfileSourceKey().equals(normalizedUploadKey)) {
+			throw new S3Exception(S3ErrorCode.INVALID_OBJECT_KEY);
+		}
+		if (!s3ObjectStorageService.exists(normalizedUploadKey)) {
+			throw new S3Exception(S3ErrorCode.OBJECT_NOT_FOUND);
+		}
+
+		profileImage.markPending();
 	}
 
 	@Transactional

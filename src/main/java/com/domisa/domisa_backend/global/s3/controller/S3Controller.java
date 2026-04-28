@@ -1,6 +1,7 @@
 package com.domisa.domisa_backend.global.s3.controller;
 
 import com.domisa.domisa_backend.auth.annotation.AuthUser;
+import com.domisa.domisa_backend.global.s3.dto.CompleteProfileImageUploadRequest;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
@@ -31,6 +32,15 @@ public class S3Controller {
 		@Valid @RequestBody GeneratePresignedUploadUrlRequest request
 	) {
 		return s3PresignedUrlService.issueProfileImageUploadUrl(authUser, request);
+	}
+
+	@PostMapping("/complete")
+	@ResponseStatus(HttpStatus.OK)
+	public void completeProfileImageUpload(
+		@AuthUser User authUser,
+		@Valid @RequestBody CompleteProfileImageUploadRequest request
+	) {
+		s3PresignedUrlService.completeProfileImageUpload(authUser, request);
 	}
 
 	@DeleteMapping

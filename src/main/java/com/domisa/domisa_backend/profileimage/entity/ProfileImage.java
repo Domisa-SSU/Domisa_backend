@@ -80,8 +80,13 @@ public class ProfileImage {
 		this.profileDetailBlurKey = profileDetailBlurKey;
 		this.profileThumbnailKey = profileThumbnailKey;
 		this.profileThumbnailBlurKey = profileThumbnailBlurKey;
-		this.processingStatus = ProfileImageProcessingStatus.PENDING;
+		this.processingStatus = ProfileImageProcessingStatus.UPLOADING;
 		this.retryCount = 0;
+		this.lastError = null;
+	}
+
+	public void markPending() {
+		this.processingStatus = ProfileImageProcessingStatus.PENDING;
 		this.lastError = null;
 	}
 
