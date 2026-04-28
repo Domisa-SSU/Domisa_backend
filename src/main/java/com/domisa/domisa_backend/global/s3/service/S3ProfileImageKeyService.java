@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.profileimage.service;
+package com.domisa.domisa_backend.global.s3.service;
 
 import com.domisa.domisa_backend.global.s3.config.S3Properties;
 import com.domisa.domisa_backend.profileimage.type.ProfileImageVariant;
@@ -6,8 +6,11 @@ import com.domisa.domisa_backend.user.entity.User;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
 @RequiredArgsConstructor
-public class ProfileImageKeyResolver {
+public class S3ProfileImageKeyService {
 
 	private static final String PROFILE_DIRECTORY = "profiles";
 
@@ -30,6 +33,7 @@ public class ProfileImageKeyResolver {
 	}
 
 	private String buildVariantKey(User user, long uploadSequence, ProfileImageVariant variant, String extension) {
+		// S3 경로 규칙은 여기서만 관리하고 프로필 이미지 로직은 키 조합을 몰라도 되게 한다.
 		List<String> segments = new ArrayList<>();
 		String normalizedPrefix = normalizePrefix(s3Properties.uploadPrefix());
 		if (!normalizedPrefix.isBlank()) {

@@ -1,5 +1,6 @@
 package com.domisa.domisa_backend.profileimage.service;
 
+import com.domisa.domisa_backend.global.s3.service.S3ObjectStorageService;
 import com.domisa.domisa_backend.profileimage.config.ProfileImageProcessingProperties;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import com.domisa.domisa_backend.profileimage.repository.ProfileImageRepository;
@@ -16,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfileImageProcessingService {
 
 	private final ProfileImageRepository profileImageRepository;
-	private final ProfileImageStorageService profileImageStorageService;
+	private final S3ObjectStorageService s3ObjectStorageService;
 	private final ProfileImageProcessor profileImageProcessor;
 	private final ProfileImageProcessingProperties properties;
 
@@ -41,19 +42,19 @@ public class ProfileImageProcessingService {
 		}
 
 		try {
-			// The client uploads directly to S3, so the scheduler has to wait until the source object exists.
-			if (!profileImageStorageService.exists(profileImage.getProfileSourceKey())) {
+			// 프론트가 presigned PUT으로 직접 업로드하므로 source 객체가 실제로 생긴 뒤에만 처리한다.
+			if (!s3ObjectStorageService.exists(profileImage.getProfileSourceKey())) {
 				return;
 			}
 
 			profileImage.markProcessing();
-			byte[] sourceBytes = profileImageStorageService.read(profileImage.getProfileSourceKey());
+			byte[] sourceBytes = s3ObjectStorageService.read(profileImage.getProfileSourceKey());
 			BufferedImage sourceImage = profileImageProcessor.read(sourceBytes);
 			ProcessedProfileImageSet variants = profileImageProcessor.generateVariants(sourceImage);
 
-			profileImageStorageService.uploadJpeg(profileImage.getProfileThumbnailKey(), variants.thumbnail());
-			profileImageStorageService.uploadJpeg(profileImage.getProfileThumbnailBlurKey(), variants.thumbnailBlur());
-			profileImageStorageService.uploadJpeg(profileImage.getProfileDetailBlurKey(), variants.detailBlur());
+			s3ObjectStorageService.uploadJpeg(profileImage.getProfileThumbnailKey(), variants.thumbnail());
+			s3ObjectStorageService.uploadJpeg(profileImage.getProfileThumbnailBlurKey(), variants.thumbnailBlur());
+			s3ObjectStorageService.uploadJpeg(profileImage.getProfileDetailBlurKey(), variants.detailBlur());
 			profileImage.markReady();
 		} catch (Exception exception) {
 			profileImage.markFailed(exception.getMessage());

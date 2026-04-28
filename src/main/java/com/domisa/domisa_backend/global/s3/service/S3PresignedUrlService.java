@@ -7,8 +7,6 @@ import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
 import com.domisa.domisa_backend.global.s3.exception.S3Exception;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import com.domisa.domisa_backend.profileimage.repository.ProfileImageRepository;
-import com.domisa.domisa_backend.profileimage.service.ProfileImageKeyResolver;
-import com.domisa.domisa_backend.profileimage.service.ProfileImageStorageService;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.List;
@@ -32,8 +30,8 @@ public class S3PresignedUrlService {
 
 	private final UserRepository userRepository;
 	private final ProfileImageRepository profileImageRepository;
-	private final ProfileImageKeyResolver profileImageKeyResolver;
-	private final ProfileImageStorageService profileImageStorageService;
+	private final S3ProfileImageKeyService s3ProfileImageKeyService;
+	private final S3ObjectStorageService s3ObjectStorageService;
 	private final S3Presigner s3Presigner;
 	private final S3Properties s3Properties;
 
@@ -56,7 +54,7 @@ public class S3PresignedUrlService {
 			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_NOT_FOUND);
 		}
 
-		profileImageStorageService.deleteAll(List.of(
+		s3ObjectStorageService.deleteAll(List.of(
 			profileImage.getProfileSourceKey(),
 			profileImage.getProfileThumbnailKey(),
 			profileImage.getProfileThumbnailBlurKey(),
@@ -72,10 +70,10 @@ public class S3PresignedUrlService {
 		long uploadSequence = getNextUploadSequence(profileImage);
 		String contentType = mediaType.toString();
 		String extension = extractExtension(mediaType);
-		String sourceKey = profileImageKeyResolver.buildSourceKey(user, uploadSequence, extension);
-		String thumbnailKey = profileImageKeyResolver.buildThumbnailKey(user, uploadSequence);
-		String thumbnailBlurKey = profileImageKeyResolver.buildThumbnailBlurKey(user, uploadSequence);
-		String detailBlurKey = profileImageKeyResolver.buildDetailBlurKey(user, uploadSequence);
+		String sourceKey = s3ProfileImageKeyService.buildSourceKey(user, uploadSequence, extension);
+		String thumbnailKey = s3ProfileImageKeyService.buildThumbnailKey(user, uploadSequence);
+		String thumbnailBlurKey = s3ProfileImageKeyService.buildThumbnailBlurKey(user, uploadSequence);
+		String detailBlurKey = s3ProfileImageKeyService.buildDetailBlurKey(user, uploadSequence);
 
 		profileImage.prepareUpload(uploadSequence, sourceKey, detailBlurKey, thumbnailKey, thumbnailBlurKey);
 
@@ -112,9 +110,9 @@ public class S3PresignedUrlService {
 	private ProfileImage getOrCreateProfileImage(User user) {
 		ProfileImage profileImage = user.getProfileImage();
 		if (profileImage != null) {
-			// A new upload replaces the previous source and generated variants under a new sequence.
+			// 새 업로드는 새 시퀀스 아래에 다시 저장하므로 이전 source/파생본은 먼저 정리한다.
 			if (profileImage.hasAnyKey()) {
-				profileImageStorageService.deleteAll(List.of(
+				s3ObjectStorageService.deleteAll(List.of(
 					profileImage.getProfileSourceKey(),
 					profileImage.getProfileThumbnailKey(),
 					profileImage.getProfileThumbnailBlurKey(),

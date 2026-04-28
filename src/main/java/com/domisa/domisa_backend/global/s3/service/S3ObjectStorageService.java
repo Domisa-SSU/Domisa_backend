@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.profileimage.service;
+package com.domisa.domisa_backend.global.s3.service;
 
 import com.domisa.domisa_backend.global.s3.config.S3Properties;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -17,8 +18,9 @@ import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+@Service
 @RequiredArgsConstructor
-public class ProfileImageStorageService {
+public class S3ObjectStorageService {
 
 	private static final String JPEG_CONTENT_TYPE = "image/jpeg";
 
@@ -57,6 +59,7 @@ public class ProfileImageStorageService {
 	}
 
 	public void uploadJpeg(String objectKey, byte[] bytes) {
+		// 프로필 이미지 파생본은 현재 모두 JPG로 저장한다.
 		try {
 			s3Client.putObject(
 				PutObjectRequest.builder()
