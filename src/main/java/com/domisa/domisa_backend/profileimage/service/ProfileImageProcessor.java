@@ -58,7 +58,7 @@ public class ProfileImageProcessor {
 	}
 
 	private BufferedImage createDetailBlur(BufferedImage sourceImage) throws IOException {
-		// Detail blur keeps the original aspect ratio and only caps the larger side.
+		// 디테일 블러는 원본 비율을 유지하고 긴 변만 제한한다.
 		BufferedImage resized = toRgb(Thumbnails.of(sourceImage)
 			.size(properties.getDetailMaxSize(), properties.getDetailMaxSize())
 			.keepAspectRatio(true)
@@ -68,7 +68,7 @@ public class ProfileImageProcessor {
 
 	private BufferedImage blur(BufferedImage sourceImage, int kernelSize) {
 		validateKernelSize(kernelSize);
-		// A normalized box kernel keeps the blur strength configurable without branching the pipeline.
+		// 정규화된 박스 커널을 사용해 같은 파이프라인에서 블러 강도만 조절한다.
 		float[] kernelData = new float[kernelSize * kernelSize];
 		float value = 1.0f / (kernelSize * kernelSize);
 		for (int index = 0; index < kernelData.length; index++) {

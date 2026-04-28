@@ -13,7 +13,7 @@ public class ProfileImageProcessingScheduler {
 
 	@Scheduled(fixedDelayString = "${app.profile-image.processing.fixed-delay-ms:30000}")
 	public void processProfileImages() {
-		// Polling is used because uploads finish outside the application through presigned S3 PUTs.
+		// presigned PUT 업로드 완료를 앱이 직접 알 수 없어서 주기적으로 상태를 확인한다.
 		profileImageProcessingService.processPendingImages();
 	}
 }
