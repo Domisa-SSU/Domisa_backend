@@ -1,6 +1,8 @@
 package com.domisa.domisa_backend.user.repository;
 
 import com.domisa.domisa_backend.user.entity.User;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +13,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@EntityGraph(attributePaths = "profileImage")
 	Optional<User> findWithProfileImageById(Long id);
+
+	@EntityGraph(attributePaths = "profileImage")
+	List<User> findAllByIdIn(Collection<Long> ids);
 
 	boolean existsByNickname(String nickname);
 }

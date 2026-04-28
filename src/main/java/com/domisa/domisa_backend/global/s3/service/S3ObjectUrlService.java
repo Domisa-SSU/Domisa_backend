@@ -23,7 +23,30 @@ public class S3ObjectUrlService {
 		if (profileImage == null || !profileImage.hasSourceKey()) {
 			return null;
 		}
-		return buildObjectUrl(profileImage.getProfileSourceKey());
+		return buildStoredObjectUrl(profileImage.getProfileSourceKey());
+	}
+
+	public String getThumbnailUrl(ProfileImage profileImage) {
+		if (profileImage == null) {
+			return null;
+		}
+		if (hasText(profileImage.getProfileThumbnailKey())) {
+			return buildStoredObjectUrl(profileImage.getProfileThumbnailKey());
+		}
+		if (profileImage.hasSourceKey()) {
+			return buildStoredObjectUrl(profileImage.getProfileSourceKey());
+		}
+		return null;
+	}
+
+	public String getThumbnailBlurUrl(ProfileImage profileImage) {
+		if (profileImage == null) {
+			return null;
+		}
+		if (hasText(profileImage.getProfileThumbnailBlurKey())) {
+			return buildStoredObjectUrl(profileImage.getProfileThumbnailBlurKey());
+		}
+		return getThumbnailUrl(profileImage);
 	}
 
 	public String getObjectUrl(String objectKey) {
@@ -45,6 +68,10 @@ public class S3ObjectUrlService {
 		}
 	}
 
+	public String buildStoredObjectUrl(String objectKey) {
+		return buildObjectUrl(normalizeObjectKey(objectKey));
+	}
+
 	private String normalizeObjectKey(String objectKey) {
 		String normalized = objectKey == null ? "" : objectKey.strip().replace('\\', '/');
 		if (normalized.isBlank() || normalized.contains("..") || normalized.startsWith("/")) {
@@ -58,5 +85,9 @@ public class S3ObjectUrlService {
 			+ ".s3." + s3Properties.region()
 			+ ".amazonaws.com/"
 			+ UriUtils.encodePath(objectKey, StandardCharsets.UTF_8);
+	}
+
+	private boolean hasText(String value) {
+		return value != null && !value.isBlank();
 	}
 }
