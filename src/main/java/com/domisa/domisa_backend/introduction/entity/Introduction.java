@@ -33,8 +33,9 @@ public class Introduction {
 	@Column(name = "q3", columnDefinition = "TEXT")
 	private String q3;
 
-	@Column(name = "introducer_id", nullable = false)
-	private Long introducerId;
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "introducer_id")
+	private User introducer;
 
 	@OneToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "participant_id", nullable = false, unique = true)
