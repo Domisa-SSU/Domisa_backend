@@ -81,6 +81,7 @@ public class S3PresignedUrlService {
 			.bucket(s3Properties.bucket())
 			.key(sourceKey)
 			.contentType(contentType)
+			.contentLength(request.fileSize())
 			.build();
 
 		PutObjectPresignRequest putObjectPresignRequest = PutObjectPresignRequest.builder()
@@ -92,7 +93,8 @@ public class S3PresignedUrlService {
 			PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(putObjectPresignRequest);
 			return new GeneratePresignedUploadUrlResponse(
 				sourceKey,
-				presignedRequest.url().toString()
+				presignedRequest.url().toString(),
+				s3Properties.presignedUrlExpiration().toSeconds()
 			);
 		} catch (SdkException exception) {
 			throw new S3Exception(S3ErrorCode.PRESIGNED_URL_GENERATION_FAILED, exception);

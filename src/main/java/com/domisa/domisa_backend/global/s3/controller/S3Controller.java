@@ -24,7 +24,7 @@ public class S3Controller {
 
 	private final S3PresignedUrlService s3PresignedUrlService;
 
-	@PostMapping("/presigned-url")
+	@PostMapping("/upload-url")
 	@ResponseStatus(HttpStatus.CREATED)
 	public GeneratePresignedUploadUrlResponse issueProfileImageUploadUrl(
 		@AuthUser User authUser,

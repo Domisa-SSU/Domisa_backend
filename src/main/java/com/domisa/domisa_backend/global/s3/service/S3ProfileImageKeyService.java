@@ -5,6 +5,7 @@ import com.domisa.domisa_backend.profileimage.type.ProfileImageVariant;
 import com.domisa.domisa_backend.user.entity.User;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,11 +14,19 @@ import org.springframework.stereotype.Service;
 public class S3ProfileImageKeyService {
 
 	private static final String PROFILE_DIRECTORY = "profiles";
+	private static final String TEMP_DIRECTORY = "users/profile/temp";
 
 	private final S3Properties s3Properties;
 
 	public String buildSourceKey(User user, long uploadSequence, String extension) {
-		return buildVariantKey(user, uploadSequence, ProfileImageVariant.SOURCE, extension);
+		List<String> segments = new ArrayList<>();
+		String normalizedPrefix = normalizePrefix(s3Properties.uploadPrefix());
+		if (!normalizedPrefix.isBlank()) {
+			segments.add(normalizedPrefix);
+		}
+		segments.add(TEMP_DIRECTORY);
+		segments.add(UUID.randomUUID() + extension);
+		return String.join("/", segments);
 	}
 
 	public String buildThumbnailKey(User user, long uploadSequence) {
