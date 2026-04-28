@@ -1,9 +1,9 @@
 package com.domisa.domisa_backend.global.s3.service;
 
-import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.global.s3.config.S3Properties;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
 import com.domisa.domisa_backend.global.s3.exception.S3Exception;
+import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,11 +19,11 @@ public class S3ObjectUrlService {
 	private final S3Client s3Client;
 	private final S3Properties s3Properties;
 
-	public String getProfileImageUrl(User user) {
-		if (user == null || !user.hasProfileImage()) {
+	public String getProfileImageUrl(ProfileImage profileImage) {
+		if (profileImage == null || !profileImage.hasSourceKey()) {
 			return null;
 		}
-		return getObjectUrl(user.getProfileImageObjectKey());
+		return buildObjectUrl(profileImage.getProfileSourceKey());
 	}
 
 	public String getObjectUrl(String objectKey) {
@@ -53,7 +53,7 @@ public class S3ObjectUrlService {
 		return normalized.replaceAll("/+", "/");
 	}
 
-	private String buildObjectUrl(String objectKey) {
+	public String buildObjectUrl(String objectKey) {
 		return "https://" + s3Properties.bucket()
 			+ ".s3." + s3Properties.region()
 			+ ".amazonaws.com/"

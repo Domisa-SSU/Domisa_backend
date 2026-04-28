@@ -3,6 +3,7 @@ package com.domisa.domisa_backend.user.service;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
+import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import com.domisa.domisa_backend.user.dto.UserMeResponse;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
@@ -19,8 +20,9 @@ public class UserService {
 
 	@Transactional(readOnly = true)
 	public UserMeResponse getMe(Long userId) {
-		User user = userRepository.findById(userId)
+		User user = userRepository.findWithProfileImageById(userId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+		ProfileImage profileImage = user.getProfileImage();
 
 		return new UserMeResponse(
 			new UserMeResponse.UserDto(
@@ -28,7 +30,7 @@ public class UserService {
 				user.getNickname(),
 				user.getAge(),
 				user.getGenderDisplay(),
-				s3ObjectUrlService.getProfileImageUrl(user),
+				s3ObjectUrlService.getProfileImageUrl(profileImage),
 				Math.toIntExact(user.getCookies()),
 				user.getInviteCode()
 			),

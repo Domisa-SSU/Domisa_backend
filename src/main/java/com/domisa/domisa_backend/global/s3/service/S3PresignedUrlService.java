@@ -1,14 +1,16 @@
 package com.domisa.domisa_backend.global.s3.service;
 
-import com.domisa.domisa_backend.user.entity.User;
-import com.domisa.domisa_backend.user.repository.UserRepository;
 import com.domisa.domisa_backend.global.s3.config.S3Properties;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlRequest;
 import com.domisa.domisa_backend.global.s3.dto.GeneratePresignedUploadUrlResponse;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
 import com.domisa.domisa_backend.global.s3.exception.S3Exception;
-import java.text.Normalizer;
-import java.util.ArrayList;
+import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
+import com.domisa.domisa_backend.profileimage.repository.ProfileImageRepository;
+import com.domisa.domisa_backend.profileimage.service.ProfileImageKeyResolver;
+import com.domisa.domisa_backend.profileimage.service.ProfileImageStorageService;
+import com.domisa.domisa_backend.user.entity.User;
+import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.core.exception.SdkException;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
@@ -28,11 +28,12 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 @RequiredArgsConstructor
 public class S3PresignedUrlService {
 
-	private static final String PROFILE_DIRECTORY = "users/profile";
 	private static final int MAX_EXTENSION_LENGTH = 20;
 
 	private final UserRepository userRepository;
-	private final S3Client s3Client;
+	private final ProfileImageRepository profileImageRepository;
+	private final ProfileImageKeyResolver profileImageKeyResolver;
+	private final ProfileImageStorageService profileImageStorageService;
 	private final S3Presigner s3Presigner;
 	private final S3Properties s3Properties;
 
@@ -50,34 +51,37 @@ public class S3PresignedUrlService {
 
 	@Transactional
 	public void deleteProfileImageByUser(User user) {
-		if (!user.hasProfileImage()) {
+		ProfileImage profileImage = user.getProfileImage();
+		if (profileImage == null || !profileImage.hasAnyKey()) {
 			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_NOT_FOUND);
 		}
 
-		String objectKey = user.getProfileImageObjectKey();
-		try {
-			s3Client.deleteObject(DeleteObjectRequest.builder()
-				.bucket(s3Properties.bucket())
-				.key(objectKey)
-				.build());
-			user.setProfileImageObjectKey(null);
-		} catch (SdkException exception) {
-			throw new S3Exception(S3ErrorCode.OBJECT_DELETE_FAILED, exception);
-		}
+		profileImageStorageService.deleteAll(List.of(
+			profileImage.getProfileSourceKey(),
+			profileImage.getProfileThumbnailKey(),
+			profileImage.getProfileThumbnailBlurKey(),
+			profileImage.getProfileDetailBlurKey()
+		));
+		profileImageRepository.delete(profileImage);
+		user.setProfileImage(null);
 	}
 
 	private GeneratePresignedUploadUrlResponse createPresignedUploadUrl(User user, GeneratePresignedUploadUrlRequest request) {
 		MediaType mediaType = normalizeContentType(request.contentType());
-		long uploadSequence = getNextUploadSequence(user);
+		ProfileImage profileImage = getOrCreateProfileImage(user);
+		long uploadSequence = getNextUploadSequence(profileImage);
 		String contentType = mediaType.toString();
-		user.setProfileImageSequence(uploadSequence);
-		String objectKey = buildObjectKey(user, uploadSequence, mediaType);
+		String extension = extractExtension(mediaType);
+		String sourceKey = profileImageKeyResolver.buildSourceKey(user, uploadSequence, extension);
+		String thumbnailKey = profileImageKeyResolver.buildThumbnailKey(user, uploadSequence);
+		String thumbnailBlurKey = profileImageKeyResolver.buildThumbnailBlurKey(user, uploadSequence);
+		String detailBlurKey = profileImageKeyResolver.buildDetailBlurKey(user, uploadSequence);
 
-		user.setProfileImageObjectKey(objectKey);
+		profileImage.prepareUpload(uploadSequence, sourceKey, detailBlurKey, thumbnailKey, thumbnailBlurKey);
 
 		PutObjectRequest putObjectRequest = PutObjectRequest.builder()
 			.bucket(s3Properties.bucket())
-			.key(objectKey)
+			.key(sourceKey)
 			.contentType(contentType)
 			.build();
 
@@ -89,7 +93,7 @@ public class S3PresignedUrlService {
 		try {
 			PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(putObjectPresignRequest);
 			return new GeneratePresignedUploadUrlResponse(
-				objectKey,
+				sourceKey,
 				presignedRequest.url().toString()
 			);
 		} catch (SdkException exception) {
@@ -101,27 +105,32 @@ public class S3PresignedUrlService {
 		if (authUser == null || authUser.getId() == null) {
 			throw new S3Exception(S3ErrorCode.USER_NOT_FOUND);
 		}
-		return userRepository.findById(authUser.getId())
+		return userRepository.findWithProfileImageById(authUser.getId())
 			.orElseThrow(() -> new S3Exception(S3ErrorCode.USER_NOT_FOUND));
 	}
 
-	private long getNextUploadSequence(User user) {
-		long currentSequence = user.getProfileImageSequence() == null ? 0L : user.getProfileImageSequence();
-		return currentSequence + 1;
+	private ProfileImage getOrCreateProfileImage(User user) {
+		ProfileImage profileImage = user.getProfileImage();
+		if (profileImage != null) {
+			// A new upload replaces the previous source and generated variants under a new sequence.
+			if (profileImage.hasAnyKey()) {
+				profileImageStorageService.deleteAll(List.of(
+					profileImage.getProfileSourceKey(),
+					profileImage.getProfileThumbnailKey(),
+					profileImage.getProfileThumbnailBlurKey(),
+					profileImage.getProfileDetailBlurKey()
+				));
+			}
+			return profileImage;
+		}
+
+		ProfileImage created = ProfileImage.create(user);
+		return profileImageRepository.save(created);
 	}
 
-	private String buildObjectKey(User user, long uploadSequence, MediaType mediaType) {
-		String normalizedConfiguredPrefix = normalizePrefix(s3Properties.uploadPrefix(), false);
-		String profileFileName = buildProfileFileName(user, uploadSequence, mediaType);
-
-		List<String> segments = new ArrayList<>();
-		if (!normalizedConfiguredPrefix.isBlank()) {
-			segments.add(normalizedConfiguredPrefix);
-		}
-		segments.add(PROFILE_DIRECTORY);
-		segments.add(profileFileName);
-
-		return String.join("/", segments);
+	private long getNextUploadSequence(ProfileImage profileImage) {
+		long currentSequence = profileImage.getUploadSequence() == null ? 0L : profileImage.getUploadSequence();
+		return currentSequence + 1;
 	}
 
 	private MediaType normalizeContentType(String contentType) {
@@ -138,51 +147,6 @@ public class S3PresignedUrlService {
 		} catch (InvalidMediaTypeException exception) {
 			throw new S3Exception(S3ErrorCode.INVALID_CONTENT_TYPE);
 		}
-	}
-
-	private String normalizePrefix(String prefix, boolean required) {
-		if (prefix == null || prefix.isBlank()) {
-			if (!required) {
-				return "";
-			}
-			throw new S3Exception(S3ErrorCode.INVALID_PREFIX);
-		}
-
-		String normalized = prefix.strip().replace('\\', '/');
-		if (normalized.contains("..")) {
-			throw new S3Exception(S3ErrorCode.INVALID_PREFIX);
-		}
-
-		normalized = normalized.replaceAll("/+", "/");
-		normalized = trimSlashes(normalized);
-		if (normalized.isBlank()) {
-			if (!required) {
-				return "";
-			}
-			throw new S3Exception(S3ErrorCode.INVALID_PREFIX);
-		}
-
-		String[] rawSegments = normalized.split("/");
-		List<String> sanitizedSegments = new ArrayList<>();
-		for (String rawSegment : rawSegments) {
-			String sanitizedSegment = rawSegment.strip()
-				.replaceAll("[^a-zA-Z0-9_-]", "-")
-				.replaceAll("-{2,}", "-");
-
-			if (sanitizedSegment.isBlank()) {
-				throw new S3Exception(S3ErrorCode.INVALID_PREFIX);
-			}
-			sanitizedSegments.add(sanitizedSegment);
-		}
-		return String.join("/", sanitizedSegments);
-	}
-
-	private String buildProfileFileName(User user, long uploadSequence, MediaType mediaType) {
-		String normalizedKakaoId = normalizeUserName(String.valueOf(user.getKakaoId()));
-		String normalizedNickname = normalizeUserName(
-			user.getNickname() == null || user.getNickname().isBlank() ? "profile" : user.getNickname()
-		);
-		return normalizedKakaoId + "-" + normalizedNickname + "-profile-" + uploadSequence + extractExtension(mediaType);
 	}
 
 	private String extractExtension(MediaType mediaType) {
@@ -211,48 +175,5 @@ public class S3PresignedUrlService {
 			throw new S3Exception(S3ErrorCode.INVALID_CONTENT_TYPE);
 		}
 		return sanitized.toLowerCase(Locale.ROOT);
-	}
-
-	private String normalizeUserName(String userName) {
-		if (userName == null || userName.isBlank()) {
-			throw new S3Exception(S3ErrorCode.INVALID_USER_NAME);
-		}
-
-		String normalized = Normalizer.normalize(userName.strip(), Normalizer.Form.NFKC)
-			.replaceAll("\\s+", "-")
-			.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}_-]", "-")
-			.replaceAll("-{2,}", "-");
-
-		normalized = trimDelimiters(normalized);
-		if (normalized.isBlank()) {
-			throw new S3Exception(S3ErrorCode.INVALID_USER_NAME);
-		}
-		return normalized;
-	}
-
-	private String trimSlashes(String value) {
-		int start = 0;
-		int end = value.length();
-
-		while (start < end && value.charAt(start) == '/') {
-			start++;
-		}
-		while (end > start && value.charAt(end - 1) == '/') {
-			end--;
-		}
-		return value.substring(start, end);
-	}
-
-	private String trimDelimiters(String value) {
-		int start = 0;
-		int end = value.length();
-
-		while (start < end && (value.charAt(start) == '-' || value.charAt(start) == '_')) {
-			start++;
-		}
-		while (end > start && (value.charAt(end - 1) == '-' || value.charAt(end - 1) == '_')) {
-			end--;
-		}
-		return value.substring(start, end);
 	}
 }
