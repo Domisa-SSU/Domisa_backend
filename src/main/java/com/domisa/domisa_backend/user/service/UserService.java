@@ -6,6 +6,7 @@ import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import com.domisa.domisa_backend.user.dto.UserMeResponse;
 import com.domisa.domisa_backend.user.dto.UserLikesReceivedResponse;
+import com.domisa.domisa_backend.user.dto.UserLikesSentResponse;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.Collections;
@@ -66,6 +67,25 @@ public class UserService {
 			.toList();
 
 		return new UserLikesReceivedResponse(fans.size(), fans);
+	}
+
+	@Transactional(readOnly = true)
+	public UserLikesSentResponse getSentLikes(User authUser) {
+		User user = getRequiredUser(authUser);
+
+		var typeIds = user.getMyTypes() == null ? Collections.<Long>emptyList() : user.getMyTypes();
+		var usersById = getUsersById(typeIds);
+
+		var myTypes = typeIds.stream()
+			.map(usersById::get)
+			.filter(targetUser -> targetUser != null)
+			.map(targetUser -> new UserLikesSentResponse.LikeUserItem(
+				targetUser.getId(),
+				s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
+			))
+			.toList();
+
+		return new UserLikesSentResponse(myTypes.size(), myTypes);
 	}
 
 	private LinkedHashMap<Long, User> getUsersById(java.util.List<Long> userIds) {

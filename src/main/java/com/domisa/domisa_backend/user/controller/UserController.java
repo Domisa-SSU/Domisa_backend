@@ -2,6 +2,7 @@ package com.domisa.domisa_backend.user.controller;
 
 import com.domisa.domisa_backend.auth.annotation.AuthUser;
 import com.domisa.domisa_backend.user.dto.UserLikesReceivedResponse;
+import com.domisa.domisa_backend.user.dto.UserLikesSentResponse;
 import com.domisa.domisa_backend.user.dto.UserMeResponse;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.service.UserService;
@@ -27,5 +28,10 @@ public class UserController {
 	@GetMapping("/likes/received")
 	public ResponseEntity<UserLikesReceivedResponse> getReceivedLikes(@AuthUser User authUser) {
 		return ResponseEntity.ok(userService.getReceivedLikes(authUser));
+	}
+
+	@GetMapping("/likes/sent")
+	public ResponseEntity<UserLikesSentResponse> getSentLikes(@AuthUser User authUser) {
+		return ResponseEntity.ok(userService.getSentLikes(authUser));
 	}
 }
