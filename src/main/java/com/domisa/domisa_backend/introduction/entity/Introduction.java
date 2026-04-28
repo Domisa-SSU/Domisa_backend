@@ -33,14 +33,19 @@ public class Introduction {
 	@Column(name = "q3", columnDefinition = "TEXT")
 	private String q3;
 
-	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "introducer_id")
+	@OneToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "introducer_id", nullable = false)
 	private User introducer;
 
-	@OneToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "participant_id", nullable = false, unique = true)
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "participant_id", unique = true)
 	private User participant;
 
 	@Column(name = "link_code")
 	private String linkCode;
+
+	public void assignParticipant(User participant) {
+		this.participant = participant;
+		participant.setIntroduction(this);
+	}
 }
