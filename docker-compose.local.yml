@@ -1,0 +1,45 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: domisa-mysql-local
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-domisa}
+      MYSQL_USER: ${MYSQL_USER:-domisa}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-domisa1234}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root1234}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql-local-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root1234}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  domisa-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: domisa-backend-local
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      DB_URL: mysql:3306/${MYSQL_DATABASE:-domisa}
+      DB_USERNAME: ${DB_USERNAME:-domisa}
+      DB_PASSWORD: ${DB_PASSWORD:-domisa1234}
+    ports:
+      - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
+
+volumes:
+  mysql-local-data:
