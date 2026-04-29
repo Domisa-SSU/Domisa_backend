@@ -19,7 +19,6 @@ aws:
   s3:
     bucket: ${AWS_S3_BUCKET}
     region: ${AWS_REGION}
-    upload-prefix: ${AWS_S3_UPLOAD_PREFIX}
     presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION}
 
 kakao:

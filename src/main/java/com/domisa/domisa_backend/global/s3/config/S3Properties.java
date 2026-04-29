@@ -12,7 +12,6 @@ public record S3Properties(
 	// 업로드/조회에 공통으로 쓰는 S3 설정이다.
 	@NotBlank String bucket,
 	@NotBlank String region,
-	@NotBlank String uploadPrefix,
 	@NotNull Duration presignedUrlExpiration
 ) {
 }
