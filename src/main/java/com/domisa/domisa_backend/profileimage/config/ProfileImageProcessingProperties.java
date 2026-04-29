@@ -9,7 +9,7 @@ public class ProfileImageProcessingProperties {
 	// 썸네일은 비율을 유지한 채 긴 변 기준으로 이 값까지 줄인다.
 	private int thumbnailSize = 300;
 	// 오리진 블러 이미지는 긴 변 기준으로 이 값까지 줄인다.
-	private int detailMaxSize = 1080;
+	private int originMaxSize = 1080;
 	// 썸네일 블러 강도다. 홀수 커널 크기이며 커질수록 더 흐려진다.
 	private int thumbnailBlurKernelSize = 13;
 	// 오리진 블러 강도다. 홀수 커널 크기이며 커질수록 더 흐려진다.
@@ -27,12 +27,12 @@ public class ProfileImageProcessingProperties {
 		this.thumbnailSize = thumbnailSize;
 	}
 
-	public int getDetailMaxSize() {
-		return detailMaxSize;
+	public int getOriginMaxSize() {
+		return originMaxSize;
 	}
 
-	public void setDetailMaxSize(int detailMaxSize) {
-		this.detailMaxSize = detailMaxSize;
+	public void setOriginMaxSize(int originMaxSize) {
+		this.originMaxSize = originMaxSize;
 	}
 
 	public int getThumbnailBlurKernelSize() {

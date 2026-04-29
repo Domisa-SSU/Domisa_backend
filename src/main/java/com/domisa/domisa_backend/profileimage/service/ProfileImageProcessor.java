@@ -61,9 +61,9 @@ public class ProfileImageProcessor {
 	}
 
 	private BufferedImage createOriginBlur(BufferedImage originImage) throws IOException {
-		// detailMaxSize 값으로 긴 변만 제한하고, originBlurKernelSize로 블러를 적용한다.
+		// originMaxSize 값으로 긴 변만 제한하고, originBlurKernelSize로 블러를 적용한다.
 		BufferedImage resized = toRgb(Thumbnails.of(originImage)
-			.size(properties.getDetailMaxSize(), properties.getDetailMaxSize())
+			.size(properties.getOriginMaxSize(), properties.getOriginMaxSize())
 			.keepAspectRatio(true)
 			.asBufferedImage());
 		return blur(resized, properties.getOriginBlurKernelSize());

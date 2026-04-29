@@ -28,7 +28,7 @@ public class S3ObjectUrlService {
 	}
 
 	public String getThumbnailUrl(ProfileImage profileImage) {
-		// 썸네일이 아직 없으면 origin 이미지로 폴백한다.
+		// 썸네일이 아직 없으면 origin 이미지로만 폴백한다.
 		if (profileImage == null) {
 			return null;
 		}
@@ -42,14 +42,17 @@ public class S3ObjectUrlService {
 	}
 
 	public String getThumbnailBlurUrl(ProfileImage profileImage) {
-		// 블러 썸네일이 없으면 일반 썸네일을 사용한다.
+		// 블러 썸네일은 blur -> thumbnail 까지만 폴백하고 origin까지는 내려가지 않는다.
 		if (profileImage == null) {
 			return null;
 		}
 		if (hasText(profileImage.getProfileThumbnailBlurKey())) {
 			return buildStoredObjectUrl(profileImage.getProfileThumbnailBlurKey());
 		}
-		return getThumbnailUrl(profileImage);
+		if (hasText(profileImage.getProfileThumbnailKey())) {
+			return buildStoredObjectUrl(profileImage.getProfileThumbnailKey());
+		}
+		return null;
 	}
 
 	public String getObjectUrl(String objectKey) {
