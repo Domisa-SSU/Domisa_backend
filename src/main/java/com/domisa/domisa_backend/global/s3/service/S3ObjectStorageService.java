@@ -28,6 +28,7 @@ public class S3ObjectStorageService {
 	private final S3Properties s3Properties;
 
 	public boolean exists(String objectKey) {
+		// 업로드 완료 여부 확인에 사용한다.
 		try {
 			s3Client.headObject(HeadObjectRequest.builder()
 				.bucket(s3Properties.bucket())
@@ -47,6 +48,7 @@ public class S3ObjectStorageService {
 	}
 
 	public byte[] read(String objectKey) {
+		// 프로필 이미지 가공 전에 source 객체를 내려받는다.
 		try {
 			ResponseBytes<?> responseBytes = s3Client.getObjectAsBytes(GetObjectRequest.builder()
 				.bucket(s3Properties.bucket())
@@ -75,6 +77,7 @@ public class S3ObjectStorageService {
 	}
 
 	public void deleteAll(Collection<String> objectKeys) {
+		// 같은 키가 중복으로 들어와도 한 번만 삭제한다.
 		Set<String> uniqueKeys = new LinkedHashSet<>();
 		for (String objectKey : objectKeys) {
 			if (objectKey != null && !objectKey.isBlank()) {

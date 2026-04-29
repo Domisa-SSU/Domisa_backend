@@ -5,6 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app.profile-image.processing")
 public class ProfileImageProcessingProperties {
 
+	// 파생본 생성 규칙과 재시도 설정을 한곳에서 관리한다.
 	private int thumbnailSize = 300;
 	private int detailMaxSize = 1080;
 	private int thumbnailBlurKernelSize = 13;

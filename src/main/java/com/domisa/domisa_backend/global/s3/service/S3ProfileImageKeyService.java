@@ -19,6 +19,7 @@ public class S3ProfileImageKeyService {
 	private final S3Properties s3Properties;
 
 	public String buildSourceKey(User user, long uploadSequence, String extension) {
+		// 프론트가 직접 올리는 원본은 temp 경로 아래에 둔다.
 		List<String> segments = new ArrayList<>();
 		String normalizedPrefix = normalizePrefix(s3Properties.uploadPrefix());
 		if (!normalizedPrefix.isBlank()) {

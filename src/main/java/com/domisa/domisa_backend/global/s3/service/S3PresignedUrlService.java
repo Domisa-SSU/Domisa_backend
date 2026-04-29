@@ -38,12 +38,14 @@ public class S3PresignedUrlService {
 
 	@Transactional
 	public GeneratePresignedUploadUrlResponse issueProfileImageUploadUrl(User authUser, GeneratePresignedUploadUrlRequest request) {
+		// 업로드 전에는 source key와 파생본 key만 먼저 확정해 둔다.
 		User user = getRequiredUser(authUser);
 		return createPresignedUploadUrl(user, request);
 	}
 
 	@Transactional
 	public void completeProfileImageUpload(User authUser, CompleteProfileImageUploadRequest request) {
+		// 실제 업로드된 source 객체를 확인한 뒤 처리 대기 상태로 넘긴다.
 		User user = getRequiredUser(authUser);
 		ProfileImage profileImage = user.getProfileImage();
 
@@ -86,6 +88,7 @@ public class S3PresignedUrlService {
 	}
 
 	private GeneratePresignedUploadUrlResponse createPresignedUploadUrl(User user, GeneratePresignedUploadUrlRequest request) {
+		// source는 temp 경로로 받고, 썸네일/블러 경로는 미리 저장해 둔다.
 		MediaType mediaType = normalizeContentType(request.contentType());
 		ProfileImage profileImage = getOrCreateProfileImage(user);
 		long uploadSequence = getNextUploadSequence(profileImage);

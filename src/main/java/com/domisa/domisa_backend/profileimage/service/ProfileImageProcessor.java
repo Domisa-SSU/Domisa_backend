@@ -23,6 +23,7 @@ public class ProfileImageProcessor {
 	private final ProfileImageProcessingProperties properties;
 
 	public ProcessedProfileImageSet generateVariants(BufferedImage sourceImage) {
+		// source 한 장으로 썸네일/썸네일 블러/디테일 블러를 만든다.
 		try {
 			BufferedImage thumbnailImage = createThumbnail(sourceImage);
 			BufferedImage detailBlurImage = createDetailBlur(sourceImage);
@@ -39,6 +40,7 @@ public class ProfileImageProcessor {
 	}
 
 	public BufferedImage read(byte[] sourceBytes) {
+		// 후속 처리의 일관성을 위해 RGB 이미지로 정규화한다.
 		try {
 			BufferedImage image = ImageIO.read(new java.io.ByteArrayInputStream(sourceBytes));
 			if (image == null) {

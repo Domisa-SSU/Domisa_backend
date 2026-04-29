@@ -23,6 +23,7 @@ public class ProfileImageProcessingService {
 
 	@Transactional
 	public void processPendingImages() {
+		// 신규 업로드와 실패 재시도 대상을 배치 단위로 가져온다.
 		List<ProfileImage> candidates = profileImageRepository.findByProcessingStatusInOrderByIdAsc(
 			List.of(ProfileImageProcessingStatus.PENDING, ProfileImageProcessingStatus.FAILED),
 			PageRequest.of(0, properties.getBatchSize())
@@ -34,6 +35,7 @@ public class ProfileImageProcessingService {
 	}
 
 	private void processProfileImage(ProfileImage profileImage) {
+		// 재시도 한도를 넘기거나 source가 없으면 이번 턴에는 건너뛴다.
 		if (!profileImage.canRetry(properties.getMaxRetryCount())) {
 			return;
 		}
