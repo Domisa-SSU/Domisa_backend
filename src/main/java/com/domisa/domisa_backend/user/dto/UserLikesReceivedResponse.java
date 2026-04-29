@@ -4,10 +4,10 @@ import java.util.List;
 
 public record UserLikesReceivedResponse(
 	int myFanNumber,
-	List<LikeUserItem> myFans
+	List<UserFan> myFans
 ) {
 
-	public record LikeUserItem(
+	public record UserFan(
 		Long userId,
 		String profile
 	) {

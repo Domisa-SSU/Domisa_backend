@@ -25,6 +25,7 @@ public class UserService {
 
 	@Transactional(readOnly = true)
 	public UserMeResponse getMe(User authUser) {
+		// 내 정보 조회는 연결된 프로필 이미지 URL까지 함께 내려준다.
 		ProfileImage profileImage = authUser.getProfileImage();
 
 		return new UserMeResponse(
@@ -47,20 +48,21 @@ public class UserService {
 
 	@Transactional(readOnly = true)
 	public UserLikesReceivedResponse getReceivedLikes(User authUser) {
+		// 받은 좋아요 목록은 myFans 기준으로 만들고, myBlurs에 있으면 블러를 해제한 썸네일을 사용한다.
 		User user = getRequiredUser(authUser);
 
 		var fanIds = user.getMyFans() == null ? Collections.<Long>emptyList() : user.getMyFans();
-		var blurIds = user.getMyBlurs() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyBlurs());
+		var unblurIds = user.getMyBlurs() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyBlurs());
 		var usersById = getUsersById(fanIds);
 
 		var fans = fanIds.stream()
 			.map(usersById::get)
 			.filter(targetUser -> targetUser != null)
-			.map(targetUser -> new UserLikesReceivedResponse.LikeUserItem(
+			.map(targetUser -> new UserLikesReceivedResponse.UserFan(
 				targetUser.getId(),
-				blurIds.contains(targetUser.getId())
-					? s3ObjectUrlService.getThumbnailBlurUrl(targetUser.getProfileImage())
-					: s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
+				unblurIds.contains(targetUser.getId())
+					? s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
+					: s3ObjectUrlService.getThumbnailBlurUrl(targetUser.getProfileImage())
 			))
 			.toList();
 
@@ -69,6 +71,7 @@ public class UserService {
 
 	@Transactional(readOnly = true)
 	public UserLikesSentResponse getSentLikes(User authUser) {
+		// 보낸 좋아요 목록은 항상 일반 썸네일로 응답한다.
 		User user = getRequiredUser(authUser);
 
 		var typeIds = user.getMyTypes() == null ? Collections.<Long>emptyList() : user.getMyTypes();
@@ -77,7 +80,7 @@ public class UserService {
 		var myTypes = typeIds.stream()
 			.map(usersById::get)
 			.filter(targetUser -> targetUser != null)
-			.map(targetUser -> new UserLikesSentResponse.LikeUserItem(
+			.map(targetUser -> new UserLikesSentResponse.UserType(
 				targetUser.getId(),
 				s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
 			))
@@ -87,21 +90,21 @@ public class UserService {
 	}
 
 	private LinkedHashMap<Long, User> getUsersById(java.util.List<Long> userIds) {
+		// 대상 유저를 한 번에 조회해서 목록 응답에서 N+1이 나지 않게 한다.
 		LinkedHashMap<Long, User> usersById = new LinkedHashMap<>();
 		if (userIds.isEmpty()) {
 			return usersById;
 		}
-
 		userRepository.findAllByIdIn(userIds)
 			.forEach(user -> usersById.put(user.getId(), user));
 		return usersById;
 	}
 
 	private User getRequiredUser(User authUser) {
+		// 프로필 이미지까지 같이 읽어 이후 URL 생성에서 추가 조회를 줄인다.
 		if (authUser == null || authUser.getId() == null) {
 			throw new GlobalException(GlobalErrorCode.USER_NOT_FOUND);
 		}
-
 		return userRepository.findWithProfileImageById(authUser.getId())
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 	}
