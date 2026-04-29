@@ -14,7 +14,6 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import net.coobird.thumbnailator.Thumbnails;
-import net.coobird.thumbnailator.geometry.Positions;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -54,10 +53,10 @@ public class ProfileImageProcessor {
 	}
 
 	private BufferedImage createThumbnail(BufferedImage originImage) throws IOException {
-		// thumbnailSize 값으로 정사각 비율을 만들기 위해 가운데를 기준으로 잘라낸다.
+		// thumbnailSize 값 기준으로 비율을 유지한 채 전체 크기만 줄인다.
 		return toRgb(Thumbnails.of(originImage)
 			.size(properties.getThumbnailSize(), properties.getThumbnailSize())
-			.crop(Positions.CENTER)
+			.keepAspectRatio(true)
 			.asBufferedImage());
 	}
 

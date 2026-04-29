@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class ProfileImageProcessingProperties {
 
 	// 파생본 생성 규칙과 재시도 설정을 한곳에서 관리한다.
-	// 썸네일 정사각 크기다. 현재 300이면 300x300으로 중앙 크롭된다.
+	// 썸네일은 비율을 유지한 채 긴 변 기준으로 이 값까지 줄인다.
 	private int thumbnailSize = 300;
 	// 오리진 블러 이미지는 긴 변 기준으로 이 값까지 줄인다.
 	private int detailMaxSize = 1080;
