@@ -24,25 +24,23 @@ public class UserService {
 	private final S3ObjectUrlService s3ObjectUrlService;
 
 	@Transactional(readOnly = true)
-	public UserMeResponse getMe(Long userId) {
-		User user = userRepository.findWithProfileImageById(userId)
-			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
-		ProfileImage profileImage = user.getProfileImage();
+	public UserMeResponse getMe(User authUser) {
+		ProfileImage profileImage = authUser.getProfileImage();
 
 		return new UserMeResponse(
 			new UserMeResponse.UserDto(
-				user.getId(),
-				user.getNickname(),
-				user.getAge(),
-				user.getGenderDisplay(),
+				authUser.getId(),
+				authUser.getNickname(),
+				authUser.getAge(),
+				authUser.getGenderDisplay(),
 				s3ObjectUrlService.getProfileImageUrl(profileImage),
-				Math.toIntExact(user.getCookies()),
-				user.getInviteCode()
+				Math.toIntExact(authUser.getCookies()),
+				authUser.getInviteCode()
 			),
 			new UserMeResponse.StatusDto(
-				user.getIsRegistered(),
-				user.hasIntroduction(),
-				user.hasCard()
+					authUser.getIsRegistered(),
+					authUser.hasIntroduction(),
+					authUser.hasCard()
 			)
 		);
 	}

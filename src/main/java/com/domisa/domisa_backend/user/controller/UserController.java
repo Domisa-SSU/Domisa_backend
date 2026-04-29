@@ -21,8 +21,8 @@ public class UserController {
 	private final UserService userService;
 
 	@GetMapping("/me")
-	public ResponseEntity<UserMeResponse> getMe(@AuthenticationPrincipal Long userId) {
-		return ResponseEntity.ok(userService.getMe(userId));
+	public ResponseEntity<UserMeResponse> getMe(@AuthUser User authUser) {
+		return ResponseEntity.ok(userService.getMe(authUser));
 	}
 
 	@GetMapping("/likes/received")
