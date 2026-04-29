@@ -31,8 +31,8 @@ kakao:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-token-validity-in-seconds: 3600
-  refresh-token-validity-in-seconds: 604800
+  access-token-validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS}
+  refresh-token-validity-in-seconds: ${JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS}
 
 app:
   frontend-url: ${FRONTEND_URL}
