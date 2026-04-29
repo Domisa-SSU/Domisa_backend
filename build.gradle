@@ -21,7 +21,7 @@ repositories {
 
 ext {
 	set('awsSdkVersion', "2.25.67")
-	set('springAiVersion', "1.1.4")
+	// set('springAiVersion', "1.1.4")
 }
 
 
@@ -51,15 +51,15 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
 	// spring ai
-	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
-	implementation 'org.springframework.ai:spring-ai-starter-model-vertex-ai-gemini'
+	// implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+	// implementation 'org.springframework.ai:spring-ai-starter-model-vertex-ai-gemini'
 }
 
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
-	}
-}
+//dependencyManagement {
+//	imports {
+//		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+//	}
+//}
 
 tasks.named('test') {
 	useJUnitPlatform()

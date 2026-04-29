@@ -16,6 +16,7 @@ public class UserController {
 
 	private final UserService userService;
 
+	// 내 정보 조회(마이페이지용)
 	@GetMapping("/me")
 	public ResponseEntity<UserMeResponse> getMe(@AuthenticationPrincipal Long userId) {
 		return ResponseEntity.ok(userService.getMe(userId));

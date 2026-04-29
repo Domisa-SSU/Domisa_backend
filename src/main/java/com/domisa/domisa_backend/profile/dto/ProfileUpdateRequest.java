@@ -3,11 +3,11 @@ package com.domisa.domisa_backend.profile.dto;
 import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.user.type.AnimalProfile;
 
-public record ProfileRegisterRequest(
+public record ProfileUpdateRequest(
         String nickname,
         Boolean gender,
         Long birthYear,
-        String inviteCode,
         ContactDTO contact,
         AnimalProfile animalProfile
-) {}
+) {
+}

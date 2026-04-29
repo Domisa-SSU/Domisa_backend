@@ -3,6 +3,10 @@ package com.domisa.domisa_backend.profile.service;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterRequest;
+import com.domisa.domisa_backend.profile.dto.ProfileUpdateRequest;
+import com.domisa.domisa_backend.profile.dto.ProfileUpdateResponse;
+import com.domisa.domisa_backend.user.dto.ContactDTO;
+import com.domisa.domisa_backend.profile.dto.ProfileRegisterResponse;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.Map;
@@ -16,37 +20,81 @@ public class ProfileService {
 
 	private final UserRepository userRepository;
 
+	// 닉네임 중복 조회
 	@Transactional(readOnly = true)
 	public Map<String, Boolean> checkNickname(String nickname) {
 		validateNickname(nickname);
 		return Map.of("isAvailable", !userRepository.existsByNickname(nickname));
 	}
 
+	// 회원가입
 	@Transactional
-	public Map<String, Long> registerProfile(Long userId, ProfileRegisterRequest request) {
+	public ProfileRegisterResponse registerProfile(Long userId, ProfileRegisterRequest request) {
 		validateRequiredFields(request);
-		validateNickname(request.nickName());
+		validateNickname(request.nickname());
 
-		if (userRepository.existsByNickname(request.nickName())) {
+		// 닉네임 중복 체크
+		if (userRepository.existsByNickname(request.nickname())) {
 			throw new GlobalException(GlobalErrorCode.DUPLICATE_NICKNAME);
 		}
 
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
-		user.setNickname(request.nickName());
+		user.setNickname(request.nickname());
 		user.setGender(request.gender());
 		user.setBirthYear(request.birthYear());
 		user.setAnimalProfile(request.animalProfile());
-		user.setContact(request.contact());
+		user.setContactType(request.contact().type());     // ContactDTO에서 type 꺼내기
+		user.setContact(request.contact().content());      // ContactDTO에서 content 꺼내기
 		user.setInviteCode(request.inviteCode());
 		user.setIsRegistered(true);
 
-		return Map.of("userId", user.getId());
+		return new ProfileRegisterResponse(
+				user.getId(),
+				new ProfileRegisterResponse.StatusDto(
+						user.getIsRegistered(),
+						user.hasIntroduction(),
+						user.hasCard()
+				)
+		);
+	}
+
+	// 프로필 수정
+	@Transactional
+	public ProfileUpdateResponse updateProfile(Long userId, ProfileUpdateRequest request) {
+		validateNickname(request.nickname());
+
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		// 내 닉네임이랑 다를때만 중복 체크 (같은 닉네임 유지는 허용)
+		if(!user.getNickname().equals(request.nickname())
+		&& userRepository.existsByNickname(request.nickname())) {
+			throw new GlobalException(GlobalErrorCode.DUPLICATE_NICKNAME);
+		}
+		user.setNickname(request.nickname());
+		user.setGender(request.gender());
+		user.setBirthYear(request.birthYear());
+		user.setAnimalProfile(request.animalProfile());
+		user.setContactType(request.contact().type());
+		user.setContact(request.contact().content());
+
+		return new ProfileUpdateResponse(
+				user.getId(),
+				user.getNickname(),
+				user.getGender(),
+				user.getBirthYear(),
+				new ContactDTO(user.getContactType(), user.getContact()),
+				user.getAnimalProfile()
+		);
 	}
 
 	private void validateRequiredFields(ProfileRegisterRequest request) {
-		if (request.nickName() == null || request.nickName().isBlank()) {
+		if (request.nickname() == null || request.nickname().isBlank()) {
+			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
+		}
+		if (request.contact() == null || request.contact().content() == null) {
 			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
 		}
 	}

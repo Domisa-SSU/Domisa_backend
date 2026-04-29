@@ -69,8 +69,8 @@ public class AuthService {
 			Math.toIntExact(user.getCookies()),
 			new AuthMeResponse.StatusDto(
 				user.getIsRegistered(),
-				user.getHasIntroduction(),
-				user.getIsProfileCompleted()
+				user.hasIntroduction(),
+				user.hasCard()
 			)
 		);
 	}

@@ -10,8 +10,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-        show_sql: false
-        format_sql: false
+        show_sql: true
+        format_sql: true
 
 kakao:
   client-id: ${KAKAO_CLIENT_ID}
@@ -25,3 +25,8 @@ jwt:
 
 app:
   frontend-url: http://localhost:3000
+  auth:
+    cookie:
+      secure: false
+      same-site: Lax
+      domain:
