@@ -32,6 +32,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17'
+	implementation 'org.apache.commons:commons-lang3:3.18.0'
 	implementation 'net.coobird:thumbnailator:0.4.20'
 	implementation platform("software.amazon.awssdk:bom:${awsSdkVersion}")
 	implementation 'software.amazon.awssdk:s3'
