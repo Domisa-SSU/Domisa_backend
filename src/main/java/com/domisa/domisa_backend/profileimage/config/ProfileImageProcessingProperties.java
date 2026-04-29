@@ -11,9 +11,9 @@ public class ProfileImageProcessingProperties {
 	// 오리진 블러 이미지는 긴 변 기준으로 이 값까지 줄인다.
 	private int originMaxSize = 1080;
 	// 썸네일 블러 강도다. 홀수 커널 크기이며 커질수록 더 흐려진다.
-	private int thumbnailBlurKernelSize = 13;
+	private int thumbnailBlurKernelSize = 17;
 	// 오리진 블러 강도다. 홀수 커널 크기이며 커질수록 더 흐려진다.
-	private int originBlurKernelSize = 17;
+	private int originBlurKernelSize = 21;
 	// 한 번에 처리할 프로필 이미지 건수다.
 	private int batchSize = 10;
 	// 실패 시 최대 재시도 횟수다.

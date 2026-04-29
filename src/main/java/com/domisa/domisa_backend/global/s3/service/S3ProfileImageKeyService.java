@@ -14,12 +14,12 @@ import org.springframework.stereotype.Service;
 public class S3ProfileImageKeyService {
 
 	private static final String PROFILE_DIRECTORY = "profiles";
-	private static final String TEMP_DIRECTORY = "users/profile/temp";
+	private static final String TEMP_DIRECTORY = "profiles/temp";
 
 	private final S3Properties s3Properties;
 
 	public String buildOriginKey(User user, long uploadSequence, String extension) {
-		// 프론트가 직접 올리는 원본은 temp 경로 아래에 둔다.
+		// 프론트가 직접 올리는 원본은 짧은 temp 경로 아래에 둔다.
 		List<String> segments = new ArrayList<>();
 		String normalizedPrefix = normalizePrefix(s3Properties.uploadPrefix());
 		if (!normalizedPrefix.isBlank()) {
