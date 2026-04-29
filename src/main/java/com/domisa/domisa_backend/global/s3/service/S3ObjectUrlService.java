@@ -4,6 +4,7 @@ import com.domisa.domisa_backend.global.s3.config.S3Properties;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
 import com.domisa.domisa_backend.global.s3.exception.S3Exception;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
+import com.domisa.domisa_backend.profileimage.type.ProfileImageProcessingStatus;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,11 +29,11 @@ public class S3ObjectUrlService {
 	}
 
 	public String getThumbnailUrl(ProfileImage profileImage) {
-		// 썸네일이 아직 없으면 origin 이미지로만 폴백한다.
+		// 썸네일은 READY 상태에서만 사용하고, 그 전에는 origin 이미지로만 폴백한다.
 		if (profileImage == null) {
 			return null;
 		}
-		if (hasText(profileImage.getProfileThumbnailKey())) {
+		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailKey())) {
 			return buildStoredObjectUrl(profileImage.getProfileThumbnailKey());
 		}
 		if (profileImage.hasOriginKey()) {
@@ -42,14 +43,14 @@ public class S3ObjectUrlService {
 	}
 
 	public String getThumbnailBlurUrl(ProfileImage profileImage) {
-		// 블러 썸네일은 blur -> thumbnail 까지만 폴백하고 origin까지는 내려가지 않는다.
+		// 블러 썸네일도 READY 상태에서만 사용하고, 없으면 일반 썸네일까지만 폴백한다.
 		if (profileImage == null) {
 			return null;
 		}
-		if (hasText(profileImage.getProfileThumbnailBlurKey())) {
+		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailBlurKey())) {
 			return buildStoredObjectUrl(profileImage.getProfileThumbnailBlurKey());
 		}
-		if (hasText(profileImage.getProfileThumbnailKey())) {
+		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailKey())) {
 			return buildStoredObjectUrl(profileImage.getProfileThumbnailKey());
 		}
 		return null;
@@ -97,5 +98,9 @@ public class S3ObjectUrlService {
 
 	private boolean hasText(String value) {
 		return value != null && !value.isBlank();
+	}
+
+	private boolean isReady(ProfileImage profileImage) {
+		return profileImage.getProcessingStatus() == ProfileImageProcessingStatus.READY;
 	}
 }
