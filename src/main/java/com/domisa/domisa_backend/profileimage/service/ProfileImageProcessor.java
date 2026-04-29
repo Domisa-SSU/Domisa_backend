@@ -22,27 +22,27 @@ public class ProfileImageProcessor {
 
 	private final ProfileImageProcessingProperties properties;
 
-	public ProcessedProfileImageSet generateVariants(BufferedImage sourceImage) {
-		// source 한 장으로 썸네일/썸네일 블러/디테일 블러를 만든다.
+	public ProcessedProfileImageSet generateVariants(BufferedImage originImage) {
+		// origin 한 장으로 썸네일/썸네일 블러/오리진 블러를 만든다.
 		try {
-			BufferedImage thumbnailImage = createThumbnail(sourceImage);
-			BufferedImage detailBlurImage = createDetailBlur(sourceImage);
+			BufferedImage thumbnailImage = createThumbnail(originImage);
+			BufferedImage originBlurImage = createOriginBlur(originImage);
 			BufferedImage thumbnailBlurImage = blur(thumbnailImage, properties.getThumbnailBlurKernelSize());
 
 			return new ProcessedProfileImageSet(
 				writeJpeg(thumbnailImage, properties.getThumbnailJpegQuality()),
 				writeJpeg(thumbnailBlurImage, properties.getThumbnailJpegQuality()),
-				writeJpeg(detailBlurImage, properties.getDetailBlurJpegQuality())
+				writeJpeg(originBlurImage, properties.getOriginBlurJpegQuality())
 			);
 		} catch (IOException exception) {
 			throw new S3Exception(S3ErrorCode.IMAGE_PROCESSING_FAILED, exception);
 		}
 	}
 
-	public BufferedImage read(byte[] sourceBytes) {
+	public BufferedImage read(byte[] originBytes) {
 		// 후속 처리의 일관성을 위해 RGB 이미지로 정규화한다.
 		try {
-			BufferedImage image = ImageIO.read(new java.io.ByteArrayInputStream(sourceBytes));
+			BufferedImage image = ImageIO.read(new java.io.ByteArrayInputStream(originBytes));
 			if (image == null) {
 				throw new S3Exception(S3ErrorCode.IMAGE_PROCESSING_FAILED, "지원하지 않는 이미지 형식입니다.");
 			}
@@ -52,20 +52,20 @@ public class ProfileImageProcessor {
 		}
 	}
 
-	private BufferedImage createThumbnail(BufferedImage sourceImage) throws IOException {
-		return toRgb(Thumbnails.of(sourceImage)
+	private BufferedImage createThumbnail(BufferedImage originImage) throws IOException {
+		return toRgb(Thumbnails.of(originImage)
 			.size(properties.getThumbnailSize(), properties.getThumbnailSize())
 			.crop(Positions.CENTER)
 			.asBufferedImage());
 	}
 
-	private BufferedImage createDetailBlur(BufferedImage sourceImage) throws IOException {
-		// 디테일 블러는 원본 비율을 유지하고 긴 변만 제한한다.
-		BufferedImage resized = toRgb(Thumbnails.of(sourceImage)
+	private BufferedImage createOriginBlur(BufferedImage originImage) throws IOException {
+		// 오리진 블러는 원본 비율을 유지하고 긴 변만 제한한다.
+		BufferedImage resized = toRgb(Thumbnails.of(originImage)
 			.size(properties.getDetailMaxSize(), properties.getDetailMaxSize())
 			.keepAspectRatio(true)
 			.asBufferedImage());
-		return blur(resized, properties.getDetailBlurKernelSize());
+		return blur(resized, properties.getOriginBlurKernelSize());
 	}
 
 	private BufferedImage blur(BufferedImage sourceImage, int kernelSize) {

@@ -35,28 +35,28 @@ public class ProfileImageProcessingService {
 	}
 
 	private void processProfileImage(ProfileImage profileImage) {
-		// 재시도 한도를 넘기거나 source가 없으면 이번 턴에는 건너뛴다.
+		// 재시도 한도를 넘기거나 origin이 없으면 이번 턴에는 건너뛴다.
 		if (!profileImage.canRetry(properties.getMaxRetryCount())) {
 			return;
 		}
-		if (!profileImage.hasSourceKey()) {
+		if (!profileImage.hasOriginKey()) {
 			return;
 		}
 
 		try {
-			// 프론트가 presigned PUT으로 직접 업로드하므로 source 객체가 실제로 생긴 뒤에만 처리한다.
-			if (!s3ObjectStorageService.exists(profileImage.getProfileSourceKey())) {
+			// 프론트가 presigned PUT으로 직접 업로드하므로 origin 객체가 실제로 생긴 뒤에만 처리한다.
+			if (!s3ObjectStorageService.exists(profileImage.getProfileOriginKey())) {
 				return;
 			}
 
 			profileImage.markProcessing();
-			byte[] sourceBytes = s3ObjectStorageService.read(profileImage.getProfileSourceKey());
-			BufferedImage sourceImage = profileImageProcessor.read(sourceBytes);
-			ProcessedProfileImageSet variants = profileImageProcessor.generateVariants(sourceImage);
+			byte[] originBytes = s3ObjectStorageService.read(profileImage.getProfileOriginKey());
+			BufferedImage originImage = profileImageProcessor.read(originBytes);
+			ProcessedProfileImageSet variants = profileImageProcessor.generateVariants(originImage);
 
 			s3ObjectStorageService.uploadJpeg(profileImage.getProfileThumbnailKey(), variants.thumbnail());
 			s3ObjectStorageService.uploadJpeg(profileImage.getProfileThumbnailBlurKey(), variants.thumbnailBlur());
-			s3ObjectStorageService.uploadJpeg(profileImage.getProfileDetailBlurKey(), variants.detailBlur());
+			s3ObjectStorageService.uploadJpeg(profileImage.getProfileOriginBlurKey(), variants.originBlur());
 			profileImage.markReady();
 		} catch (Exception exception) {
 			profileImage.markFailed(exception.getMessage());

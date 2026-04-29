@@ -1,10 +1,10 @@
 package com.domisa.domisa_backend.profileimage.type;
 
 public enum ProfileImageVariant {
-	SOURCE("source", "original"),
+	ORIGIN("origin", "original"),
 	THUMBNAIL("thumbnail", "original"),
 	THUMBNAIL_BLUR("thumbnail", "blur"),
-	DETAIL_BLUR("detail", "blur");
+	ORIGIN_BLUR("origin", "blur");
 
 	private final String directory;
 	private final String fileName;

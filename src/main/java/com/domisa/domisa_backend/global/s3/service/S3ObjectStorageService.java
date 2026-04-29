@@ -48,7 +48,7 @@ public class S3ObjectStorageService {
 	}
 
 	public byte[] read(String objectKey) {
-		// 프로필 이미지 가공 전에 source 객체를 내려받는다.
+		// 프로필 이미지 가공 전에 origin 객체를 내려받는다.
 		try {
 			ResponseBytes<?> responseBytes = s3Client.getObjectAsBytes(GetObjectRequest.builder()
 				.bucket(s3Properties.bucket())

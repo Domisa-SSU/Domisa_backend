@@ -13,8 +13,8 @@ public class ProfileImageKeyResolver {
 
 	private final S3Properties s3Properties;
 
-	public String buildSourceKey(User user, long uploadSequence, String extension) {
-		return buildVariantKey(user, uploadSequence, ProfileImageVariant.SOURCE, extension);
+	public String buildOriginKey(User user, long uploadSequence, String extension) {
+		return buildVariantKey(user, uploadSequence, ProfileImageVariant.ORIGIN, extension);
 	}
 
 	public String buildThumbnailKey(User user, long uploadSequence) {
@@ -25,8 +25,8 @@ public class ProfileImageKeyResolver {
 		return buildVariantKey(user, uploadSequence, ProfileImageVariant.THUMBNAIL_BLUR, ".jpg");
 	}
 
-	public String buildDetailBlurKey(User user, long uploadSequence) {
-		return buildVariantKey(user, uploadSequence, ProfileImageVariant.DETAIL_BLUR, ".jpg");
+	public String buildOriginBlurKey(User user, long uploadSequence) {
+		return buildVariantKey(user, uploadSequence, ProfileImageVariant.ORIGIN_BLUR, ".jpg");
 	}
 
 	private String buildVariantKey(User user, long uploadSequence, ProfileImageVariant variant, String extension) {

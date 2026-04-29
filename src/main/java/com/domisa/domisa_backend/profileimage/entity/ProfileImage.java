@@ -35,10 +35,10 @@ public class ProfileImage {
 	private Long uploadSequence;
 
 	@Column(name = "profile_source_key", length = 1024)
-	private String profileSourceKey;
+	private String profileOriginKey;
 
 	@Column(name = "profile_detail_blur_key", length = 1024)
-	private String profileDetailBlurKey;
+	private String profileOriginBlurKey;
 
 	@Column(name = "profile_thumbnail_key", length = 1024)
 	private String profileThumbnailKey;
@@ -70,14 +70,14 @@ public class ProfileImage {
 
 	public void prepareUpload(
 		long nextSequence,
-		String profileSourceKey,
-		String profileDetailBlurKey,
+		String profileOriginKey,
+		String profileOriginBlurKey,
 		String profileThumbnailKey,
 		String profileThumbnailBlurKey
 	) {
 		this.uploadSequence = nextSequence;
-		this.profileSourceKey = profileSourceKey;
-		this.profileDetailBlurKey = profileDetailBlurKey;
+		this.profileOriginKey = profileOriginKey;
+		this.profileOriginBlurKey = profileOriginBlurKey;
 		this.profileThumbnailKey = profileThumbnailKey;
 		this.profileThumbnailBlurKey = profileThumbnailBlurKey;
 		this.processingStatus = ProfileImageProcessingStatus.UPLOADING;
@@ -107,8 +107,8 @@ public class ProfileImage {
 	}
 
 	public void clear() {
-		this.profileSourceKey = null;
-		this.profileDetailBlurKey = null;
+		this.profileOriginKey = null;
+		this.profileOriginBlurKey = null;
 		this.profileThumbnailKey = null;
 		this.profileThumbnailBlurKey = null;
 		this.processingStatus = ProfileImageProcessingStatus.READY;
@@ -116,13 +116,13 @@ public class ProfileImage {
 		this.lastError = null;
 	}
 
-	public boolean hasSourceKey() {
-		return hasText(profileSourceKey);
+	public boolean hasOriginKey() {
+		return hasText(profileOriginKey);
 	}
 
 	public boolean hasAnyKey() {
-		return hasSourceKey()
-			|| hasText(profileDetailBlurKey)
+		return hasOriginKey()
+			|| hasText(profileOriginBlurKey)
 			|| hasText(profileThumbnailKey)
 			|| hasText(profileThumbnailBlurKey);
 	}

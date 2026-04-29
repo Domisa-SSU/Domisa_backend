@@ -45,16 +45,16 @@ public class S3PresignedUrlService {
 
 	@Transactional
 	public void completeProfileImageUpload(User authUser, CompleteProfileImageUploadRequest request) {
-		// 실제 업로드된 source 객체를 확인한 뒤 처리 대기 상태로 넘긴다.
+		// 실제 업로드된 origin 객체를 확인한 뒤 처리 대기 상태로 넘긴다.
 		User user = getRequiredUser(authUser);
 		ProfileImage profileImage = user.getProfileImage();
 
-		if (profileImage == null || !profileImage.hasSourceKey()) {
+		if (profileImage == null || !profileImage.hasOriginKey()) {
 			throw new S3Exception(S3ErrorCode.PROFILE_IMAGE_NOT_FOUND);
 		}
 
 		String normalizedUploadKey = request.uploadKey().strip();
-		if (!profileImage.getProfileSourceKey().equals(normalizedUploadKey)) {
+		if (!profileImage.getProfileOriginKey().equals(normalizedUploadKey)) {
 			throw new S3Exception(S3ErrorCode.INVALID_OBJECT_KEY);
 		}
 		if (!s3ObjectStorageService.exists(normalizedUploadKey)) {
@@ -78,32 +78,32 @@ public class S3PresignedUrlService {
 		}
 
 		s3ObjectStorageService.deleteAll(List.of(
-			profileImage.getProfileSourceKey(),
+			profileImage.getProfileOriginKey(),
 			profileImage.getProfileThumbnailKey(),
 			profileImage.getProfileThumbnailBlurKey(),
-			profileImage.getProfileDetailBlurKey()
+			profileImage.getProfileOriginBlurKey()
 		));
 		profileImageRepository.delete(profileImage);
 		user.setProfileImage(null);
 	}
 
 	private GeneratePresignedUploadUrlResponse createPresignedUploadUrl(User user, GeneratePresignedUploadUrlRequest request) {
-		// source는 temp 경로로 받고, 썸네일/블러 경로는 미리 저장해 둔다.
+		// origin은 temp 경로로 받고, 썸네일/블러 경로는 미리 저장해 둔다.
 		MediaType mediaType = normalizeContentType(request.contentType());
 		ProfileImage profileImage = getOrCreateProfileImage(user);
 		long uploadSequence = getNextUploadSequence(profileImage);
 		String contentType = mediaType.toString();
 		String extension = extractExtension(mediaType);
-		String sourceKey = s3ProfileImageKeyService.buildSourceKey(user, uploadSequence, extension);
+		String originKey = s3ProfileImageKeyService.buildOriginKey(user, uploadSequence, extension);
 		String thumbnailKey = s3ProfileImageKeyService.buildThumbnailKey(user, uploadSequence);
 		String thumbnailBlurKey = s3ProfileImageKeyService.buildThumbnailBlurKey(user, uploadSequence);
-		String detailBlurKey = s3ProfileImageKeyService.buildDetailBlurKey(user, uploadSequence);
+		String originBlurKey = s3ProfileImageKeyService.buildOriginBlurKey(user, uploadSequence);
 
-		profileImage.prepareUpload(uploadSequence, sourceKey, detailBlurKey, thumbnailKey, thumbnailBlurKey);
+		profileImage.prepareUpload(uploadSequence, originKey, originBlurKey, thumbnailKey, thumbnailBlurKey);
 
 		PutObjectRequest putObjectRequest = PutObjectRequest.builder()
 			.bucket(s3Properties.bucket())
-			.key(sourceKey)
+			.key(originKey)
 			.contentType(contentType)
 			.contentLength(request.fileSize())
 			.build();
@@ -116,7 +116,7 @@ public class S3PresignedUrlService {
 		try {
 			PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(putObjectPresignRequest);
 			return new GeneratePresignedUploadUrlResponse(
-				sourceKey,
+				originKey,
 				presignedRequest.url().toString(),
 				s3Properties.presignedUrlExpiration().toSeconds()
 			);
@@ -136,13 +136,13 @@ public class S3PresignedUrlService {
 	private ProfileImage getOrCreateProfileImage(User user) {
 		ProfileImage profileImage = user.getProfileImage();
 		if (profileImage != null) {
-			// 새 업로드는 새 시퀀스 아래에 다시 저장하므로 이전 source/파생본은 먼저 정리한다.
+			// 새 업로드는 새 시퀀스 아래에 다시 저장하므로 이전 origin/파생본은 먼저 정리한다.
 			if (profileImage.hasAnyKey()) {
 				s3ObjectStorageService.deleteAll(List.of(
-					profileImage.getProfileSourceKey(),
+					profileImage.getProfileOriginKey(),
 					profileImage.getProfileThumbnailKey(),
 					profileImage.getProfileThumbnailBlurKey(),
-					profileImage.getProfileDetailBlurKey()
+					profileImage.getProfileOriginBlurKey()
 				));
 			}
 			return profileImage;

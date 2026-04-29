@@ -9,9 +9,9 @@ public class ProfileImageProcessingProperties {
 	private int thumbnailSize = 300;
 	private int detailMaxSize = 1080;
 	private int thumbnailBlurKernelSize = 13;
-	private int detailBlurKernelSize = 17;
+	private int originBlurKernelSize = 17;
 	private double thumbnailJpegQuality = 0.85d;
-	private double detailBlurJpegQuality = 0.9d;
+	private double originBlurJpegQuality = 0.9d;
 	private int batchSize = 10;
 	private int maxRetryCount = 5;
 
@@ -39,12 +39,12 @@ public class ProfileImageProcessingProperties {
 		this.thumbnailBlurKernelSize = thumbnailBlurKernelSize;
 	}
 
-	public int getDetailBlurKernelSize() {
-		return detailBlurKernelSize;
+	public int getOriginBlurKernelSize() {
+		return originBlurKernelSize;
 	}
 
-	public void setDetailBlurKernelSize(int detailBlurKernelSize) {
-		this.detailBlurKernelSize = detailBlurKernelSize;
+	public void setOriginBlurKernelSize(int originBlurKernelSize) {
+		this.originBlurKernelSize = originBlurKernelSize;
 	}
 
 	public double getThumbnailJpegQuality() {
@@ -55,12 +55,12 @@ public class ProfileImageProcessingProperties {
 		this.thumbnailJpegQuality = thumbnailJpegQuality;
 	}
 
-	public double getDetailBlurJpegQuality() {
-		return detailBlurJpegQuality;
+	public double getOriginBlurJpegQuality() {
+		return originBlurJpegQuality;
 	}
 
-	public void setDetailBlurJpegQuality(double detailBlurJpegQuality) {
-		this.detailBlurJpegQuality = detailBlurJpegQuality;
+	public void setOriginBlurJpegQuality(double originBlurJpegQuality) {
+		this.originBlurJpegQuality = originBlurJpegQuality;
 	}
 
 	public int getBatchSize() {

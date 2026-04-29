@@ -20,23 +20,23 @@ public class S3ObjectUrlService {
 	private final S3Properties s3Properties;
 
 	public String getProfileImageUrl(ProfileImage profileImage) {
-		// 일반 프로필 조회는 source 이미지를 기준으로 응답한다.
-		if (profileImage == null || !profileImage.hasSourceKey()) {
+		// 일반 프로필 조회는 origin 이미지를 기준으로 응답한다.
+		if (profileImage == null || !profileImage.hasOriginKey()) {
 			return null;
 		}
-		return buildStoredObjectUrl(profileImage.getProfileSourceKey());
+		return buildStoredObjectUrl(profileImage.getProfileOriginKey());
 	}
 
 	public String getThumbnailUrl(ProfileImage profileImage) {
-		// 썸네일이 아직 없으면 source 이미지로 폴백한다.
+		// 썸네일이 아직 없으면 origin 이미지로 폴백한다.
 		if (profileImage == null) {
 			return null;
 		}
 		if (hasText(profileImage.getProfileThumbnailKey())) {
 			return buildStoredObjectUrl(profileImage.getProfileThumbnailKey());
 		}
-		if (profileImage.hasSourceKey()) {
-			return buildStoredObjectUrl(profileImage.getProfileSourceKey());
+		if (profileImage.hasOriginKey()) {
+			return buildStoredObjectUrl(profileImage.getProfileOriginKey());
 		}
 		return null;
 	}

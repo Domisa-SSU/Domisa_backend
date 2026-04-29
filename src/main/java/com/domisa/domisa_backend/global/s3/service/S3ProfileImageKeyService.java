@@ -18,7 +18,7 @@ public class S3ProfileImageKeyService {
 
 	private final S3Properties s3Properties;
 
-	public String buildSourceKey(User user, long uploadSequence, String extension) {
+	public String buildOriginKey(User user, long uploadSequence, String extension) {
 		// 프론트가 직접 올리는 원본은 temp 경로 아래에 둔다.
 		List<String> segments = new ArrayList<>();
 		String normalizedPrefix = normalizePrefix(s3Properties.uploadPrefix());
@@ -38,8 +38,8 @@ public class S3ProfileImageKeyService {
 		return buildVariantKey(user, uploadSequence, ProfileImageVariant.THUMBNAIL_BLUR, ".jpg");
 	}
 
-	public String buildDetailBlurKey(User user, long uploadSequence) {
-		return buildVariantKey(user, uploadSequence, ProfileImageVariant.DETAIL_BLUR, ".jpg");
+	public String buildOriginBlurKey(User user, long uploadSequence) {
+		return buildVariantKey(user, uploadSequence, ProfileImageVariant.ORIGIN_BLUR, ".jpg");
 	}
 
 	private String buildVariantKey(User user, long uploadSequence, ProfileImageVariant variant, String extension) {

@@ -115,7 +115,7 @@ public class User {
 	}
 
 	public boolean hasProfileImage() {
-		return profileImage != null && profileImage.hasSourceKey();
+		return profileImage != null && profileImage.hasOriginKey();
 	}
 
 	public Integer getAge() {
