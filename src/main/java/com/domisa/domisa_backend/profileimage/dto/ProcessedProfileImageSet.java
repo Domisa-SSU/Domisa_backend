@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.profileimage.service;
+package com.domisa.domisa_backend.profileimage.dto;
 
 public record ProcessedProfileImageSet(
 	byte[] thumbnail,

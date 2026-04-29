@@ -3,6 +3,7 @@ package com.domisa.domisa_backend.profileimage.service;
 import com.domisa.domisa_backend.global.s3.exception.S3ErrorCode;
 import com.domisa.domisa_backend.global.s3.exception.S3Exception;
 import com.domisa.domisa_backend.profileimage.config.ProfileImageProcessingProperties;
+import com.domisa.domisa_backend.profileimage.dto.ProcessedProfileImageSet;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -23,16 +24,16 @@ public class ProfileImageProcessor {
 	private final ProfileImageProcessingProperties properties;
 
 	public ProcessedProfileImageSet generateVariants(BufferedImage originImage) {
-		// origin 한 장으로 썸네일/썸네일 블러/오리진 블러를 만든다.
+		// origin 한 장으로 썸네일, 썸네일 블러, 오리진 블러 3종을 만든다.
 		try {
 			BufferedImage thumbnailImage = createThumbnail(originImage);
 			BufferedImage originBlurImage = createOriginBlur(originImage);
 			BufferedImage thumbnailBlurImage = blur(thumbnailImage, properties.getThumbnailBlurKernelSize());
 
 			return new ProcessedProfileImageSet(
-				writeJpeg(thumbnailImage, properties.getThumbnailJpegQuality()),
-				writeJpeg(thumbnailBlurImage, properties.getThumbnailJpegQuality()),
-				writeJpeg(originBlurImage, properties.getOriginBlurJpegQuality())
+				writeJpeg(thumbnailImage),
+				writeJpeg(thumbnailBlurImage),
+				writeJpeg(originBlurImage)
 			);
 		} catch (IOException exception) {
 			throw new S3Exception(S3ErrorCode.IMAGE_PROCESSING_FAILED, exception);
@@ -53,6 +54,7 @@ public class ProfileImageProcessor {
 	}
 
 	private BufferedImage createThumbnail(BufferedImage originImage) throws IOException {
+		// thumbnailSize 값으로 정사각 비율을 만들기 위해 가운데를 기준으로 잘라낸다.
 		return toRgb(Thumbnails.of(originImage)
 			.size(properties.getThumbnailSize(), properties.getThumbnailSize())
 			.crop(Positions.CENTER)
@@ -60,7 +62,7 @@ public class ProfileImageProcessor {
 	}
 
 	private BufferedImage createOriginBlur(BufferedImage originImage) throws IOException {
-		// 오리진 블러는 원본 비율을 유지하고 긴 변만 제한한다.
+		// detailMaxSize 값으로 긴 변만 제한하고, originBlurKernelSize로 블러를 적용한다.
 		BufferedImage resized = toRgb(Thumbnails.of(originImage)
 			.size(properties.getDetailMaxSize(), properties.getDetailMaxSize())
 			.keepAspectRatio(true)
@@ -85,12 +87,12 @@ public class ProfileImageProcessor {
 		return toRgb(convolveOp.filter(sourceImage, null));
 	}
 
-	private byte[] writeJpeg(BufferedImage image, double quality) throws IOException {
+	private byte[] writeJpeg(BufferedImage image) throws IOException {
+		// 별도 품질 보정은 하지 않고 기본 JPG 인코딩만 수행한다.
 		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 			Thumbnails.of(image)
 				.scale(1.0)
 				.outputFormat("jpg")
-				.outputQuality(quality)
 				.toOutputStream(outputStream);
 			return outputStream.toByteArray();
 		}

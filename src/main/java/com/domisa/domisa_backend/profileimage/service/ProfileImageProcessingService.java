@@ -2,6 +2,7 @@ package com.domisa.domisa_backend.profileimage.service;
 
 import com.domisa.domisa_backend.global.s3.service.S3ObjectStorageService;
 import com.domisa.domisa_backend.profileimage.config.ProfileImageProcessingProperties;
+import com.domisa.domisa_backend.profileimage.dto.ProcessedProfileImageSet;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import com.domisa.domisa_backend.profileimage.repository.ProfileImageRepository;
 import com.domisa.domisa_backend.profileimage.type.ProfileImageProcessingStatus;
