@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/profiles")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class ProfileController {
 
@@ -25,7 +25,7 @@ public class ProfileController {
 		return ResponseEntity.ok(profileService.checkNickname(nickname));
 	}
 
-	@PostMapping("/me")
+	@PostMapping("/register")
 	public ResponseEntity<Map<String, Long>> registerProfile(
 		@AuthenticationPrincipal Long userId,
 		@RequestBody ProfileRegisterRequest request

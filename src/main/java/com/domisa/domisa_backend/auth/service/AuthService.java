@@ -1,8 +1,11 @@
 package com.domisa.domisa_backend.auth.service;
 
+import com.domisa.domisa_backend.auth.dto.AuthMeResponse;
 import com.domisa.domisa_backend.auth.dto.LoginResponse;
 import com.domisa.domisa_backend.auth.jwt.JwtProvider;
 import com.domisa.domisa_backend.auth.oauth.KakaoOAuthService;
+import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
+import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -55,5 +58,20 @@ public class AuthService {
 		authCookieManager.expireCookie(response, "accessToken");
 		authCookieManager.expireCookie(response, "refreshToken");
 		return java.util.Map.of("message", "Successfully logged out");
+	}
+
+	public AuthMeResponse getMe(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		return new AuthMeResponse(
+			user.getId(),
+			Math.toIntExact(user.getCookies()),
+			new AuthMeResponse.StatusDto(
+				user.getIsRegistered(),
+				user.getHasIntroduction(),
+				user.getIsProfileCompleted()
+			)
+		);
 	}
 }
