@@ -1,10 +1,10 @@
-package com.domisa.domisa_backend.user.controller;
+package com.domisa.domisa_backend.dating.controller;
 
 import com.domisa.domisa_backend.auth.annotation.AuthUser;
-import com.domisa.domisa_backend.user.dto.DatingProfileResponse;
-import com.domisa.domisa_backend.user.dto.DatingRefreshTimeResponse;
+import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
+import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
+import com.domisa.domisa_backend.dating.service.DatingService;
 import com.domisa.domisa_backend.user.entity.User;
-import com.domisa.domisa_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,18 +17,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class DatingController {
 
-	private final UserService userService;
+	private final DatingService datingService;
 
 	@GetMapping("/profiles/{userId}")
 	public ResponseEntity<DatingProfileResponse> getDatingProfile(
 		@AuthUser User authUser,
 		@PathVariable Long userId
 	) {
-		return ResponseEntity.ok(userService.getDatingProfile(authUser, userId));
+		return ResponseEntity.ok(datingService.getDatingProfile(authUser, userId));
 	}
 
 	@GetMapping("/refresh-time")
 	public ResponseEntity<DatingRefreshTimeResponse> getRefreshTime(@AuthUser User authUser) {
-		return ResponseEntity.ok(userService.getDatingRefreshTime(authUser));
+		return ResponseEntity.ok(datingService.getDatingRefreshTime(authUser));
 	}
 }
