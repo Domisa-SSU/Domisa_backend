@@ -2,7 +2,8 @@ package com.domisa.domisa_backend.profile.dto;
 
 public record ProfileRegisterResponse(
         Long userId,
-        StatusDto status
+        StatusDto status,
+        long totalUserCount
 ) {
     public record StatusDto(
             boolean isRegistered,       // 회원가입 완료하면 true

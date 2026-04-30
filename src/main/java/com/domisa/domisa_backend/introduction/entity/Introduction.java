@@ -47,5 +47,16 @@ public class Introduction {
 	public void assignParticipant(User participant) {
 		this.participant = participant;
 		participant.setIntroduction(this);
+		participant.setHasIntroduction(true);
+	}
+
+	public void clearParticipant() {
+		if (this.participant == null) {
+			return;
+		}
+		User currentParticipant = this.participant;
+		this.participant = null;
+		currentParticipant.setIntroduction(null);
+		currentParticipant.setHasIntroduction(false);
 	}
 }
