@@ -95,8 +95,6 @@ public class User {
 	@Column(name = "shows_refresh_at")
 	private LocalDateTime showsRefreshAt;
 
-	@Column(name = "is_certificated", nullable = false)
-	private Boolean isCertificated = false;
 
 	@Column(name = "kakao_id", nullable = false, unique = true)
 	private Long kakaoId;
@@ -144,5 +142,4 @@ public class User {
 	public boolean hasIntroduction() {
 		return introduction != null;
 	}
-
 }
