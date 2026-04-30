@@ -2,9 +2,9 @@ package com.domisa.domisa_backend.user.service;
 
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
-import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
+import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.user.dto.UserMeResponse;
 import com.domisa.domisa_backend.user.dto.UserLikesReceivedResponse;
 import com.domisa.domisa_backend.user.dto.UserLikesSentResponse;
@@ -22,36 +22,23 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
 	private final UserRepository userRepository;
+	private final S3ObjectUrlService s3ObjectUrlService;
 
 	// 내 정보 조회(마이페이지용)
 	@Transactional(readOnly = true)
 	public UserMeResponse getMe(User authUser) {
-		// 내 정보 조회는 연결된 프로필 이미지 URL까지 함께 내려준다.
-		ProfileImage profileImage = authUser.getProfileImage();
+		// 내 정보 조회는 프로필 이미지까지 함께 읽어서 응답한다.
+		User user = getRequiredUser(authUser);
+		ProfileImage profileImage = user.getProfileImage();
 
 		return new UserMeResponse(
-				user.getId(),
-				user.getNickname(),
-				user.getBirthYear(),
-				user.getGender(),
-				user.getAnimalProfile(),
-				new ContactDTO(user.getContactType(), user.getContact()),
-				user.getInviteCode()
-
-			new UserMeResponse.UserDto(
-				authUser.getId(),
-				authUser.getNickname(),
-				authUser.getAge(),
-				authUser.getGenderDisplay(),
-				s3ObjectUrlService.getProfileImageUrl(profileImage),
-				Math.toIntExact(authUser.getCookies()),
-				authUser.getInviteCode()
-			),
-			new UserMeResponse.StatusDto(
-					authUser.getIsRegistered(),
-					authUser.hasIntroduction(),
-					authUser.hasCard()
-			)
+			user.getId(),
+			user.getNickname(),
+			user.getBirthYear(),
+			user.getGender(),
+			user.getAnimalProfile(),
+			new ContactDTO(user.getContactType(), user.getContact()),
+			user.getInviteCode()
 		);
 	}
 
