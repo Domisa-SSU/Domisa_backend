@@ -96,9 +96,8 @@ public class User {
 	@Column(name = "target_user_id")
 	private List<Long> nowShows;
 
-	@Column(name = "shows_refresh_at")
-	private LocalDateTime showsRefreshAt;
-
+	@Column(name = "refresh_at")
+	private LocalDateTime refreshAt;
 
 	@Column(name = "kakao_id", nullable = false, unique = true)
 	private Long kakaoId;

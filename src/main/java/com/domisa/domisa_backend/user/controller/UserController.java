@@ -1,11 +1,13 @@
 package com.domisa.domisa_backend.user.controller;
 
 import com.domisa.domisa_backend.auth.annotation.AuthUser;
+import com.domisa.domisa_backend.profile.dto.MyIntroductionResponse;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterResponse;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateResponse;
 import com.domisa.domisa_backend.profile.service.ProfileService;
+import com.domisa.domisa_backend.user.dto.UserCookiesResponse;
 import com.domisa.domisa_backend.user.dto.UserLikesReceivedResponse;
 import com.domisa.domisa_backend.user.dto.UserLikesSentResponse;
 import com.domisa.domisa_backend.user.dto.UserMeResponse;
@@ -38,18 +40,28 @@ public class UserController {
 	}
 
 	// 회원가입
-	@PostMapping("/register")
+	@PostMapping({"/register", "/profiles"})
 	public ResponseEntity<ProfileRegisterResponse> registerProfile(
-			@AuthUser Long userId,
+			@AuthUser User authUser,
 			@RequestBody ProfileRegisterRequest request
 	) {
-		return ResponseEntity.ok(profileService.registerProfile(userId, request));
+		return ResponseEntity.ok(profileService.registerProfile(authUser.getId(), request));
 	}
 
 	// 내 정보 조회(마이페이지용)
 	@GetMapping("/me")
 	public ResponseEntity<UserMeResponse> getMe(@AuthUser User authUser) {
 		return ResponseEntity.ok(userService.getMe(authUser));
+	}
+
+	@GetMapping("/introduction")
+	public ResponseEntity<MyIntroductionResponse> getMyIntroduction(@AuthUser User authUser) {
+		return ResponseEntity.ok(userService.getMyIntroduction(authUser));
+	}
+
+	@GetMapping("/cookies")
+	public ResponseEntity<UserCookiesResponse> getMyCookies(@AuthUser User authUser) {
+		return ResponseEntity.ok(userService.getMyCookies(authUser));
 	}
 
 	@GetMapping("/likes/received")
@@ -65,9 +77,9 @@ public class UserController {
 	// 나의 프로필 수정
 	@PutMapping("/me")
 	public ResponseEntity<ProfileUpdateResponse> updateResponse(
-			@AuthUser Long userId,
+			@AuthUser User authUser,
 			@RequestBody ProfileUpdateRequest request
 	) {
-		return ResponseEntity.ok(profileService.updateProfile(userId, request));
+		return ResponseEntity.ok(profileService.updateProfile(authUser.getId(), request));
 	}
 }

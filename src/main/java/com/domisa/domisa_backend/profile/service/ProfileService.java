@@ -49,6 +49,7 @@ public class ProfileService {
 		user.setContact(request.contact().content());      // ContactDTO에서 content 꺼내기
 		user.setInviteCode(request.inviteCode());
 		user.setIsRegistered(true);
+		long totalUserCount = Math.max(0, userRepository.count() - 1);
 
 		return new ProfileRegisterResponse(
 				user.getId(),
@@ -56,7 +57,8 @@ public class ProfileService {
 						user.getIsRegistered(),
 						user.hasIntroduction(),
 						user.hasCard()
-				)
+				),
+				totalUserCount
 		);
 	}
 

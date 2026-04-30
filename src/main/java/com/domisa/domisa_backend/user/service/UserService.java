@@ -3,8 +3,9 @@ package com.domisa.domisa_backend.user.service;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
-import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
+import com.domisa.domisa_backend.profile.dto.MyIntroductionResponse;
 import com.domisa.domisa_backend.user.dto.ContactDTO;
+import com.domisa.domisa_backend.user.dto.UserCookiesResponse;
 import com.domisa.domisa_backend.user.dto.UserMeResponse;
 import com.domisa.domisa_backend.user.dto.UserLikesReceivedResponse;
 import com.domisa.domisa_backend.user.dto.UserLikesSentResponse;
@@ -29,7 +30,6 @@ public class UserService {
 	public UserMeResponse getMe(User authUser) {
 		// 내 정보 조회는 프로필 이미지까지 함께 읽어서 응답한다.
 		User user = getRequiredUser(authUser);
-		ProfileImage profileImage = user.getProfileImage();
 
 		return new UserMeResponse(
 			user.getId(),
@@ -40,6 +40,21 @@ public class UserService {
 			new ContactDTO(user.getContactType(), user.getContact()),
 			user.getInviteCode()
 		);
+	}
+
+	@Transactional(readOnly = true)
+	public MyIntroductionResponse getMyIntroduction(User authUser) {
+		User user = getRequiredUser(authUser);
+		if (user.getIntroduction() == null) {
+			return null;
+		}
+		return MyIntroductionResponse.from(user.getIntroduction());
+	}
+
+	@Transactional(readOnly = true)
+	public UserCookiesResponse getMyCookies(User authUser) {
+		User user = getRequiredUser(authUser);
+		return new UserCookiesResponse(user.getCookies() == null ? 0L : user.getCookies());
 	}
 
 	@Transactional(readOnly = true)
