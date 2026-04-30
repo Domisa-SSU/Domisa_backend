@@ -11,7 +11,10 @@ public enum GlobalErrorCode {
 	NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_NOT_FOUND", "알림을 찾을 수 없습니다."),
 	MISSING_REQUIRED_FIELD(HttpStatus.BAD_REQUEST, "MISSING_REQUIRED_FIELD", "필수 입력 항목이 누락되었습니다."),
 	INVALID_NICKNAME_LENGTH(HttpStatus.BAD_REQUEST, "INVALID_NICKNAME_LENGTH", "닉네임은 최대 4글자까지 입력 가능합니다."),
-	DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "DUPLICATE_NICKNAME", "이미 사용 중인 닉네임입니다.");
+	DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "DUPLICATE_NICKNAME", "이미 사용 중인 닉네임입니다."),
+	CARD_NOT_FOUND(HttpStatus.NOT_FOUND, "CARD_NOT_FOUND", "소개팅 카드를 찾을 수 없습니다."),
+	CARD_ALREADY_EXISTS(HttpStatus.CONFLICT, "CARD_ALREADY_EXISTS", "이미 소개팅 카드가 존재합니다."),
+	USER_NOT_REGISTERED(HttpStatus.FORBIDDEN, "USER_NOT_REGISTERED", "회원가입이 완료되지 않은 사용자입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;

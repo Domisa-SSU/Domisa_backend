@@ -40,4 +40,25 @@ public class Card {
 	@Column(name = "mbti", length = 20)
 	@Enumerated(EnumType.STRING)
 	private Mbti mbti;
+
+	// S3 ObjectKey 저징
+	@Column(name = "image_key", length = 1024)
+	private String imageKey;
+
+	public static Card create(User user, Mbti mbti, String datingStyle, String idealType, String imageKey) {
+		Card card = new Card();
+		card.user = user;
+		card.mbti = mbti;
+		card.datingStyle = datingStyle;
+		card.idealType = idealType;
+		card.imageKey = imageKey;
+		return card;
+	}
+
+	public void update(Mbti mbti, String datingStyle, String idealType, String imageKey) {
+		this.mbti = mbti;
+		this.datingStyle = datingStyle;
+		this.idealType = idealType;
+		this.imageKey = imageKey;
+	}
 }
