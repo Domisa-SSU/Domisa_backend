@@ -7,7 +7,6 @@ public record ProfileRegisterRequest(
         String nickname,
         Boolean gender,
         Long birthYear,
-        String inviteCode,
         ContactDTO contact,
         AnimalProfile animalProfile
 ) {}

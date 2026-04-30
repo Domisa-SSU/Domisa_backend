@@ -9,7 +9,6 @@ public record UserMeResponse(
 		Boolean gender,
 		AnimalProfile animalProfile,
 		ContactDTO contact,
-		String myInviteCode,     // 내 추천인 코드
 		String profileImageUrl
 ) {}
 

@@ -47,7 +47,6 @@ public class ProfileService {
 		user.setAnimalProfile(request.animalProfile());
 		user.setContactType(request.contact().type());     // ContactDTO에서 type 꺼내기
 		user.setContact(request.contact().content());      // ContactDTO에서 content 꺼내기
-		user.setInviteCode(request.inviteCode());
 		user.setIsRegistered(true);
 		long totalUserCount = Math.max(0, userRepository.count() - 1);
 
