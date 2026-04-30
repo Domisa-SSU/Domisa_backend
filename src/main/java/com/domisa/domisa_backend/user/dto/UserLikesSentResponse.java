@@ -8,7 +8,7 @@ public record UserLikesSentResponse(
 ) {
 
 	public record UserType(
-		String publicId,
+		String userId,
 		String profile
 	) {
 	}
