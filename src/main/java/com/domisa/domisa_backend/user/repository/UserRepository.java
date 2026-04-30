@@ -14,6 +14,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	@EntityGraph(attributePaths = "profileImage")
 	Optional<User> findWithProfileImageById(Long id);
 
+	@EntityGraph(attributePaths = {"profileImage", "card", "introduction"})
+	Optional<User> findDatingProfileById(Long id);
+
 	@EntityGraph(attributePaths = "profileImage")
 	List<User> findAllByIdIn(Collection<Long> ids);
 

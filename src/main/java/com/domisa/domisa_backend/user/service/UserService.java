@@ -4,6 +4,7 @@ import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
 import com.domisa.domisa_backend.profile.dto.MyIntroductionResponse;
+import com.domisa.domisa_backend.user.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.user.dto.DatingRefreshTimeResponse;
@@ -72,6 +73,40 @@ public class UserService {
 			: user.getRefreshAt().plus(REFRESH_INTERVAL);
 		boolean canRefresh = refreshAvailableAt == null || !LocalDateTime.now().isBefore(refreshAvailableAt);
 		return new DatingRefreshTimeResponse(refreshAvailableAt, canRefresh);
+	}
+
+	@Transactional(readOnly = true)
+	public DatingProfileResponse getDatingProfile(User authUser, Long userId) {
+		User requester = getRequiredUser(authUser);
+		User targetUser = userRepository.findDatingProfileById(userId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		boolean isBlurred = requester.getMyBlurs() == null || !requester.getMyBlurs().contains(userId);
+		boolean hasSentLike = requester.getMyTypes() != null && requester.getMyTypes().contains(userId);
+
+		String profileUrl = isBlurred
+			? s3ObjectUrlService.getOriginBlurUrl(targetUser.getProfileImage())
+			: s3ObjectUrlService.getProfileImageUrl(targetUser.getProfileImage());
+		ContactDTO contact = isBlurred
+			? null
+			: new ContactDTO(targetUser.getContactType(), targetUser.getContact());
+
+		return new DatingProfileResponse(
+			targetUser.getId(),
+			targetUser.getNickname(),
+			targetUser.getAge(),
+			targetUser.getAnimalProfile(),
+			profileUrl,
+			targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ1(),
+			targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ2(),
+			targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ3(),
+			targetUser.getCard() == null ? null : targetUser.getCard().getDatingStyle(),
+			targetUser.getCard() == null ? null : targetUser.getCard().getIdealType(),
+			targetUser.getCard() == null ? null : targetUser.getCard().getMbti(),
+			contact,
+			isBlurred,
+			hasSentLike
+		);
 	}
 
 	@Transactional(readOnly = true)

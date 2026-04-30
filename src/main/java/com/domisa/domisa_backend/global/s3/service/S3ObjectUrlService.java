@@ -56,6 +56,17 @@ public class S3ObjectUrlService {
 		return null;
 	}
 
+	public String getOriginBlurUrl(ProfileImage profileImage) {
+		// 블러 프로필 상세는 READY 상태의 origin blur만 사용한다.
+		if (profileImage == null) {
+			return null;
+		}
+		if (isReady(profileImage) && hasText(profileImage.getProfileOriginBlurKey())) {
+			return buildStoredObjectUrl(profileImage.getProfileOriginBlurKey());
+		}
+		return null;
+	}
+
 	public String getObjectUrl(String objectKey) {
 		// 임의 key 조회는 존재 여부를 확인한 뒤 URL을 만든다.
 		String normalizedObjectKey = normalizeObjectKey(objectKey);
