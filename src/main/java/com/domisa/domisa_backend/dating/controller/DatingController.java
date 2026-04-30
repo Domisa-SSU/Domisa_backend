@@ -1,8 +1,8 @@
 package com.domisa.domisa_backend.dating.controller;
 
 import com.domisa.domisa_backend.auth.annotation.AuthUser;
+import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
-import com.domisa.domisa_backend.dating.dto.DatingProfilesResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
 import com.domisa.domisa_backend.dating.service.DatingService;
 import com.domisa.domisa_backend.user.entity.User;
@@ -21,7 +21,7 @@ public class DatingController {
 	private final DatingService datingService;
 
 	@GetMapping("/profiles")
-	public ResponseEntity<DatingProfilesResponse> getDatingProfiles(@AuthUser User authUser) {
+	public ResponseEntity<DatingProfileListResponse> getDatingProfiles(@AuthUser User authUser) {
 		return ResponseEntity.ok(datingService.getDatingProfiles(authUser));
 	}
 

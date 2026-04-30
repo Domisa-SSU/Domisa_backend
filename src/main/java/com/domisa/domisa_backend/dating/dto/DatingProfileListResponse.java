@@ -2,11 +2,11 @@ package com.domisa.domisa_backend.dating.dto;
 
 import java.util.List;
 
-public record DatingProfilesResponse(
+public record DatingProfileListResponse(
 	int profileNum,
-	List<DatingListProfile> profiles
+	List<ProfileSummary> profiles
 ) {
-	public record DatingListProfile(
+	public record ProfileSummary(
 		Long userId,
 		String profile
 	) {

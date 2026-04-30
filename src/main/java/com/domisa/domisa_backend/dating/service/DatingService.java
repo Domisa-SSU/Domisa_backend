@@ -1,7 +1,7 @@
 package com.domisa.domisa_backend.dating.service;
 
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
-import com.domisa.domisa_backend.dating.dto.DatingProfilesResponse;
+import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
@@ -25,26 +25,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class DatingService {
 
 	private static final Duration REFRESH_INTERVAL = Duration.ofHours(2);
+	private static final int MAX_DATING_PROFILE_COUNT = 8;
 
 	private final UserRepository userRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
 
 	@Transactional(readOnly = true)
-	public DatingProfilesResponse getDatingProfiles(User authUser) {
+	public DatingProfileListResponse getDatingProfiles(User authUser) {
 		User requester = getRequiredUser(authUser);
 
 		List<Long> nowShowIds = requester.getNowShows() == null
 			? Collections.emptyList()
-			: requester.getNowShows();
+			: requester.getNowShows().stream().limit(MAX_DATING_PROFILE_COUNT).toList();
 		Set<Long> unblurIds = requester.getMyBlurs() == null
 			? Collections.emptySet()
 			: new HashSet<>(requester.getMyBlurs());
 		LinkedHashMap<Long, User> usersById = getUsersById(nowShowIds);
 
-		List<DatingProfilesResponse.DatingListProfile> profiles = nowShowIds.stream()
+		List<DatingProfileListResponse.ProfileSummary> profiles = nowShowIds.stream()
 			.map(usersById::get)
 			.filter(targetUser -> targetUser != null)
-			.map(targetUser -> new DatingProfilesResponse.DatingListProfile(
+			.map(targetUser -> new DatingProfileListResponse.ProfileSummary(
 				targetUser.getId(),
 				unblurIds.contains(targetUser.getId())
 					? s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
@@ -52,7 +53,7 @@ public class DatingService {
 			))
 			.toList();
 
-		return new DatingProfilesResponse(profiles.size(), profiles);
+		return new DatingProfileListResponse(profiles.size(), profiles);
 	}
 
 	@Transactional(readOnly = true)
