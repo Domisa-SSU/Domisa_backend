@@ -6,11 +6,13 @@ import com.domisa.domisa_backend.profile.dto.ProfileRegisterResponse;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateResponse;
 import com.domisa.domisa_backend.profile.service.ProfileService;
+import com.domisa.domisa_backend.user.dto.UserLikesReceivedResponse;
+import com.domisa.domisa_backend.user.dto.UserLikesSentResponse;
 import com.domisa.domisa_backend.user.dto.UserMeResponse;
+import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -46,8 +48,18 @@ public class UserController {
 
 	// 내 정보 조회(마이페이지용)
 	@GetMapping("/me")
-	public ResponseEntity<UserMeResponse> getMe(@AuthenticationPrincipal Long userId) {
-		return ResponseEntity.ok(userService.getMe(userId));
+	public ResponseEntity<UserMeResponse> getMe(@AuthUser User authUser) {
+		return ResponseEntity.ok(userService.getMe(authUser));
+	}
+
+	@GetMapping("/likes/received")
+	public ResponseEntity<UserLikesReceivedResponse> getReceivedLikes(@AuthUser User authUser) {
+		return ResponseEntity.ok(userService.getReceivedLikes(authUser));
+	}
+
+	@GetMapping("/likes/sent")
+	public ResponseEntity<UserLikesSentResponse> getSentLikes(@AuthUser User authUser) {
+		return ResponseEntity.ok(userService.getSentLikes(authUser));
 	}
 
 	// 나의 프로필 수정

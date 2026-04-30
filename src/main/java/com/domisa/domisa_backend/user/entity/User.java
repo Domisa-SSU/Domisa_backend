@@ -2,6 +2,7 @@ package com.domisa.domisa_backend.user.entity;
 
 import com.domisa.domisa_backend.card.entity.Card;
 import com.domisa.domisa_backend.introduction.entity.Introduction;
+import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import com.domisa.domisa_backend.user.type.AnimalProfile;
 import com.domisa.domisa_backend.user.type.ContactType;
 import jakarta.persistence.CollectionTable;
@@ -50,8 +51,8 @@ public class User {
 	@Enumerated(EnumType.STRING)
 	private AnimalProfile animalProfile;
 
-	@Column(name = "profile", length = 200)
-	private String profile;
+	@Column(name = "profile_key", length = 200)
+	private String profile_key;
 
 	@Column(name = "cookies", nullable = false)
 	private Long cookies = 0L;
@@ -71,6 +72,9 @@ public class User {
 
 	@OneToOne(mappedBy = "participant", fetch = FetchType.LAZY)
 	private Introduction introduction;
+
+	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+	private ProfileImage profileImage;
 
 	@ElementCollection(fetch = FetchType.LAZY)
 	@CollectionTable(name = "user_my_blurs", joinColumns = @JoinColumn(name = "user_id"))
@@ -95,8 +99,6 @@ public class User {
 	@Column(name = "shows_refresh_at")
 	private LocalDateTime showsRefreshAt;
 
-	@Column(name = "is_certificated", nullable = false)
-	private Boolean isCertificated = false;
 
 	@Column(name = "kakao_id", nullable = false, unique = true)
 	private Long kakaoId;
@@ -115,10 +117,9 @@ public class User {
 
 	@Column(name = "is_profile_completed", nullable = false)
 	private Boolean isProfileCompleted = false;
-
+  
 	private User(Long kakaoId) {
 		this.kakaoId = kakaoId;
-		this.profileImageSequence = 0L;
 	}
 
 	public static User create(Long kakaoId) {
@@ -126,7 +127,7 @@ public class User {
 	}
 
 	public boolean hasProfileImage() {
-		return profileImageObjectKey != null && !profileImageObjectKey.isBlank();
+		return profileImage != null && profileImage.hasOriginKey();
 	}
 
 	public Integer getAge() {

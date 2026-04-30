@@ -6,10 +6,49 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  datasource:
+    url: jdbc:mysql://${DB_URL}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        show_sql: false
+        format_sql: false
 
 aws:
   s3:
     bucket: ${AWS_S3_BUCKET}
     region: ${AWS_REGION}
-    upload-prefix: ${AWS_S3_UPLOAD_PREFIX:uploads}
-    presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION:PT10M}
+    presigned-url-expiration: ${AWS_S3_PRESIGNED_URL_EXPIRATION}
+
+kakao:
+  client-id: ${KAKAO_CLIENT_ID}
+  client-secret: ${KAKAO_CLIENT_SECRET}
+  redirect-uri: ${KAKAO_REDIRECT_URI}
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS}
+  refresh-token-validity-in-seconds: ${JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS}
+
+app:
+  frontend-url: ${FRONTEND_URL}
+  auth:
+    cookie:
+      secure: ${APP_AUTH_COOKIE_SECURE}
+      same-site: ${APP_AUTH_COOKIE_SAME_SITE}
+      domain: ${APP_AUTH_COOKIE_DOMAIN:}
+  profile-image:
+    processing:
+      fixed-delay-ms: ${PROFILE_IMAGE_FIXED_DELAY_MS}
+      thumbnail-size: ${PROFILE_IMAGE_THUMBNAIL_SIZE}
+      origin-max-size: ${PROFILE_IMAGE_ORIGIN_MAX_SIZE}
+      thumbnail-blur-kernel-size: ${PROFILE_IMAGE_THUMBNAIL_BLUR_KERNEL_SIZE}
+      origin-blur-kernel-size: ${PROFILE_IMAGE_ORIGIN_BLUR_KERNEL_SIZE}
+      batch-size: ${PROFILE_IMAGE_BATCH_SIZE}
+      max-retry-count: ${PROFILE_IMAGE_MAX_RETRY_COUNT}

@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: ${LOCAL_MYSQL_CONTAINER_NAME}
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${LOCAL_MYSQL_DATABASE}
+      MYSQL_USER: ${LOCAL_MYSQL_USER}
+      MYSQL_PASSWORD: ${LOCAL_MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${LOCAL_MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${LOCAL_MYSQL_PORT}:3306"
+    volumes:
+      - mysql-local-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${LOCAL_MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  domisa-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${LOCAL_BACKEND_CONTAINER_NAME}
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${LOCAL_SPRING_PROFILES_ACTIVE}
+      LOCAL_SERVER_PORT: ${LOCAL_SERVER_PORT}
+      LOCAL_DB_URL: ${LOCAL_DB_URL}
+      LOCAL_DB_USERNAME: ${LOCAL_DB_USERNAME}
+      LOCAL_DB_PASSWORD: ${LOCAL_DB_PASSWORD}
+      LOCAL_JPA_SHOW_SQL: ${LOCAL_JPA_SHOW_SQL}
+      LOCAL_JPA_FORMAT_SQL: ${LOCAL_JPA_FORMAT_SQL}
+      LOCAL_FRONTEND_URL: ${LOCAL_FRONTEND_URL}
+      LOCAL_APP_AUTH_COOKIE_SECURE: ${LOCAL_APP_AUTH_COOKIE_SECURE}
+      LOCAL_APP_AUTH_COOKIE_SAME_SITE: ${LOCAL_APP_AUTH_COOKIE_SAME_SITE}
+      LOCAL_APP_AUTH_COOKIE_DOMAIN: ${LOCAL_APP_AUTH_COOKIE_DOMAIN}
+    ports:
+      - "${LOCAL_SERVER_PORT}:${LOCAL_SERVER_PORT}"
+
+volumes:
+  mysql-local-data:
