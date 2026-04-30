@@ -44,6 +44,18 @@ public class Introduction {
 	@Column(name = "link_code")
 	private String linkCode;
 
+	private Introduction(String q1, String q2, String q3, User introducer, String linkCode) {
+		this.q1 = q1;
+		this.q2 = q2;
+		this.q3 = q3;
+		this.introducer = introducer;
+		this.linkCode = linkCode;
+	}
+
+	public static Introduction create(String q1, String q2, String q3, User introducer, String linkCode) {
+		return new Introduction(q1, q2, q3, introducer, linkCode);
+	}
+
 	public void assignParticipant(User participant) {
 		this.participant = participant;
 		participant.setIntroduction(this);

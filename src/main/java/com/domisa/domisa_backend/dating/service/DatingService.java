@@ -1,11 +1,15 @@
 package com.domisa.domisa_backend.dating.service;
 
+import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
+import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
+import com.domisa.domisa_backend.introduction.entity.Introduction;
+import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
 import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
@@ -16,6 +20,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +33,7 @@ public class DatingService {
 	private static final int MAX_DATING_PROFILE_COUNT = 8;
 
 	private final UserRepository userRepository;
+	private final IntroductionRepository introductionRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
 
 	@Transactional(readOnly = true)
@@ -100,6 +106,25 @@ public class DatingService {
 		return new DatingRefreshTimeResponse(refreshAvailableAt, canRefresh);
 	}
 
+	@Transactional
+	public DatingIntroductionLinkCreateResponse createIntroductionLink(
+		User authUser,
+		DatingIntroductionLinkCreateRequest request
+	) {
+		User introducer = getRequiredUser(authUser);
+		String linkCode = generateUniqueLinkCode();
+
+		introductionRepository.save(Introduction.create(
+			request.q1(),
+			request.q2(),
+			request.q3(),
+			introducer,
+			linkCode
+		));
+
+		return new DatingIntroductionLinkCreateResponse(linkCode);
+	}
+
 	private LinkedHashMap<Long, User> getUsersById(List<Long> userIds) {
 		// 소개팅 목록은 한 번에 조회해서 프로필 이미지 N+1을 줄인다.
 		LinkedHashMap<Long, User> usersById = new LinkedHashMap<>();
@@ -118,5 +143,13 @@ public class DatingService {
 		}
 		return userRepository.findWithProfileImageById(authUser.getId())
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+	}
+
+	private String generateUniqueLinkCode() {
+		String linkCode;
+		do {
+			linkCode = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+		} while (introductionRepository.findByLinkCode(linkCode).isPresent());
+		return linkCode;
 	}
 }
