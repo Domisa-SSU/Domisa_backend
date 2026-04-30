@@ -66,7 +66,8 @@ public class Notification {
 		return new Notification(userId, targetUserId, type);
 	}
 
-	public void markAsRead() {
-		this.isRead = true;
+	public void updateStatus(boolean isRead, boolean isClosed) {
+		this.isRead = isRead;
+		this.isCanceled = isClosed;
 	}
 }

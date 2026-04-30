@@ -3,9 +3,9 @@ package com.domisa.domisa_backend.notification.service;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.notification.dto.NotificationListResponse;
-import com.domisa.domisa_backend.notification.dto.NotificationReadResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationSimpleListResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationStatusResponse;
+import com.domisa.domisa_backend.notification.dto.NotificationUpdateRequest;
 import com.domisa.domisa_backend.notification.entity.Notification;
 import com.domisa.domisa_backend.notification.repository.NotificationRepository;
 import com.domisa.domisa_backend.notification.type.NotificationType;
@@ -95,12 +95,11 @@ public class NotificationService {
 	}
 
 	@Transactional
-	public NotificationReadResponse markAsRead(Long userId, Long notificationId) {
-		Notification notification = notificationRepository.findByIdAndUserId(notificationId, userId)
+	public void updateNotification(Long userId, NotificationUpdateRequest request) {
+		Notification notification = notificationRepository.findByIdAndUserId(request.notificationId(), userId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.NOTIFICATION_NOT_FOUND));
 
-		notification.markAsRead();
-		return new NotificationReadResponse(notification.getId(), notification.isRead());
+		notification.updateStatus(request.isRead(), request.isClosed());
 	}
 
 

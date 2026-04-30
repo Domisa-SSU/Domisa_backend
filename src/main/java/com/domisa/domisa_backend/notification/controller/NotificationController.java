@@ -1,16 +1,16 @@
 package com.domisa.domisa_backend.notification.controller;
 
 import com.domisa.domisa_backend.notification.dto.NotificationListResponse;
-import com.domisa.domisa_backend.notification.dto.NotificationReadResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationSimpleListResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationStatusResponse;
+import com.domisa.domisa_backend.notification.dto.NotificationUpdateRequest;
 import com.domisa.domisa_backend.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,11 +38,12 @@ public class NotificationController {
 		return ResponseEntity.ok(notificationService.getNotificationStatus(userId));
 	}
 
-	@PostMapping("/{notificationId}")
-	public ResponseEntity<NotificationReadResponse> markAsRead(
+	@PostMapping
+	public ResponseEntity<Void> updateNotification(
 		@AuthenticationPrincipal Long userId,
-		@PathVariable Long notificationId
+		@RequestBody NotificationUpdateRequest request
 	) {
-		return ResponseEntity.ok(notificationService.markAsRead(userId, notificationId));
+		notificationService.updateNotification(userId, request);
+		return ResponseEntity.noContent().build();
 	}
 }
