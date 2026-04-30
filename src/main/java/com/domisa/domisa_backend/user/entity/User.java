@@ -106,6 +106,18 @@ public class User {
 	@Column(name = "is_registered", nullable = false)
 	private Boolean isRegistered = false;
 
+	@Column(name = "profile_image_sequence", nullable = false)
+	private Long profileImageSequence = 0L;
+
+	@Column(name = "profile_image_object_key", length = 1024)
+	private String profileImageObjectKey;
+
+	@Column(name = "has_introduction", nullable = false)
+	private Boolean hasIntroduction = false;
+
+	@Column(name = "is_profile_completed", nullable = false)
+	private Boolean isProfileCompleted = false;
+  
 	private User(Long kakaoId) {
 		this.kakaoId = kakaoId;
 	}
@@ -133,10 +145,10 @@ public class User {
 	}
 
 	public boolean hasCard() {
-		return card != null;
+		return Boolean.TRUE.equals(isProfileCompleted);
 	}
 
 	public boolean hasIntroduction() {
-		return introduction != null;
+		return Boolean.TRUE.equals(hasIntroduction);
 	}
 }
