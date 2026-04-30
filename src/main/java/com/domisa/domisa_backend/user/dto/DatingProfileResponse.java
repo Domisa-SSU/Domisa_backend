@@ -4,7 +4,7 @@ import com.domisa.domisa_backend.user.type.AnimalProfile;
 import com.domisa.domisa_backend.user.type.Mbti;
 
 public record DatingProfileResponse(
-	Long userId,
+	String publicId,
 	String nickName,
 	Integer age,
 	AnimalProfile animalProfile,

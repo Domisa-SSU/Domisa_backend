@@ -39,7 +39,7 @@ public class S3ProfileImageKeyService {
 		// S3 경로 규칙은 여기서만 관리하고 프로필 이미지 로직은 키 조합을 몰라도 되게 한다.
 		List<String> segments = new ArrayList<>();
 		segments.add(PROFILE_DIRECTORY);
-		segments.add(String.valueOf(user.getId()));
+		segments.add(user.getPublicId());
 		segments.add(String.valueOf(uploadSequence));
 		segments.add(variant.directory());
 		segments.add(variant.fileName() + extension);

@@ -33,7 +33,7 @@ public class UserService {
 		String profileImageUrl = s3ObjectUrlService.getProfileImageUrl(user.getProfileImage());
 
 		return new UserMeResponse(
-			user.getId(),
+			user.getPublicId(),
 			user.getNickname(),
 			user.getBirthYear(),
 			user.getGender(),
@@ -72,7 +72,7 @@ public class UserService {
 			.map(usersById::get)
 			.filter(targetUser -> targetUser != null)
 			.map(targetUser -> new UserLikesReceivedResponse.UserFan(
-				targetUser.getId(),
+				targetUser.getPublicId(),
 				unblurIds.contains(targetUser.getId())
 					? s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
 					: s3ObjectUrlService.getThumbnailBlurUrl(targetUser.getProfileImage())
@@ -94,7 +94,7 @@ public class UserService {
 			.map(usersById::get)
 			.filter(targetUser -> targetUser != null)
 			.map(targetUser -> new UserLikesSentResponse.UserType(
-				targetUser.getId(),
+				targetUser.getPublicId(),
 				s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
 			))
 			.toList();

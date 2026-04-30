@@ -29,12 +29,12 @@ public class DatingController {
 		return ResponseEntity.ok(datingService.getDatingProfiles(authUser));
 	}
 
-	@GetMapping("/profiles/{userId}")
+	@GetMapping("/profiles/{publicId}")
 	public ResponseEntity<DatingProfileResponse> getDatingProfile(
 		@AuthUser User authUser,
-		@PathVariable Long userId
+		@PathVariable String publicId
 	) {
-		return ResponseEntity.ok(datingService.getDatingProfile(authUser, userId));
+		return ResponseEntity.ok(datingService.getDatingProfile(authUser, publicId));
 	}
 
 	@GetMapping("/refresh-time")

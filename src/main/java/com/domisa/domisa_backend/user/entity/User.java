@@ -5,6 +5,7 @@ import com.domisa.domisa_backend.introduction.entity.Introduction;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import com.domisa.domisa_backend.user.type.AnimalProfile;
 import com.domisa.domisa_backend.user.type.ContactType;
+import com.domisa.domisa_backend.user.util.UserPublicIdGenerator;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -17,6 +18,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.*;
 
@@ -34,6 +36,9 @@ public class User {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
+	@Column(name = "public_id", nullable = false, unique = true, updatable = false, length = 16)
+	private String publicId;
 
 	@Column(name = "name", length = 20)
 	private String name;
@@ -123,6 +128,13 @@ public class User {
 
 	public static User create(Long kakaoId) {
 		return new User(kakaoId);
+	}
+
+	@PrePersist
+	void assignPublicIdIfAbsent() {
+		if (publicId == null || publicId.isBlank()) {
+			publicId = UserPublicIdGenerator.generate();
+		}
 	}
 
 	public boolean hasProfileImage() {

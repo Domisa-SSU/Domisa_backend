@@ -5,6 +5,11 @@ import org.springframework.http.HttpStatus;
 public enum GlobalErrorCode {
 
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "유저를 찾을 수 없습니다."),
+	USER_PUBLIC_ID_GENERATION_FAILED(
+		HttpStatus.INTERNAL_SERVER_ERROR,
+		"USER_PUBLIC_ID_GENERATION_FAILED",
+		"유저 공개 식별자 생성에 실패했습니다."
+	),
 	INTRODUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "INTRODUCTION_NOT_FOUND", "소개서를 찾을 수 없습니다."),
 	INTRODUCTION_ALREADY_ACCEPTED(HttpStatus.CONFLICT, "INTRODUCTION_ALREADY_ACCEPTED", "이미 수락된 소개서입니다."),
 	USER_ALREADY_HAS_INTRODUCTION(HttpStatus.CONFLICT, "USER_ALREADY_HAS_INTRODUCTION", "이미 수락한 소개서가 있습니다."),

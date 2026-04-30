@@ -52,7 +52,7 @@ public class DatingService {
 			.map(usersById::get)
 			.filter(targetUser -> targetUser != null)
 			.map(targetUser -> new DatingProfileListResponse.ProfileSummary(
-				targetUser.getId(),
+				targetUser.getPublicId(),
 				unblurIds.contains(targetUser.getId())
 					? s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
 					: s3ObjectUrlService.getThumbnailBlurUrl(targetUser.getProfileImage())
@@ -63,13 +63,13 @@ public class DatingService {
 	}
 
 	@Transactional(readOnly = true)
-	public DatingProfileResponse getDatingProfile(User authUser, Long userId) {
+	public DatingProfileResponse getDatingProfile(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findDatingProfileById(userId)
+		User targetUser = userRepository.findDatingProfileByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
-		boolean isBlurred = requester.getMyBlurs() == null || !requester.getMyBlurs().contains(userId);
-		boolean hasSentLike = requester.getMyTypes() != null && requester.getMyTypes().contains(userId);
+		boolean isBlurred = requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId());
+		boolean hasSentLike = requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId());
 
 		String profileUrl = isBlurred
 			? s3ObjectUrlService.getOriginBlurUrl(targetUser.getProfileImage())
@@ -79,7 +79,7 @@ public class DatingService {
 			: new ContactDTO(targetUser.getContactType(), targetUser.getContact());
 
 		return new DatingProfileResponse(
-			targetUser.getId(),
+			targetUser.getPublicId(),
 			targetUser.getNickname(),
 			targetUser.getAge(),
 			targetUser.getAnimalProfile(),
