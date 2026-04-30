@@ -30,6 +30,7 @@ public class UserService {
 	public UserMeResponse getMe(User authUser) {
 		// 내 정보 조회는 프로필 이미지까지 함께 읽어서 응답한다.
 		User user = getRequiredUser(authUser);
+		String profileImageUrl = s3ObjectUrlService.getProfileImageUrl(user.getProfileImage());
 
 		return new UserMeResponse(
 			user.getId(),
@@ -38,7 +39,8 @@ public class UserService {
 			user.getGender(),
 			user.getAnimalProfile(),
 			new ContactDTO(user.getContactType(), user.getContact()),
-			user.getInviteCode()
+			user.getInviteCode(),
+			profileImageUrl
 		);
 	}
 

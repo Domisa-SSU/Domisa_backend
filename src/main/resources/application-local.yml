@@ -7,15 +7,28 @@ spring:
     username: ${LOCAL_DB_USERNAME}
     password: ${LOCAL_DB_PASSWORD}
   jpa:
+    hibernate:
+      ddl-auto: update
     properties:
       hibernate:
-        show_sql: ${LOCAL_JPA_SHOW_SQL}
-        format_sql: ${LOCAL_JPA_FORMAT_SQL}
+        show_sql: ${LOCAL_JPA_SHOW_SQL:true}
+        format_sql: ${LOCAL_JPA_FORMAT_SQL:true}
+
+kakao:
+  client-id: ${KAKAO_CLIENT_ID}
+  client-secret: ${KAKAO_CLIENT_SECRET}
+  redirect-uri: http://localhost:3000/auth/callback
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-validity-in-seconds: 3600
+  refresh-token-validity-in-seconds: 604800
 
 app:
-  frontend-url: ${LOCAL_FRONTEND_URL}
+  frontend-url: ${LOCAL_FRONTEND_URL:http://localhost:3000}
   auth:
     cookie:
       secure: ${LOCAL_APP_AUTH_COOKIE_SECURE}
       same-site: ${LOCAL_APP_AUTH_COOKIE_SAME_SITE}
       domain: ${LOCAL_APP_AUTH_COOKIE_DOMAIN:}
+
