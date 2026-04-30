@@ -39,7 +39,6 @@ public class UserService {
 			user.getGender(),
 			user.getAnimalProfile(),
 			new ContactDTO(user.getContactType(), user.getContact()),
-			user.getInviteCode(),
 			profileImageUrl
 		);
 	}
