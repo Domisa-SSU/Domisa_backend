@@ -1,11 +1,6 @@
 spring:
   application:
     name: domisa-backend
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local}
-
-server:
-  port: ${SERVER_PORT:8080}
   datasource:
     url: jdbc:mysql://${DB_URL}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${DB_USERNAME}
