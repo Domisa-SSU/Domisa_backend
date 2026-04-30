@@ -57,7 +57,7 @@ public class NotificationService {
 	@Transactional(readOnly = true)
 	public NotificationStatusResponse getNotificationStatus(Long userId) {
 		long unreadCount = notificationRepository.countByUserIdAndIsReadFalse(userId);
-		return new NotificationStatusResponse(unreadCount > 0, unreadCount);
+		return new NotificationStatusResponse(unreadCount);
 	}
 
 	@Transactional
