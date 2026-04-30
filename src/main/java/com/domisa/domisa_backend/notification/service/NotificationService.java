@@ -4,6 +4,7 @@ import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.notification.dto.NotificationListResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationReadResponse;
+import com.domisa.domisa_backend.notification.dto.NotificationSimpleListResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationStatusResponse;
 import com.domisa.domisa_backend.notification.entity.Notification;
 import com.domisa.domisa_backend.notification.repository.NotificationRepository;
@@ -66,6 +67,25 @@ public class NotificationService {
 			.toList();
 
 		return new NotificationListResponse(notifications);
+	}
+
+	@Transactional(readOnly = true)
+	public NotificationSimpleListResponse getActiveNotifications(Long userId) {
+		String publicUserId = userRepository.findById(userId)
+			.map(User::getPublicId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		List<NotificationSimpleListResponse.NotificationItem> notifications = notificationRepository
+			.findAllByUserIdAndIsCanceledFalseOrderByCreatedAtAsc(userId)
+			.stream()
+			.map(notification -> new NotificationSimpleListResponse.NotificationItem(
+				notification.getId(),
+				publicUserId,
+				notification.getType()
+			))
+			.toList();
+
+		return new NotificationSimpleListResponse(notifications);
 	}
 
 	@Transactional(readOnly = true)

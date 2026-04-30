@@ -37,6 +37,9 @@ public class Notification {
 	@Column(name = "is_read", nullable = false)
 	private boolean isRead = false;
 
+	@Column(name = "is_canceled", nullable = false)
+	private boolean isCanceled = false;
+
 	@Column(name = "created_at", nullable = false)
 	private LocalDateTime createdAt;
 
