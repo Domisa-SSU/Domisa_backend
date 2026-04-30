@@ -7,7 +7,7 @@ public record DatingProfileListResponse(
 	List<ProfileSummary> profiles
 ) {
 	public record ProfileSummary(
-		String publicId,
+		String userId,
 		String profile
 	) {
 	}

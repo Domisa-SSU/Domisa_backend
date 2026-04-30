@@ -4,7 +4,7 @@ import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.user.type.AnimalProfile;
 
 public record ProfileUpdateResponse(
-        String publicId,
+        String userId,
         String nickname,
         Boolean gender,
         Long birthYear,
