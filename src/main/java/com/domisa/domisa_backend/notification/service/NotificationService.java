@@ -10,6 +10,7 @@ import com.domisa.domisa_backend.notification.repository.NotificationRepository;
 import com.domisa.domisa_backend.notification.type.NotificationType;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
+import com.domisa.domisa_backend.user.type.AnimalProfile;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -31,28 +32,34 @@ public class NotificationService {
 	@Transactional
 	public Notification createNotification(NotificationType type, Long userId, Long targetUserId) {
 		validateUserExists(userId);
-		if (targetUserId != null) {
+
+		Notification notification;
+		if (requiresTargetUser(type)) {
+			if (targetUserId == null) {
+				throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
+			}
 			validateUserExists(targetUserId);
+			notification = Notification.create(userId, targetUserId, type);
+		} else {
+			notification = Notification.create(userId, type);
 		}
 
-		Notification.NotificationTemplate template = createTemplate(type);
-		Notification notification = Notification.create(userId, targetUserId, template);
 		return notificationRepository.save(notification);
 	}
 
 	@Transactional(readOnly = true)
 	public NotificationListResponse getNotifications(Long userId) {
-		List<Notification> storedNotifications = notificationRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
-		Map<Long, String> publicIdsById = getPublicIdsById(storedNotifications);
+		List<Notification> storedNotifications = notificationRepository.findAllByUserIdOrderByCreatedAtAsc(userId);
+		Map<Long, User> usersById = getUsersById(storedNotifications);
 		List<NotificationListResponse.NotificationItem> notifications = storedNotifications
 			.stream()
 			.map(notification -> new NotificationListResponse.NotificationItem(
 				notification.getId(),
-				publicIdsById.get(notification.getUserId()),
-				publicIdsById.get(notification.getTargetUserId()),
+				getPublicId(usersById.get(notification.getUserId())),
 				notification.getType(),
-				notification.getTitle(),
-				notification.getContent(),
+				getPublicId(usersById.get(notification.getTargetUserId())),
+				getAnimalProfile(usersById.get(notification.getTargetUserId())),
+				getPersonNickname(usersById.get(notification.getTargetUserId())),
 				notification.isRead(),
 				notification.getCreatedAt()
 			))
@@ -76,25 +83,6 @@ public class NotificationService {
 		return new NotificationReadResponse(notification.getId(), notification.isRead());
 	}
 
-	private Notification.NotificationTemplate createTemplate(NotificationType type) {
-		return switch (type) {
-			case LIKE -> new Notification.NotificationTemplate(
-				NotificationType.LIKE,
-				"새로운 호감이 도착했어요",
-				"새로운 호감을 확인해보세요."
-			);
-			case INTRODUCTION -> new Notification.NotificationTemplate(
-				NotificationType.INTRODUCTION,
-				"소개서가 도착했어요",
-				"새로운 소개서를 확인해보세요."
-			);
-			case SHUFFLE -> new Notification.NotificationTemplate(
-				NotificationType.SHUFFLE,
-				"새로운 추천이 도착했어요",
-				"새로운 추천 상대를 확인해보세요."
-			);
-		};
-	}
 
 	private void validateUserExists(Long userId) {
 		if (!userRepository.existsById(userId)) {
@@ -102,7 +90,11 @@ public class NotificationService {
 		}
 	}
 
-	private Map<Long, String> getPublicIdsById(List<Notification> notifications) {
+	private boolean requiresTargetUser(NotificationType type) {
+		return type == NotificationType.LIKE || type == NotificationType.MATCH;
+	}
+
+	private Map<Long, User> getUsersById(List<Notification> notifications) {
 		Set<Long> userIds = new HashSet<>();
 		for (Notification notification : notifications) {
 			if (notification.getUserId() != null) {
@@ -118,6 +110,18 @@ public class NotificationService {
 		}
 
 		return userRepository.findAllByIdIn(userIds).stream()
-			.collect(Collectors.toMap(User::getId, User::getPublicId));
+			.collect(Collectors.toMap(User::getId, user -> user));
+	}
+
+	private String getPublicId(User user) {
+		return user == null ? null : user.getPublicId();
+	}
+
+	private AnimalProfile getAnimalProfile(User user) {
+		return user == null ? null : user.getAnimalProfile();
+	}
+
+	private String getPersonNickname(User user) {
+		return user == null ? null : user.getNickname();
 	}
 }
