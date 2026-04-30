@@ -52,7 +52,7 @@ public class ProfileService {
 		long totalUserCount = Math.max(0, userRepository.count() - 1);
 
 		return new ProfileRegisterResponse(
-				user.getId(),
+				user.getPublicId(),
 				new ProfileRegisterResponse.StatusDto(
 						user.getIsRegistered(),
 						user.hasIntroduction(),
@@ -83,7 +83,7 @@ public class ProfileService {
 		user.setContact(request.contact().content());
 
 		return new ProfileUpdateResponse(
-				user.getId(),
+				user.getPublicId(),
 				user.getNickname(),
 				user.getGender(),
 				user.getBirthYear(),

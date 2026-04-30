@@ -1,7 +1,7 @@
 package com.domisa.domisa_backend.auth.dto;
 
 public record AuthMeResponse(
-	Long userId,
+	String publicId,
 	Integer cookies,
 	StatusDto status
 ) {

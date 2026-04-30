@@ -8,8 +8,8 @@ public record NotificationListResponse(List<NotificationItem> notifications) {
 
 	public record NotificationItem(
 		Long notificationId,
-		Long userId,
-		Long targetUserId,
+		String publicId,
+		String targetPublicId,
 		NotificationType type,
 		String title,
 		String content,

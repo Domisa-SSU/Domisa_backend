@@ -8,7 +8,7 @@ public record UserLikesReceivedResponse(
 ) {
 
 	public record UserFan(
-		Long userId,
+		String publicId,
 		String profile
 	) {
 	}
