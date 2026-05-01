@@ -56,9 +56,9 @@ public class NotificationService {
 			.stream()
 			.map(notification -> new NotificationListResponse.NotificationItem(
 				notification.getId(),
-				getPublicId(usersById.get(notification.getUserId())),
+				notification.getUserId(),
 				notification.getType(),
-				getPublicId(usersById.get(notification.getTargetUserId())),
+				notification.getTargetUserId(),
 				getAnimalProfile(usersById.get(notification.getTargetUserId())),
 				getPersonNickname(usersById.get(notification.getTargetUserId())),
 				notification.isRead(),
@@ -130,10 +130,6 @@ public class NotificationService {
 
 		return userRepository.findAllByIdIn(userIds).stream()
 			.collect(Collectors.toMap(User::getId, user -> user));
-	}
-
-	private String getPublicId(User user) {
-		return user == null ? null : user.getPublicId();
 	}
 
 	private AnimalProfile getAnimalProfile(User user) {
