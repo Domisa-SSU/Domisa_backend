@@ -2,8 +2,8 @@ package com.domisa.domisa_backend.notification.service;
 
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
+import com.domisa.domisa_backend.notification.dto.NotificationActiveResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationListResponse;
-import com.domisa.domisa_backend.notification.dto.NotificationSimpleListResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationStatusResponse;
 import com.domisa.domisa_backend.notification.entity.Notification;
 import com.domisa.domisa_backend.notification.repository.NotificationRepository;
@@ -69,22 +69,23 @@ public class NotificationService {
 	}
 
 	@Transactional(readOnly = true)
-	public NotificationSimpleListResponse getActiveNotifications(Long userId) {
-		String publicUserId = userRepository.findById(userId)
-			.map(User::getPublicId)
-			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+	public NotificationActiveResponse getActiveNotifications(Long userId) {
+		List<Notification> notifications = notificationRepository.findAllByUserIdAndIsCanceledFalseOrderByCreatedAtAsc(userId);
+		boolean signup = false;
+		long referralCount = 0;
+		boolean like = false;
+		boolean match = false;
 
-		List<NotificationSimpleListResponse.NotificationItem> notifications = notificationRepository
-			.findAllByUserIdAndIsCanceledFalseOrderByCreatedAtAsc(userId)
-			.stream()
-			.map(notification -> new NotificationSimpleListResponse.NotificationItem(
-				notification.getId(),
-				publicUserId,
-				notification.getType()
-			))
-			.toList();
+		for (Notification notification : notifications) {
+			switch (notification.getType()) {
+				case SIGNUP -> signup = true;
+				case REFERRAL -> referralCount++;
+				case LIKE -> like = true;
+				case MATCH -> match = true;
+			}
+		}
 
-		return new NotificationSimpleListResponse(notifications);
+		return new NotificationActiveResponse(signup, referralCount, like, match);
 	}
 
 	@Transactional(readOnly = true)

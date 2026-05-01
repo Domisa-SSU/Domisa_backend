@@ -1,8 +1,8 @@
 package com.domisa.domisa_backend.notification.controller;
 
 import com.domisa.domisa_backend.auth.annotation.AuthUser;
+import com.domisa.domisa_backend.notification.dto.NotificationActiveResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationListResponse;
-import com.domisa.domisa_backend.notification.dto.NotificationSimpleListResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationStatusResponse;
 import com.domisa.domisa_backend.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class NotificationController {
 	}
 
 	@GetMapping("/active")
-	public ResponseEntity<NotificationSimpleListResponse> getActiveNotifications(@AuthUser Long userId) {
+	public ResponseEntity<NotificationActiveResponse> getActiveNotifications(@AuthUser Long userId) {
 		return ResponseEntity.ok(notificationService.getActiveNotifications(userId));
 	}
 
