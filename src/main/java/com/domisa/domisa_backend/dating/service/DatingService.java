@@ -1,6 +1,6 @@
 package com.domisa.domisa_backend.dating.service;
 
-import com.domisa.domisa_backend.domain.cookie.repository.CookieWalletRepository;
+import com.domisa.domisa_backend.cookie.repository.CookieWalletRepository;
 import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
