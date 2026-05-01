@@ -21,7 +21,8 @@ public enum GlobalErrorCode {
 	CARD_ALREADY_EXISTS(HttpStatus.CONFLICT, "CARD_ALREADY_EXISTS", "이미 소개팅 카드가 존재합니다."),
 	USER_NOT_REGISTERED(HttpStatus.FORBIDDEN, "USER_NOT_REGISTERED", "회원가입이 완료되지 않은 사용자입니다."),
 	CANNOT_LIKE_SELF(HttpStatus.BAD_REQUEST, "CANNOT_LIKE_SELF", "자기 자신에게 호감을 보낼 수 없습니다."),
-	ALREADY_LIKED(HttpStatus.CONFLICT, "ALREADY_LIKED", "이미 호감을 보낸 사용자입니다.");
+	ALREADY_LIKED(HttpStatus.CONFLICT, "ALREADY_LIKED", "이미 호감을 보낸 사용자입니다."),
+	INSUFFICIENT_COOKIES(HttpStatus.PAYMENT_REQUIRED, "INSUFFICIENT_COOKIES", "쿠키가 부족합니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
