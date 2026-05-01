@@ -22,7 +22,29 @@ public enum GlobalErrorCode {
 	USER_NOT_REGISTERED(HttpStatus.FORBIDDEN, "USER_NOT_REGISTERED", "회원가입이 완료되지 않은 사용자입니다."),
 	CANNOT_LIKE_SELF(HttpStatus.BAD_REQUEST, "CANNOT_LIKE_SELF", "자기 자신에게 호감을 보낼 수 없습니다."),
 	ALREADY_LIKED(HttpStatus.CONFLICT, "ALREADY_LIKED", "이미 호감을 보낸 사용자입니다."),
-	INSUFFICIENT_COOKIES(HttpStatus.PAYMENT_REQUIRED, "INSUFFICIENT_COOKIES", "쿠키가 부족합니다.");
+	INSUFFICIENT_COOKIES(HttpStatus.PAYMENT_REQUIRED, "INSUFFICIENT_COOKIES", "쿠키가 부족합니다."),
+	COOKIE_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "COOKIE_ORDER_NOT_FOUND", "쿠키 주문을 찾을 수 없습니다."),
+	COOKIE_ORDER_INVALID_STATUS(HttpStatus.BAD_REQUEST, "COOKIE_ORDER_INVALID_STATUS", "처리할 수 없는 주문 상태입니다."),
+	PAYACTION_ORDER_CREATE_FAILED(
+		HttpStatus.BAD_GATEWAY,
+		"PAYACTION_ORDER_CREATE_FAILED",
+		"페이액션 주문 등록에 실패했습니다."
+	),
+	PAYACTION_WEBHOOK_UNAUTHORIZED(
+		HttpStatus.UNAUTHORIZED,
+		"PAYACTION_WEBHOOK_UNAUTHORIZED",
+		"유효하지 않은 페이액션 웹훅 키입니다."
+	),
+	PAYACTION_WEBHOOK_FORBIDDEN(
+		HttpStatus.FORBIDDEN,
+		"PAYACTION_WEBHOOK_FORBIDDEN",
+		"유효하지 않은 페이액션 상점 정보입니다."
+	),
+	INVALID_PAYACTION_ORDER_STATUS(
+		HttpStatus.BAD_REQUEST,
+		"INVALID_PAYACTION_ORDER_STATUS",
+		"처리할 수 없는 페이액션 주문 상태입니다."
+	);
 
 	private final HttpStatus httpStatus;
 	private final String code;

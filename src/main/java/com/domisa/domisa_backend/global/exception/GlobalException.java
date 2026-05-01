@@ -9,6 +9,11 @@ public class GlobalException extends RuntimeException {
 		this.errorCode = errorCode;
 	}
 
+	public GlobalException(GlobalErrorCode errorCode, String message) {
+		super(message);
+		this.errorCode = errorCode;
+	}
+
 	public GlobalErrorCode getErrorCode() {
 		return errorCode;
 	}
