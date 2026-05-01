@@ -1,6 +1,7 @@
 package com.domisa.domisa_backend.dating.controller;
 
 import com.domisa.domisa_backend.auth.annotation.AuthUser;
+import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
@@ -48,5 +49,19 @@ public class DatingController {
 		@RequestBody DatingIntroductionLinkCreateRequest request
 	) {
 		return ResponseEntity.ok(datingService.createIntroductionLink(authUser, request));
+	}
+
+	@GetMapping("/count")
+	public ResponseEntity<DatingMatchCountResponse> getMatchCount() {
+		return ResponseEntity.ok(datingService.getMatchCount());
+	}
+
+	@PostMapping("/likes/{publicId}")
+	public ResponseEntity<Void> sendLike(
+		@AuthUser User authUser,
+		@PathVariable String publicId
+	) {
+		datingService.sendLike(authUser, publicId);
+		return ResponseEntity.ok().build();
 	}
 }

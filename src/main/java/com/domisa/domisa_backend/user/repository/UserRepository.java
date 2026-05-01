@@ -31,4 +31,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	boolean existsByNickname(String nickname);
 
 	boolean existsByPublicId(String publicId);
+
+	@org.springframework.data.jpa.repository.Query(
+		value = """
+			SELECT COUNT(*) FROM user_my_types a
+			JOIN user_my_types b
+			  ON a.user_id = b.target_user_id
+			 AND a.target_user_id = b.user_id
+			 AND a.user_id < b.user_id
+			""",
+		nativeQuery = true
+	)
+	long countMutualMatches();
 }

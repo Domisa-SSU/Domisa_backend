@@ -1,5 +1,6 @@
 package com.domisa.domisa_backend.dating.service;
 
+import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
@@ -143,6 +144,36 @@ public class DatingService {
 		}
 		return userRepository.findWithProfileImageById(authUser.getId())
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+	}
+
+	@Transactional(readOnly = true)
+	public DatingMatchCountResponse getMatchCount() {
+		return new DatingMatchCountResponse(userRepository.countMutualMatches());
+	}
+
+	@Transactional
+	public void sendLike(User authUser, String publicId) {
+		User requester = getRequiredUser(authUser);
+		User targetUser = userRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		if (requester.getId().equals(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.CANNOT_LIKE_SELF);
+		}
+
+		if (requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.ALREADY_LIKED);
+		}
+
+		if (requester.getMyTypes() == null) {
+			requester.setMyTypes(new java.util.ArrayList<>());
+		}
+		requester.getMyTypes().add(targetUser.getId());
+
+		if (targetUser.getMyFans() == null) {
+			targetUser.setMyFans(new java.util.ArrayList<>());
+		}
+		targetUser.getMyFans().add(requester.getId());
 	}
 
 	private String generateUniqueLinkCode() {
