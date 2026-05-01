@@ -36,13 +36,14 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/health").permitAll()
-                .requestMatchers("/api/introduction/**").permitAll()
-                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
-                .requestMatchers(
-                    "/v3/api-docs/**",
-                    "/swagger-ui/**",
+	            .authorizeHttpRequests(auth -> auth
+	                .requestMatchers("/health").permitAll()
+	                .requestMatchers("/api/introduction/**").permitAll()
+	                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+	                .requestMatchers("/api/webhooks/payaction/**").permitAll()
+	                .requestMatchers(
+	                    "/v3/api-docs/**",
+	                    "/swagger-ui/**",
                     "/swagger-ui.html"
                 ).permitAll()
                 .anyRequest().authenticated()
