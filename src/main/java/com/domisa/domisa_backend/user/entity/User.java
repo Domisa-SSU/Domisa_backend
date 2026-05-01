@@ -121,7 +121,12 @@ public class User {
 
 	@Column(name = "is_profile_completed", nullable = false)
 	private Boolean isProfileCompleted = false;
-  
+
+	@Column(name = "free_like_count", nullable = false)
+	private Integer freeLikeCount = 0;
+
+	@Column(name = "free_like_reset_at")
+	private LocalDateTime freeLikeResetAt;
 	private User(Long kakaoId) {
 		this.kakaoId = kakaoId;
 	}

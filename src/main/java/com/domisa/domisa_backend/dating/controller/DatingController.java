@@ -7,6 +7,7 @@ import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
+import com.domisa.domisa_backend.dating.dto.LikeSendResponse;
 import com.domisa.domisa_backend.dating.service.DatingService;
 import com.domisa.domisa_backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -57,11 +58,10 @@ public class DatingController {
 	}
 
 	@PostMapping("/likes/{publicId}")
-	public ResponseEntity<Void> sendLike(
+	public ResponseEntity<LikeSendResponse> sendLike(
 		@AuthUser User authUser,
 		@PathVariable String publicId
 	) {
-		datingService.sendLike(authUser, publicId);
-		return ResponseEntity.ok().build();
+		return ResponseEntity.ok(datingService.sendLike(authUser, publicId));
 	}
 }

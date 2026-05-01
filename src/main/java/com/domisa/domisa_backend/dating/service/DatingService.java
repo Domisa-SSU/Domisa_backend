@@ -6,6 +6,7 @@ import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
+import com.domisa.domisa_backend.dating.dto.LikeSendResponse;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
@@ -37,9 +38,11 @@ public class DatingService {
 	private final IntroductionRepository introductionRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
 		User requester = getRequiredUser(authUser);
+
+		int freeLikeRemaining = getFreeLikeRemaining(requester);
 
 		List<Long> nowShowIds = requester.getNowShows() == null
 			? Collections.emptyList()
@@ -60,7 +63,7 @@ public class DatingService {
 			))
 			.toList();
 
-		return new DatingProfileListResponse(profiles.size(), profiles);
+		return new DatingProfileListResponse(profiles.size(), freeLikeRemaining, profiles);
 	}
 
 	@Transactional(readOnly = true)
@@ -152,7 +155,7 @@ public class DatingService {
 	}
 
 	@Transactional
-	public void sendLike(User authUser, String publicId) {
+	public LikeSendResponse sendLike(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
 		User targetUser = userRepository.findByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
@@ -174,6 +177,25 @@ public class DatingService {
 			targetUser.setMyFans(new java.util.ArrayList<>());
 		}
 		targetUser.getMyFans().add(requester.getId());
+
+		boolean usedFreeChance = false;
+		int freeLikeRemaining = getFreeLikeRemaining(requester);
+
+		// 무료 찬스 사용
+		if(freeLikeRemaining > 0) {
+			requester.setFreeLikeCount(requester.getFreeLikeCount() + 1);
+			if(requester.getFreeLikeResetAt() == null) {
+				requester.setFreeLikeResetAt(LocalDateTime.now());
+			}
+			usedFreeChance = true;
+		}
+		else {
+			if(requester.getCookies() == null || requester.getCookies() < 1) {
+				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
+			}
+			requester.setCookies(requester.getCookies() - 1);
+		}
+		return new LikeSendResponse(usedFreeChance, requester.getCookies());
 	}
 
 	private String generateUniqueLinkCode() {
@@ -182,5 +204,16 @@ public class DatingService {
 			linkCode = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
 		} while (introductionRepository.findByLinkCode(linkCode).isPresent());
 		return linkCode;
+	}
+
+	private int getFreeLikeRemaining(User user) {
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime resetAt = user.getFreeLikeResetAt();
+
+		if(resetAt == null || resetAt.toLocalDate().isBefore(now.toLocalDate())) {
+			user.setFreeLikeCount(0);
+			user.setFreeLikeResetAt(now);
+		}
+		return Math.max(0, 3-user.getFreeLikeCount());
 	}
 }
