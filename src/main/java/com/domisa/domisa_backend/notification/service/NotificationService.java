@@ -2,10 +2,9 @@ package com.domisa.domisa_backend.notification.service;
 
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
+import com.domisa.domisa_backend.notification.dto.NotificationActiveResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationListResponse;
-import com.domisa.domisa_backend.notification.dto.NotificationSimpleListResponse;
 import com.domisa.domisa_backend.notification.dto.NotificationStatusResponse;
-import com.domisa.domisa_backend.notification.dto.NotificationUpdateRequest;
 import com.domisa.domisa_backend.notification.entity.Notification;
 import com.domisa.domisa_backend.notification.repository.NotificationRepository;
 import com.domisa.domisa_backend.notification.type.NotificationType;
@@ -56,9 +55,9 @@ public class NotificationService {
 			.stream()
 			.map(notification -> new NotificationListResponse.NotificationItem(
 				notification.getId(),
-				getPublicId(usersById.get(notification.getUserId())),
+				notification.getUserId(),
 				notification.getType(),
-				getPublicId(usersById.get(notification.getTargetUserId())),
+				notification.getTargetUserId(),
 				getAnimalProfile(usersById.get(notification.getTargetUserId())),
 				getPersonNickname(usersById.get(notification.getTargetUserId())),
 				notification.isRead(),
@@ -69,37 +68,45 @@ public class NotificationService {
 		return new NotificationListResponse(notifications);
 	}
 
-	@Transactional(readOnly = true)
-	public NotificationSimpleListResponse getActiveNotifications(Long userId) {
-		String publicUserId = userRepository.findById(userId)
-			.map(User::getPublicId)
-			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+	@Transactional
+	public NotificationActiveResponse getActiveNotifications(Long userId) {
+		List<Notification> notifications = notificationRepository.findAllByUserIdAndIsCanceledFalseOrderByCreatedAtAsc(userId);
+		boolean signup = false;
+		long referralCount = 0;
+		boolean like = false;
+		boolean match = false;
 
-		List<NotificationSimpleListResponse.NotificationItem> notifications = notificationRepository
-			.findAllByUserIdAndIsCanceledFalseOrderByCreatedAtAsc(userId)
-			.stream()
-			.map(notification -> new NotificationSimpleListResponse.NotificationItem(
-				notification.getId(),
-				publicUserId,
-				notification.getType()
-			))
-			.toList();
+		for (Notification notification : notifications) {
+			switch (notification.getType()) {
+				case SIGNUP -> {
+					signup = true;
+					notification.markAsRead();
+				}
+				case REFERRAL -> {
+					referralCount++;
+					notification.markAsRead();
+				}
+				case LIKE -> like = true;
+				case MATCH -> match = true;
+			}
+			notification.cancel();
+		}
 
-		return new NotificationSimpleListResponse(notifications);
+		return new NotificationActiveResponse(signup, referralCount, like, match);
 	}
 
 	@Transactional(readOnly = true)
 	public NotificationStatusResponse getNotificationStatus(Long userId) {
 		long unreadCount = notificationRepository.countByUserIdAndIsReadFalse(userId);
-		return new NotificationStatusResponse(unreadCount);
+		return new NotificationStatusResponse(unreadCount > 0, unreadCount);
 	}
 
 	@Transactional
-	public void updateNotification(Long userId, NotificationUpdateRequest request) {
-		Notification notification = notificationRepository.findByIdAndUserId(request.notificationId(), userId)
+	public void markAsRead(Long userId, Long notificationId) {
+		Notification notification = notificationRepository.findByIdAndUserId(notificationId, userId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.NOTIFICATION_NOT_FOUND));
 
-		notification.updateStatus(request.isRead(), request.isClosed());
+		notification.markAsRead();
 	}
 
 
@@ -130,10 +137,6 @@ public class NotificationService {
 
 		return userRepository.findAllByIdIn(userIds).stream()
 			.collect(Collectors.toMap(User::getId, user -> user));
-	}
-
-	private String getPublicId(User user) {
-		return user == null ? null : user.getPublicId();
 	}
 
 	private AnimalProfile getAnimalProfile(User user) {

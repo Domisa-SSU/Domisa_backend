@@ -21,8 +21,14 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
 
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
-		return parameter.hasParameterAnnotation(AuthUser.class)
-			&& User.class.isAssignableFrom(parameter.getParameterType());
+		if (!parameter.hasParameterAnnotation(AuthUser.class)) {
+			return false;
+		}
+
+		Class<?> parameterType = parameter.getParameterType();
+		return User.class.isAssignableFrom(parameterType)
+			|| Long.class.equals(parameterType)
+			|| long.class.equals(parameterType);
 	}
 
 	@Override
@@ -40,6 +46,10 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
 		Long userId = extractUserId(authentication.getPrincipal());
 		if (userId == null) {
 			return null;
+		}
+
+		if (Long.class.equals(parameter.getParameterType()) || long.class.equals(parameter.getParameterType())) {
+			return userId;
 		}
 
 		return userRepository.findById(userId).orElse(null);
