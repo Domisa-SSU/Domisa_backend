@@ -66,12 +66,13 @@ class NotificationServiceTest {
 
 	@Test
 	void getActiveNotificationsAggregatesByType() {
-		when(notificationRepository.findAllByUserIdAndIsCanceledFalseOrderByCreatedAtAsc(1L)).thenReturn(List.of(
-			Notification.create(1L, NotificationType.SIGNUP),
-			Notification.create(1L, NotificationType.REFERRAL),
-			Notification.create(1L, NotificationType.REFERRAL),
-			Notification.create(1L, 2L, NotificationType.MATCH)
-		));
+		Notification signup = Notification.create(1L, NotificationType.SIGNUP);
+		Notification referral1 = Notification.create(1L, NotificationType.REFERRAL);
+		Notification referral2 = Notification.create(1L, NotificationType.REFERRAL);
+		Notification match = Notification.create(1L, 2L, NotificationType.MATCH);
+		when(notificationRepository.findAllByUserIdAndIsCanceledFalseOrderByCreatedAtAsc(1L)).thenReturn(
+			List.of(signup, referral1, referral2, match)
+		);
 
 		NotificationActiveResponse response = notificationService.getActiveNotifications(1L);
 
@@ -79,6 +80,14 @@ class NotificationServiceTest {
 		assertThat(response.referralCount()).isEqualTo(2);
 		assertThat(response.like()).isFalse();
 		assertThat(response.match()).isTrue();
+		assertThat(signup.isRead()).isTrue();
+		assertThat(referral1.isRead()).isTrue();
+		assertThat(referral2.isRead()).isTrue();
+		assertThat(match.isRead()).isFalse();
+		assertThat(signup.isCanceled()).isTrue();
+		assertThat(referral1.isCanceled()).isTrue();
+		assertThat(referral2.isCanceled()).isTrue();
+		assertThat(match.isCanceled()).isTrue();
 	}
 
 	@Test

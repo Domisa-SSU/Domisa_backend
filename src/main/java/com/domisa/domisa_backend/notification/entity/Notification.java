@@ -69,4 +69,8 @@ public class Notification {
 	public void markAsRead() {
 		this.isRead = true;
 	}
+
+	public void cancel() {
+		this.isCanceled = true;
+	}
 }

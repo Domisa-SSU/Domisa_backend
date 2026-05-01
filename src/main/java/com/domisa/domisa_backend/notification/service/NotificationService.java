@@ -68,7 +68,7 @@ public class NotificationService {
 		return new NotificationListResponse(notifications);
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public NotificationActiveResponse getActiveNotifications(Long userId) {
 		List<Notification> notifications = notificationRepository.findAllByUserIdAndIsCanceledFalseOrderByCreatedAtAsc(userId);
 		boolean signup = false;
@@ -78,11 +78,18 @@ public class NotificationService {
 
 		for (Notification notification : notifications) {
 			switch (notification.getType()) {
-				case SIGNUP -> signup = true;
-				case REFERRAL -> referralCount++;
+				case SIGNUP -> {
+					signup = true;
+					notification.markAsRead();
+				}
+				case REFERRAL -> {
+					referralCount++;
+					notification.markAsRead();
+				}
 				case LIKE -> like = true;
 				case MATCH -> match = true;
 			}
+			notification.cancel();
 		}
 
 		return new NotificationActiveResponse(signup, referralCount, like, match);
