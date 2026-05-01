@@ -55,7 +55,7 @@ public class UserService {
 	@Transactional(readOnly = true)
 	public UserCookiesResponse getMyCookies(User authUser) {
 		User user = getRequiredUser(authUser);
-		return new UserCookiesResponse(user.getCookies() == null ? 0L : user.getCookies());
+		return new UserCookiesResponse(user.getCookieBalance());
 	}
 
 	@Transactional(readOnly = true)

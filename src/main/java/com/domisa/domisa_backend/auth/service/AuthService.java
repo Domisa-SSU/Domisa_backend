@@ -70,7 +70,7 @@ public class AuthService {
 
 		return new AuthMeResponse(
 			user.getPublicId(),
-			Math.toIntExact(user.getCookies()),
+			Math.toIntExact(user.getCookieBalance()),
 			new AuthMeResponse.StatusDto(
 				user.getIsRegistered(),
 				user.hasIntroduction(),

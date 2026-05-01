@@ -167,4 +167,16 @@ public class User {
 	public boolean hasIntroduction() {
 		return Boolean.TRUE.equals(hasIntroduction);
 	}
+
+	public long getCookieBalance() {
+		return cookies == null ? 0L : cookies;
+	}
+
+	public void addCookies(long amount) {
+		this.cookies = getCookieBalance() + amount;
+	}
+
+	public void subtractCookies(long amount) {
+		this.cookies = getCookieBalance() - amount;
+	}
 }
