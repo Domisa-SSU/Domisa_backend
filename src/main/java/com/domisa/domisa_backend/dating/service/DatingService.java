@@ -38,7 +38,7 @@ public class DatingService {
 	private final IntroductionRepository introductionRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
 		User requester = getRequiredUser(authUser);
 
