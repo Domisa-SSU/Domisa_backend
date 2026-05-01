@@ -34,50 +34,40 @@ public class Notification {
 	@Column(name = "type", nullable = false, length = 20)
 	private NotificationType type;
 
-	@Column(name = "title", nullable = false, length = 100)
-	private String title;
-
-	@Column(name = "content", nullable = false, columnDefinition = "TEXT")
-	private String content;
-
 	@Column(name = "is_read", nullable = false)
 	private boolean isRead = false;
+
+	@Column(name = "is_canceled", nullable = false)
+	private boolean isCanceled = false;
 
 	@Column(name = "created_at", nullable = false)
 	private LocalDateTime createdAt;
 
-	private Notification(Long userId, Long targetUserId, NotificationType type, String title, String content) {
+	private Notification(Long userId, NotificationType type) {
 		this.userId = userId;
-		this.targetUserId = targetUserId;
 		this.type = type;
-		this.title = title;
-		this.content = content;
 		this.isRead = false;
 		this.createdAt = LocalDateTime.now();
 	}
 
-	public static Notification create(
-		Long userId,
-		Long targetUserId,
-		NotificationType type,
-		String title,
-		String content
-	) {
-		return new Notification(userId, targetUserId, type, title, content);
+	private Notification(Long userId, Long targetUserId, NotificationType type) {
+		this.userId = userId;
+		this.targetUserId = targetUserId;
+		this.type = type;
+		this.isRead = false;
+		this.createdAt = LocalDateTime.now();
 	}
 
-	public static Notification create(Long userId, Long targetUserId, NotificationTemplate template) {
-		return new Notification(userId, targetUserId, template.type(), template.title(), template.content());
+	public static Notification create(Long userId, NotificationType type) {
+		return new Notification(userId, type);
 	}
 
-	public void markAsRead() {
-		this.isRead = true;
+	public static Notification create(Long userId, Long targetUserId, NotificationType type) {
+		return new Notification(userId, targetUserId, type);
 	}
 
-	public record NotificationTemplate(
-		NotificationType type,
-		String title,
-		String content
-	) {
+	public void updateStatus(boolean isRead, boolean isClosed) {
+		this.isRead = isRead;
+		this.isCanceled = isClosed;
 	}
 }
