@@ -27,7 +27,11 @@ public class AuthController {
 		@RequestBody LoginRequest request,
 		HttpServletResponse response
 	) {
-		LoginResponse loginResponse = authService.login(request.authorizationCode(), response);
+		LoginResponse loginResponse = authService.login(
+			request.authorizationCode(),
+			request.redirectUri(),
+			response
+		);
 		return ResponseEntity.ok(loginResponse);
 	}
 

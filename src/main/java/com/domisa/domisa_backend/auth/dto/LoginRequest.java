@@ -1,4 +1,4 @@
 package com.domisa.domisa_backend.auth.dto;
 
-public record LoginRequest(String authorizationCode) {
+public record LoginRequest(String authorizationCode, String redirectUri) {
 }
