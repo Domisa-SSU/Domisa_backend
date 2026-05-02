@@ -5,7 +5,6 @@ import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateResponse;
-import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterResponse;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
@@ -45,8 +44,6 @@ public class ProfileService {
 		user.setGender(request.gender());
 		user.setBirthYear(request.birthYear());
 		user.setAnimalProfile(request.animalProfile());
-		user.setContactType(request.contact().type());     // ContactDTO에서 type 꺼내기
-		user.setContact(request.contact().content());      // ContactDTO에서 content 꺼내기
 		user.setIsRegistered(true);
 		long totalUserCount = Math.max(0, userRepository.count() - 1);
 
@@ -78,24 +75,18 @@ public class ProfileService {
 		user.setGender(request.gender());
 		user.setBirthYear(request.birthYear());
 		user.setAnimalProfile(request.animalProfile());
-		user.setContactType(request.contact().type());
-		user.setContact(request.contact().content());
 
 		return new ProfileUpdateResponse(
 				user.getPublicId(),
 				user.getNickname(),
 				user.getGender(),
 				user.getBirthYear(),
-				new ContactDTO(user.getContactType(), user.getContact()),
 				user.getAnimalProfile()
 		);
 	}
 
 	private void validateRequiredFields(ProfileRegisterRequest request) {
 		if (request.nickname() == null || request.nickname().isBlank()) {
-			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
-		}
-		if (request.contact() == null || request.contact().content() == null) {
 			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
 		}
 	}

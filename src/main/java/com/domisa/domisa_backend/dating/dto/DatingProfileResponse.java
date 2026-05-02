@@ -18,6 +18,7 @@ public record DatingProfileResponse(
 	Mbti mbti,
 	ContactDTO contact,
 	boolean isBlurred,
-	boolean hasSentLike
+	boolean hasSentLike,
+	int freeBlurRemaining
 ) {
 }

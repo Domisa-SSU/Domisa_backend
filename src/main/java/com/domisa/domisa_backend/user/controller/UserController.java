@@ -40,7 +40,7 @@ public class UserController {
 	}
 
 	// 회원가입
-	@PostMapping({"/register", "/profiles"})
+	@PostMapping("/register")
 	public ResponseEntity<ProfileRegisterResponse> registerProfile(
 			@AuthUser User authUser,
 			@RequestBody ProfileRegisterRequest request

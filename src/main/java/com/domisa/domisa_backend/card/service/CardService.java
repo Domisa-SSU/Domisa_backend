@@ -52,6 +52,10 @@ public class CardService {
         );
         cardRepository.save(card);
 
+        // 연락처 저장
+        user.setContactType(request.contactType());
+        user.setContact(request.contact());
+
         // 카드 생성 완료
         user.setIsProfileCompleted(true);
 
@@ -91,6 +95,12 @@ public class CardService {
                 request.idealType(),
                 request.imageKey()
         );
+
+        // 연락처 수정
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+        user.setContactType(request.contactType());
+        user.setContact(request.contact());
 
         return new CardResponse(
                 card.getId(),

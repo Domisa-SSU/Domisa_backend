@@ -23,6 +23,7 @@ public enum GlobalErrorCode {
 	CANNOT_LIKE_SELF(HttpStatus.BAD_REQUEST, "CANNOT_LIKE_SELF", "자기 자신에게 호감을 보낼 수 없습니다."),
 	ALREADY_LIKED(HttpStatus.CONFLICT, "ALREADY_LIKED", "이미 호감을 보낸 사용자입니다."),
 	INSUFFICIENT_COOKIES(HttpStatus.PAYMENT_REQUIRED, "INSUFFICIENT_COOKIES", "쿠키가 부족합니다."),
+	NOT_UNBLURRED(HttpStatus.FORBIDDEN, "NOT_UNBLURRED", "블러 해제한 상대에게만 호감을 보낼 수 있습니다."),
 	COOKIE_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "COOKIE_ORDER_NOT_FOUND", "쿠키 주문을 찾을 수 없습니다."),
 	COOKIE_ORDER_INVALID_STATUS(HttpStatus.BAD_REQUEST, "COOKIE_ORDER_INVALID_STATUS", "처리할 수 없는 주문 상태입니다."),
 	PAYACTION_ORDER_CREATE_FAILED(

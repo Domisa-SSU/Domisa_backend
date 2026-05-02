@@ -2,12 +2,13 @@ package com.domisa.domisa_backend.dating.controller;
 
 import com.domisa.domisa_backend.auth.annotation.AuthUser;
 import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
+import com.domisa.domisa_backend.dating.dto.DatingMatchListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
-import com.domisa.domisa_backend.dating.dto.LikeSendResponse;
+import com.domisa.domisa_backend.dating.dto.UnblurProfileResponse;
 import com.domisa.domisa_backend.dating.service.DatingService;
 import com.domisa.domisa_backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -31,12 +32,12 @@ public class DatingController {
 		return ResponseEntity.ok(datingService.getDatingProfiles(authUser));
 	}
 
-	@GetMapping("/profiles/{userId}")
+	@GetMapping("/profiles/{publicId}")
 	public ResponseEntity<DatingProfileResponse> getDatingProfile(
 		@AuthUser User authUser,
-		@PathVariable String userId
+		@PathVariable String publicId
 	) {
-		return ResponseEntity.ok(datingService.getDatingProfile(authUser, userId));
+		return ResponseEntity.ok(datingService.getDatingProfile(authUser, publicId));
 	}
 
 	@GetMapping("/refresh-time")
@@ -52,16 +53,44 @@ public class DatingController {
 		return ResponseEntity.ok(datingService.createIntroductionLink(authUser, request));
 	}
 
+	@GetMapping("/matches")
+	public ResponseEntity<DatingMatchListResponse> getMatchList(@AuthUser User authUser) {
+		return ResponseEntity.ok(datingService.getMatchList(authUser));
+	}
+
 	@GetMapping("/count")
 	public ResponseEntity<DatingMatchCountResponse> getMatchCount() {
 		return ResponseEntity.ok(datingService.getMatchCount());
 	}
 
-	@PostMapping("/likes/{publicId}")
-	public ResponseEntity<LikeSendResponse> sendLike(
+	@PostMapping("/shuffle")
+	public ResponseEntity<Void> shuffle(@AuthUser User authUser) {
+		datingService.shuffle(authUser);
+		return ResponseEntity.ok().build();
+	}
+
+	@PostMapping("/profiles/{publicId}/unblur")
+	public ResponseEntity<UnblurProfileResponse> unblurProfile(
 		@AuthUser User authUser,
 		@PathVariable String publicId
 	) {
-		return ResponseEntity.ok(datingService.sendLike(authUser, publicId));
+		return ResponseEntity.ok(datingService.unblurProfile(authUser, publicId));
+	}
+
+	@PostMapping("/likes/received/{publicId}/unblur")
+	public ResponseEntity<UnblurProfileResponse> unblurReceivedLike(
+		@AuthUser User authUser,
+		@PathVariable String publicId
+	) {
+		return ResponseEntity.ok(datingService.unblurReceivedLike(authUser, publicId));
+	}
+
+	@PostMapping("/likes/{publicId}")
+	public ResponseEntity<Void> sendLike(
+		@AuthUser User authUser,
+		@PathVariable String publicId
+	) {
+		datingService.sendLike(authUser, publicId);
+		return ResponseEntity.ok().build();
 	}
 }

@@ -2,12 +2,13 @@ package com.domisa.domisa_backend.dating.service;
 
 import com.domisa.domisa_backend.cookie.repository.CookieWalletRepository;
 import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
+import com.domisa.domisa_backend.dating.dto.DatingMatchListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
-import com.domisa.domisa_backend.dating.dto.LikeSendResponse;
+import com.domisa.domisa_backend.dating.dto.UnblurProfileResponse;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
@@ -44,11 +45,14 @@ public class DatingService {
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
 		User requester = getRequiredUser(authUser);
 
-		int freeLikeRemaining = getFreeLikeRemaining(requester);
+		int freeBlurRemaining = getFreeBlurRemaining(requester);
 
 		List<Long> nowShowIds = requester.getNowShows() == null
 			? Collections.emptyList()
-			: requester.getNowShows().stream().limit(MAX_DATING_PROFILE_COUNT).toList();
+			: requester.getNowShows().stream()
+				.filter(id -> requester.getMyFans() == null || !requester.getMyFans().contains(id))
+				.limit(MAX_DATING_PROFILE_COUNT)
+				.toList();
 		Set<Long> unblurIds = requester.getMyBlurs() == null
 			? Collections.emptySet()
 			: new HashSet<>(requester.getMyBlurs());
@@ -65,10 +69,10 @@ public class DatingService {
 			))
 			.toList();
 
-		return new DatingProfileListResponse(profiles.size(), freeLikeRemaining, profiles);
+		return new DatingProfileListResponse(profiles.size(), freeBlurRemaining, profiles);
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public DatingProfileResponse getDatingProfile(User authUser, String userId) {
 		User requester = getRequiredUser(authUser);
 		User targetUser = userRepository.findDatingProfileByPublicId(userId)
@@ -76,6 +80,7 @@ public class DatingService {
 
 		boolean isBlurred = requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId());
 		boolean hasSentLike = requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId());
+		int freeBlurRemaining = getFreeBlurRemaining(requester);
 
 		String profileUrl = isBlurred
 			? s3ObjectUrlService.getOriginBlurUrl(targetUser.getProfileImage())
@@ -98,7 +103,8 @@ public class DatingService {
 			targetUser.getCard() == null ? null : targetUser.getCard().getMbti(),
 			contact,
 			isBlurred,
-			hasSentLike
+			hasSentLike,
+			freeBlurRemaining
 		);
 	}
 
@@ -152,18 +158,121 @@ public class DatingService {
 	}
 
 	@Transactional(readOnly = true)
+	public DatingMatchListResponse getMatchList(User authUser) {
+		User requester = getRequiredUser(authUser);
+
+		if (requester.getMyTypes() == null || requester.getMyFans() == null) {
+			return new DatingMatchListResponse(0, Collections.emptyList());
+		}
+
+		// 내가 호감 보낸 사람 중에 나한테도 호감 보낸 사람 = 쌍방 매칭
+		Set<Long> myTypes = new HashSet<>(requester.getMyTypes());
+		List<Long> matchedIds = requester.getMyFans().stream()
+			.filter(myTypes::contains)
+			.toList();
+
+		if (matchedIds.isEmpty()) {
+			return new DatingMatchListResponse(0, Collections.emptyList());
+		}
+
+		List<DatingMatchListResponse.MatchSummary> matches = userRepository.findAllByIdIn(matchedIds).stream()
+			.map(user -> new DatingMatchListResponse.MatchSummary(
+				user.getPublicId(),
+				user.getNickname(),
+				user.getProfileImage() != null
+					? s3ObjectUrlService.getProfileImageUrl(user.getProfileImage())
+					: null,
+				user.getContactType() != null ? user.getContactType().name() : null,
+				user.getContact()
+			))
+			.toList();
+
+		return new DatingMatchListResponse(matches.size(), matches);
+	}
+
+	@Transactional(readOnly = true)
 	public DatingMatchCountResponse getMatchCount() {
 		return new DatingMatchCountResponse(userRepository.countMutualMatches());
 	}
 
 	@Transactional
-	public LikeSendResponse sendLike(User authUser, String publicId) {
+	public UnblurProfileResponse unblurProfile(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
 		User targetUser = userRepository.findByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
 		if (requester.getId().equals(targetUser.getId())) {
 			throw new GlobalException(GlobalErrorCode.CANNOT_LIKE_SELF);
+		}
+
+		if (requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId())) {
+			return new UnblurProfileResponse(targetUser.getPublicId(), false, "이미 블러가 해제된 프로필입니다.");
+		}
+
+		// 일반 블러 해제: 2시간에 3번 무료, 초과 시 쿠키 1개
+		int freeBlurRemaining = getFreeBlurRemaining(requester);
+		if (freeBlurRemaining > 0) {
+			requester.setFreeBlurCount(requester.getFreeBlurCount() + 1);
+			if (requester.getFreeBlurResetAt() == null) {
+				requester.setFreeBlurResetAt(LocalDateTime.now());
+			}
+		} else {
+			if (requester.getCookies() == null || requester.getCookies() < 1) {
+				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
+			}
+			requester.setCookies(requester.getCookies() - 1);
+		}
+
+		if (requester.getMyBlurs() == null) {
+			requester.setMyBlurs(new java.util.ArrayList<>());
+		}
+		requester.getMyBlurs().add(targetUser.getId());
+
+		return new UnblurProfileResponse(targetUser.getPublicId(), false, "프로필 블러가 해제되었습니다.");
+	}
+
+	// 받은 호감 전용 블러 해제 — 쿠키 2개
+	@Transactional
+	public UnblurProfileResponse unblurReceivedLike(User authUser, String publicId) {
+		User requester = getRequiredUser(authUser);
+		User targetUser = userRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		// 실제로 받은 호감인지 확인
+		if (requester.getMyFans() == null || !requester.getMyFans().contains(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.USER_NOT_FOUND);
+		}
+
+		if (requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId())) {
+			return new UnblurProfileResponse(targetUser.getPublicId(), false, "이미 블러가 해제된 프로필입니다.");
+		}
+
+		if (requester.getCookies() == null || requester.getCookies() < 2) {
+			throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
+		}
+		requester.setCookies(requester.getCookies() - 2);
+
+		if (requester.getMyBlurs() == null) {
+			requester.setMyBlurs(new java.util.ArrayList<>());
+		}
+		requester.getMyBlurs().add(targetUser.getId());
+
+		return new UnblurProfileResponse(targetUser.getPublicId(), false, "소개팅 카드 블러가 해제되었습니다.");
+	}
+
+	@Transactional
+	public void sendLike(User authUser, String publicId) {
+		User requester = getRequiredUser(authUser);
+		User targetUser = userRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		if (requester.getId().equals(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.CANNOT_LIKE_SELF);
+		}
+
+		// 블러 해제한 상대에게만 호감 보내기 가능
+		if (requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.NOT_UNBLURRED);
 		}
 
 		if (requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId())) {
@@ -180,24 +289,36 @@ public class DatingService {
 		}
 		targetUser.getMyFans().add(requester.getId());
 
-		boolean usedFreeChance = false;
-		int freeLikeRemaining = getFreeLikeRemaining(requester);
-
-		// 무료 찬스 사용
-		if(freeLikeRemaining > 0) {
-			requester.setFreeLikeCount(requester.getFreeLikeCount() + 1);
-			if(requester.getFreeLikeResetAt() == null) {
-				requester.setFreeLikeResetAt(LocalDateTime.now());
+		// 쌍방 매칭 확인 — 상대도 나한테 호감 보낸 상태면 서로 myBlurs에 자동 추가 (연락처 공개)
+		boolean isMutual = targetUser.getMyTypes() != null && targetUser.getMyTypes().contains(requester.getId());
+		if (isMutual) {
+			if (targetUser.getMyBlurs() == null) {
+				targetUser.setMyBlurs(new java.util.ArrayList<>());
 			}
-			usedFreeChance = true;
-		} else {
-			if (requester.getCookieBalance() < 1) {
-				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
+			if (!targetUser.getMyBlurs().contains(requester.getId())) {
+				targetUser.getMyBlurs().add(requester.getId());
 			}
-			requester.subtractCookies(1);
-			cookieWalletRepository.findByUserId(requester.getId()).ifPresent(wallet -> wallet.subtract(1));
+			if (requester.getMyBlurs() == null) {
+				requester.setMyBlurs(new java.util.ArrayList<>());
+			}
+			if (!requester.getMyBlurs().contains(targetUser.getId())) {
+				requester.getMyBlurs().add(targetUser.getId());
+			}
 		}
-		return new LikeSendResponse(usedFreeChance, requester.getCookieBalance());
+	}
+
+	@Transactional
+	public void shuffle(User authUser) {
+		User requester = getRequiredUser(authUser);
+
+		if (requester.getCookies() == null || requester.getCookies() < 3) {
+			throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
+		}
+
+		List<Long> randomIds = userRepository.findRandomUserIds(requester.getId(), MAX_DATING_PROFILE_COUNT);
+		requester.setNowShows(new java.util.ArrayList<>(randomIds));
+		requester.setCookies(requester.getCookies() - 3);
+		requester.setRefreshAt(LocalDateTime.now());
 	}
 
 	private String generateUniqueLinkCode() {
@@ -212,10 +333,21 @@ public class DatingService {
 		LocalDateTime now = LocalDateTime.now();
 		LocalDateTime resetAt = user.getFreeLikeResetAt();
 
-		if(resetAt == null || resetAt.toLocalDate().isBefore(now.toLocalDate())) {
+		if (resetAt == null || resetAt.plusHours(2).isBefore(now)) {
 			user.setFreeLikeCount(0);
 			user.setFreeLikeResetAt(now);
 		}
-		return Math.max(0, 3-user.getFreeLikeCount());
+		return Math.max(0, 3 - user.getFreeLikeCount());
+	}
+
+	private int getFreeBlurRemaining(User user) {
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime resetAt = user.getFreeBlurResetAt();
+
+		if (resetAt == null || resetAt.plusHours(2).isBefore(now)) {
+			user.setFreeBlurCount(0);
+			user.setFreeBlurResetAt(now);
+		}
+		return Math.max(0, 3 - user.getFreeBlurCount());
 	}
 }
