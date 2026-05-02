@@ -22,7 +22,8 @@ public enum GlobalErrorCode {
 	USER_NOT_REGISTERED(HttpStatus.FORBIDDEN, "USER_NOT_REGISTERED", "회원가입이 완료되지 않은 사용자입니다."),
 	CANNOT_LIKE_SELF(HttpStatus.BAD_REQUEST, "CANNOT_LIKE_SELF", "자기 자신에게 호감을 보낼 수 없습니다."),
 	ALREADY_LIKED(HttpStatus.CONFLICT, "ALREADY_LIKED", "이미 호감을 보낸 사용자입니다."),
-	INSUFFICIENT_COOKIES(HttpStatus.PAYMENT_REQUIRED, "INSUFFICIENT_COOKIES", "쿠키가 부족합니다.");
+	INSUFFICIENT_COOKIES(HttpStatus.PAYMENT_REQUIRED, "INSUFFICIENT_COOKIES", "쿠키가 부족합니다."),
+	NOT_UNBLURRED(HttpStatus.FORBIDDEN, "NOT_UNBLURRED", "블러 해제한 상대에게만 호감을 보낼 수 있습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;

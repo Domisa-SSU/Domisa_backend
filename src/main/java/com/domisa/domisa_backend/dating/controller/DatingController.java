@@ -7,7 +7,7 @@ import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
-import com.domisa.domisa_backend.dating.dto.LikeSendResponse;
+import com.domisa.domisa_backend.dating.dto.UnblurProfileResponse;
 import com.domisa.domisa_backend.dating.service.DatingService;
 import com.domisa.domisa_backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -31,12 +31,12 @@ public class DatingController {
 		return ResponseEntity.ok(datingService.getDatingProfiles(authUser));
 	}
 
-	@GetMapping("/profiles/{userId}")
+	@GetMapping("/profiles/{publicId}")
 	public ResponseEntity<DatingProfileResponse> getDatingProfile(
 		@AuthUser User authUser,
-		@PathVariable String userId
+		@PathVariable String publicId
 	) {
-		return ResponseEntity.ok(datingService.getDatingProfile(authUser, userId));
+		return ResponseEntity.ok(datingService.getDatingProfile(authUser, publicId));
 	}
 
 	@GetMapping("/refresh-time")
@@ -57,11 +57,20 @@ public class DatingController {
 		return ResponseEntity.ok(datingService.getMatchCount());
 	}
 
-	@PostMapping("/likes/{publicId}")
-	public ResponseEntity<LikeSendResponse> sendLike(
+	@PostMapping("/profiles/{publicId}/unblur")
+	public ResponseEntity<UnblurProfileResponse> unblurProfile(
 		@AuthUser User authUser,
 		@PathVariable String publicId
 	) {
-		return ResponseEntity.ok(datingService.sendLike(authUser, publicId));
+		return ResponseEntity.ok(datingService.unblurProfile(authUser, publicId));
+	}
+
+	@PostMapping("/likes/{publicId}")
+	public ResponseEntity<Void> sendLike(
+		@AuthUser User authUser,
+		@PathVariable String publicId
+	) {
+		datingService.sendLike(authUser, publicId);
+		return ResponseEntity.ok().build();
 	}
 }

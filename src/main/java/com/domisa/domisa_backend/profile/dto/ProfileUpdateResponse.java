@@ -1,6 +1,5 @@
 package com.domisa.domisa_backend.profile.dto;
 
-import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.user.type.AnimalProfile;
 
 public record ProfileUpdateResponse(
@@ -8,6 +7,5 @@ public record ProfileUpdateResponse(
         String nickname,
         Boolean gender,
         Long birthYear,
-        ContactDTO contactDTO,
         AnimalProfile animalProfile
 ) {}

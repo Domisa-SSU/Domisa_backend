@@ -6,7 +6,7 @@ import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
-import com.domisa.domisa_backend.dating.dto.LikeSendResponse;
+import com.domisa.domisa_backend.dating.dto.UnblurProfileResponse;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
@@ -42,7 +42,7 @@ public class DatingService {
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
 		User requester = getRequiredUser(authUser);
 
-		int freeLikeRemaining = getFreeLikeRemaining(requester);
+		int freeBlurRemaining = getFreeBlurRemaining(requester);
 
 		List<Long> nowShowIds = requester.getNowShows() == null
 			? Collections.emptyList()
@@ -63,7 +63,7 @@ public class DatingService {
 			))
 			.toList();
 
-		return new DatingProfileListResponse(profiles.size(), freeLikeRemaining, profiles);
+		return new DatingProfileListResponse(profiles.size(), freeBlurRemaining, profiles);
 	}
 
 	@Transactional(readOnly = true)
@@ -155,13 +155,53 @@ public class DatingService {
 	}
 
 	@Transactional
-	public LikeSendResponse sendLike(User authUser, String publicId) {
+	public UnblurProfileResponse unblurProfile(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
 		User targetUser = userRepository.findByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
 		if (requester.getId().equals(targetUser.getId())) {
 			throw new GlobalException(GlobalErrorCode.CANNOT_LIKE_SELF);
+		}
+
+		if (requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId())) {
+			return new UnblurProfileResponse(targetUser.getPublicId(), false, "이미 블러가 해제된 프로필입니다.");
+		}
+
+		int freeBlurRemaining = getFreeBlurRemaining(requester);
+		if (freeBlurRemaining > 0) {
+			requester.setFreeBlurCount(requester.getFreeBlurCount() + 1);
+			if (requester.getFreeBlurResetAt() == null) {
+				requester.setFreeBlurResetAt(LocalDateTime.now());
+			}
+		} else {
+			if (requester.getCookies() == null || requester.getCookies() < 1) {
+				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
+			}
+			requester.setCookies(requester.getCookies() - 1);
+		}
+
+		if (requester.getMyBlurs() == null) {
+			requester.setMyBlurs(new java.util.ArrayList<>());
+		}
+		requester.getMyBlurs().add(targetUser.getId());
+
+		return new UnblurProfileResponse(targetUser.getPublicId(), false, "프로필 블러가 해제되었습니다.");
+	}
+
+	@Transactional
+	public void sendLike(User authUser, String publicId) {
+		User requester = getRequiredUser(authUser);
+		User targetUser = userRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		if (requester.getId().equals(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.CANNOT_LIKE_SELF);
+		}
+
+		// 블러 해제한 상대에게만 호감 보내기 가능
+		if (requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.NOT_UNBLURRED);
 		}
 
 		if (requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId())) {
@@ -177,25 +217,6 @@ public class DatingService {
 			targetUser.setMyFans(new java.util.ArrayList<>());
 		}
 		targetUser.getMyFans().add(requester.getId());
-
-		boolean usedFreeChance = false;
-		int freeLikeRemaining = getFreeLikeRemaining(requester);
-
-		// 무료 찬스 사용
-		if(freeLikeRemaining > 0) {
-			requester.setFreeLikeCount(requester.getFreeLikeCount() + 1);
-			if(requester.getFreeLikeResetAt() == null) {
-				requester.setFreeLikeResetAt(LocalDateTime.now());
-			}
-			usedFreeChance = true;
-		}
-		else {
-			if(requester.getCookies() == null || requester.getCookies() < 1) {
-				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
-			}
-			requester.setCookies(requester.getCookies() - 1);
-		}
-		return new LikeSendResponse(usedFreeChance, requester.getCookies());
 	}
 
 	private String generateUniqueLinkCode() {
@@ -206,14 +227,14 @@ public class DatingService {
 		return linkCode;
 	}
 
-	private int getFreeLikeRemaining(User user) {
+	private int getFreeBlurRemaining(User user) {
 		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime resetAt = user.getFreeLikeResetAt();
+		LocalDateTime resetAt = user.getFreeBlurResetAt();
 
-		if(resetAt == null || resetAt.toLocalDate().isBefore(now.toLocalDate())) {
-			user.setFreeLikeCount(0);
-			user.setFreeLikeResetAt(now);
+		if (resetAt == null || resetAt.toLocalDate().isBefore(now.toLocalDate())) {
+			user.setFreeBlurCount(0);
+			user.setFreeBlurResetAt(now);
 		}
-		return Math.max(0, 3-user.getFreeLikeCount());
+		return Math.max(0, 3 - user.getFreeBlurCount());
 	}
 }
