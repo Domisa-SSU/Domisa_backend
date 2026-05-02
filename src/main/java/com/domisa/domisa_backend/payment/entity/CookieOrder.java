@@ -36,7 +36,7 @@ public class CookieOrder {
 	@Column(name = "order_number", length = 22, nullable = false, unique = true)
 	private String orderNumber;
 
-	@Column(name = "billing_name", nullable = false)
+	@Column(name = "billing_name", length = 20, nullable = false)
 	private String billingName;
 
 	@Column(name = "order_amount", nullable = false)
@@ -83,7 +83,7 @@ public class CookieOrder {
 		this.cookieAmount = cookieAmount;
 		this.ordererName = ordererName;
 		this.orderDate = orderDate;
-		this.status = OrderStatus.PENDING;
+		this.status = OrderStatus.PAYMENT_PENDING;
 	}
 
 	public static CookieOrder create(
@@ -103,13 +103,27 @@ public class CookieOrder {
 	}
 
 	public boolean isPending() {
-		return status == OrderStatus.PENDING;
+		return status == OrderStatus.PAYMENT_PENDING || status == OrderStatus.PENDING;
 	}
 
 	public void markPaid(LocalDateTime processingDate) {
+		if (isPaid()) {
+			return;
+		}
 		this.status = OrderStatus.PAID;
 		this.payactionProcessingDate = processingDate;
 		this.paidAt = processingDate == null ? LocalDateTime.now() : processingDate;
+	}
+
+	public void markFailed() {
+		this.status = OrderStatus.FAILED;
+	}
+
+	public void cancel() {
+		if (isPaid()) {
+			throw new IllegalStateException("이미 결제 완료된 주문은 취소할 수 없습니다.");
+		}
+		this.status = OrderStatus.CANCELED;
 	}
 
 	@PrePersist
