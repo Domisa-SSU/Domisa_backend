@@ -1,7 +1,5 @@
 package com.domisa.domisa_backend.payment.service;
 
-import com.domisa.domisa_backend.cookie.entity.CookieWallet;
-import com.domisa.domisa_backend.cookie.repository.CookieWalletRepository;
 import com.domisa.domisa_backend.notification.service.NotificationService;
 import com.domisa.domisa_backend.notification.type.NotificationType;
 import com.domisa.domisa_backend.payment.config.PayActionProperties;
@@ -14,6 +12,8 @@ import com.domisa.domisa_backend.payment.repository.CookieTransactionRepository;
 import com.domisa.domisa_backend.payment.repository.PayActionWebhookLogRepository;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
+import com.domisa.domisa_backend.user.entity.User;
+import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Objects;
@@ -30,10 +30,10 @@ public class PayActionWebhookService {
 
 	private final PayActionProperties payActionProperties;
 	private final CookieOrderRepository cookieOrderRepository;
-	private final CookieWalletRepository cookieWalletRepository;
 	private final CookieTransactionRepository cookieTransactionRepository;
 	private final PayActionWebhookLogRepository payActionWebhookLogRepository;
 	private final NotificationService notificationService;
+	private final UserRepository userRepository;
 
 	@Transactional
 	public void handleMatchedWebhook(
@@ -70,16 +70,12 @@ public class PayActionWebhookService {
 		}
 
 		order.markPaid(processingDate);
+		User user = userRepository.findByIdWithLock(order.getUser().getId())
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+		user.addCookies(order.getCookieAmount());
 
-		CookieWallet wallet = cookieWalletRepository.findByUserIdWithLock(order.getUser().getId())
-			.orElseGet(() -> cookieWalletRepository.save(
-				CookieWallet.create(order.getUser(), Math.toIntExact(order.getUser().getCookieBalance()))
-			));
-		wallet.add(order.getCookieAmount());
-		order.getUser().addCookies(order.getCookieAmount());
-
-		cookieTransactionRepository.save(CookieTransaction.charge(order.getUser(), order, order.getCookieAmount()));
-		notificationService.createNotification(NotificationType.COOKIE_PAYMENT, order.getUser().getId(), null);
+		cookieTransactionRepository.save(CookieTransaction.charge(user, order, order.getCookieAmount()));
+		notificationService.createNotification(NotificationType.COOKIE_PAYMENT, user.getId(), null);
 		saveWebhookLog(traceId, request, processingDate);
 	}
 

@@ -4,8 +4,12 @@ import com.domisa.domisa_backend.user.entity.User;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
@@ -15,6 +19,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@EntityGraph(attributePaths = "profileImage")
 	Optional<User> findWithProfileImageById(Long id);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select u from User u where u.id = :id")
+	Optional<User> findByIdWithLock(@Param("id") Long id);
 
 	@EntityGraph(attributePaths = "profileImage")
 	Optional<User> findWithProfileImageByPublicId(String publicId);
