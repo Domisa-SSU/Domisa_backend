@@ -43,4 +43,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
 		nativeQuery = true
 	)
 	long countMutualMatches();
+
+	@org.springframework.data.jpa.repository.Query(
+		value = """
+			SELECT u.id FROM users u
+			WHERE u.id != :userId
+			AND u.is_profile_completed = true
+			ORDER BY RAND()
+			LIMIT :limit
+			""",
+		nativeQuery = true
+	)
+	List<Long> findRandomUserIds(@org.springframework.data.repository.query.Param("userId") Long userId,
+		@org.springframework.data.repository.query.Param("limit") int limit);
 }

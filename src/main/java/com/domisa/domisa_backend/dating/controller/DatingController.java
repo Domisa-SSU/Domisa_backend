@@ -57,6 +57,12 @@ public class DatingController {
 		return ResponseEntity.ok(datingService.getMatchCount());
 	}
 
+	@PostMapping("/shuffle")
+	public ResponseEntity<Void> shuffle(@AuthUser User authUser) {
+		datingService.shuffle(authUser);
+		return ResponseEntity.ok().build();
+	}
+
 	@PostMapping("/profiles/{publicId}/unblur")
 	public ResponseEntity<UnblurProfileResponse> unblurProfile(
 		@AuthUser User authUser,

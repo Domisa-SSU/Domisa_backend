@@ -219,6 +219,20 @@ public class DatingService {
 		targetUser.getMyFans().add(requester.getId());
 	}
 
+	@Transactional
+	public void shuffle(User authUser) {
+		User requester = getRequiredUser(authUser);
+
+		if (requester.getCookies() == null || requester.getCookies() < 3) {
+			throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
+		}
+
+		List<Long> randomIds = userRepository.findRandomUserIds(requester.getId(), MAX_DATING_PROFILE_COUNT);
+		requester.setNowShows(new java.util.ArrayList<>(randomIds));
+		requester.setCookies(requester.getCookies() - 3);
+		requester.setRefreshAt(LocalDateTime.now());
+	}
+
 	private String generateUniqueLinkCode() {
 		String linkCode;
 		do {
