@@ -26,8 +26,12 @@ public class AuthService {
 	private final JwtProvider jwtProvider;
 	private final AuthCookieManager authCookieManager;
 
-	public LoginResponse login(String authorizationCode, HttpServletResponse response) {
-		String kakaoAccessToken = kakaoOAuthService.getAccessToken(authorizationCode);
+	public LoginResponse login(
+		String authorizationCode,
+		String redirectUri,
+		HttpServletResponse response
+	) {
+		String kakaoAccessToken = kakaoOAuthService.getAccessToken(authorizationCode, redirectUri);
 		Long kakaoId = kakaoOAuthService.getKakaoId(kakaoAccessToken);
 
 		User user = userRepository.findByKakaoId(kakaoId)
