@@ -1,5 +1,6 @@
 package com.domisa.domisa_backend.dating.service;
 
+import com.domisa.domisa_backend.cookie.repository.CookieWalletRepository;
 import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
@@ -37,6 +38,7 @@ public class DatingService {
 	private final UserRepository userRepository;
 	private final IntroductionRepository introductionRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
+	private final CookieWalletRepository cookieWalletRepository;
 
 	@Transactional
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
