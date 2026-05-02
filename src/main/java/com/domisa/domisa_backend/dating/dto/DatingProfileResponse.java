@@ -19,6 +19,6 @@ public record DatingProfileResponse(
 	ContactDTO contact,
 	boolean isBlurred,
 	boolean hasSentLike,
-	int freeBlurRemaining
+	int freeLikeRemaining
 ) {
 }
