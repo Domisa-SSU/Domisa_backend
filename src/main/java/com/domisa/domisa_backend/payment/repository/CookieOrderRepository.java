@@ -13,11 +13,26 @@ public interface CookieOrderRepository extends JpaRepository<CookieOrder, Long> 
 
 	Optional<CookieOrder> findByOrderNumber(String orderNumber);
 
-	boolean existsByBillingNameAndOrderAmountAndStatus(String billingName, Integer orderAmount, OrderStatus status);
+	Optional<CookieOrder> findByUserIdAndBillingNameAndOrderAmount(Long userId, String billingName, Integer orderAmount);
+
+	boolean existsByBillingNameAndStatus(String billingName, OrderStatus status);
 
 	Optional<CookieOrder> findTopByOrderNumberStartingWithOrderByOrderNumberDesc(String prefix);
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select o from CookieOrder o where o.orderNumber = :orderNumber")
 	Optional<CookieOrder> findByOrderNumberWithLock(@Param("orderNumber") String orderNumber);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("""
+		select o from CookieOrder o
+		where o.user.id = :userId
+			and o.billingName = :billingName
+			and o.orderAmount = :orderAmount
+		""")
+	Optional<CookieOrder> findByUserIdAndBillingNameAndOrderAmountWithLock(
+		@Param("userId") Long userId,
+		@Param("billingName") String billingName,
+		@Param("orderAmount") Integer orderAmount
+	);
 }

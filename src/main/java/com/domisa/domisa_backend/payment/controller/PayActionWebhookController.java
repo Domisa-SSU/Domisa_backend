@@ -22,7 +22,7 @@ public class PayActionWebhookController {
 	public ResponseEntity<PayActionWebhookResponse> receiveMatchedWebhook(
 		@RequestHeader("x-webhook-key") String webhookKey,
 		@RequestHeader("x-mall-id") String mallId,
-		@RequestHeader(value = "x-trace-id", required = false) String traceId,
+		@RequestHeader("x-trace-id") String traceId,
 		@RequestBody PayActionMatchedWebhookRequest request
 	) {
 		payActionWebhookService.handleMatchedWebhook(webhookKey, mallId, traceId, request);

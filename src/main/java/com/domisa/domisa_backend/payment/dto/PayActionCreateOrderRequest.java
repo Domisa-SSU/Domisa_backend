@@ -7,11 +7,7 @@ public record PayActionCreateOrderRequest(
 	@JsonProperty("order_amount") Integer orderAmount,
 	@JsonProperty("order_date") String orderDate,
 	@JsonProperty("billing_name") String billingName,
-	@JsonProperty("orderer_name") String ordererName,
-	@JsonProperty("orderer_phone_number") String ordererPhoneNumber,
-	@JsonProperty("orderer_email") String ordererEmail,
-	@JsonProperty("trade_usage") String tradeUsage,
-	@JsonProperty("identity_number") String identityNumber
+	@JsonProperty("orderer_name") String ordererName
 ) {
 	public static PayActionCreateOrderRequest requiredOnly(
 		String orderNumber,
@@ -25,11 +21,7 @@ public record PayActionCreateOrderRequest(
 			orderAmount,
 			orderDate,
 			billingName,
-			ordererName,
-			null,
-			null,
-			null,
-			null
+			ordererName
 		);
 	}
 }

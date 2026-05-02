@@ -77,6 +77,7 @@ public class NotificationService {
 		boolean match = false;
 
 		for (Notification notification : notifications) {
+			boolean shouldCancel = true;
 			switch (notification.getType()) {
 				case SIGNUP -> {
 					signup = true;
@@ -88,8 +89,11 @@ public class NotificationService {
 				}
 				case LIKE -> like = true;
 				case MATCH -> match = true;
+				case COOKIE_PAYMENT -> shouldCancel = false;
 			}
-			notification.cancel();
+			if (shouldCancel) {
+				notification.cancel();
+			}
 		}
 
 		return new NotificationActiveResponse(signup, referralCount, like, match);

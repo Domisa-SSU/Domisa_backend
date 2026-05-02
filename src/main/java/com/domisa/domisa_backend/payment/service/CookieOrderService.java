@@ -1,11 +1,13 @@
 package com.domisa.domisa_backend.payment.service;
 
 import com.domisa.domisa_backend.payment.client.PayActionClient;
-import com.domisa.domisa_backend.payment.config.PayActionProperties;
+import com.domisa.domisa_backend.payment.dto.CancelCookieOrderRequest;
+import com.domisa.domisa_backend.payment.dto.CookieOrderPaymentStatusResponse;
 import com.domisa.domisa_backend.payment.dto.CreateCookieOrderRequest;
 import com.domisa.domisa_backend.payment.dto.CreateCookieOrderResponse;
 import com.domisa.domisa_backend.payment.dto.PayActionCreateOrderRequest;
 import com.domisa.domisa_backend.payment.dto.PayActionCreateOrderResponse;
+import com.domisa.domisa_backend.payment.dto.PayActionOrderExcludeRequest;
 import com.domisa.domisa_backend.payment.entity.CookieOrder;
 import com.domisa.domisa_backend.payment.entity.OrderStatus;
 import com.domisa.domisa_backend.payment.repository.CookieOrderRepository;
@@ -13,7 +15,6 @@ import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
-import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -31,18 +32,18 @@ import org.springframework.web.client.RestClientException;
 public class CookieOrderService {
 
 	private static final ZoneId KOREA_ZONE_ID = ZoneId.of("Asia/Seoul");
-	private static final DateTimeFormatter ORDER_DATE_PREFIX_FORMATTER = DateTimeFormatter.BASIC_ISO_DATE;
-	private static final String BILLING_NAME_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	private static final DateTimeFormatter PAYACTION_ORDER_DATE_FORMATTER =
+		DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
 	private static final int MAX_ORDER_SAVE_ATTEMPTS = 20;
 	private static final int MAX_BILLING_NAME_ATTEMPTS = 20;
 
 	private final UserRepository userRepository;
 	private final CookieOrderRepository cookieOrderRepository;
 	private final PayActionClient payActionClient;
-	private final PayActionProperties payActionProperties;
-	private final SecureRandom secureRandom = new SecureRandom();
+	private final BillingNameGenerator billingNameGenerator;
+	private final OrderNumberGenerator orderNumberGenerator;
 
-	@Transactional
+	@Transactional(noRollbackFor = GlobalException.class)
 	public CreateCookieOrderResponse createCookieOrder(Long userId, CreateCookieOrderRequest request) {
 		validateRequest(request);
 
@@ -57,20 +58,62 @@ public class CookieOrderService {
 			order.getBillingName(),
 			resolveOrdererName(user)
 		);
-		PayActionCreateOrderResponse payActionResponse = createPayActionOrder(payActionRequest);
-		validatePayActionResponse(payActionResponse);
+		try {
+			PayActionCreateOrderResponse payActionResponse = createPayActionOrder(payActionRequest);
+			validatePayActionResponse(payActionResponse);
+		} catch (GlobalException exception) {
+			order.markFailed();
+			throw exception;
+		}
 
-		PayActionProperties.Deposit deposit = payActionProperties.getDeposit();
 		return new CreateCookieOrderResponse(
-			order.getOrderNumber(),
-			order.getOrderAmount(),
 			order.getBillingName(),
-			deposit.getBankName(),
-			deposit.getBankCode(),
-			deposit.getAccountNumber(),
-			deposit.getAccountHolder(),
-			order.getStatus().name()
+			order.getOrderAmount()
 		);
+	}
+
+	@Transactional
+	public void cancelCookieOrder(Long userId, CancelCookieOrderRequest request) {
+		validateCancelRequest(request);
+
+		CookieOrder order = cookieOrderRepository.findByUserIdAndBillingNameAndOrderAmountWithLock(
+				userId,
+				request.billingName(),
+				request.orderAmount()
+			)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.COOKIE_ORDER_NOT_FOUND));
+
+		if (order.getStatus() == OrderStatus.CANCELED) {
+			return;
+		}
+		if (!order.isPending()) {
+			throw new GlobalException(GlobalErrorCode.COOKIE_ORDER_INVALID_STATUS);
+		}
+
+		PayActionCreateOrderResponse payActionResponse = excludePayActionOrder(
+			new PayActionOrderExcludeRequest(order.getOrderNumber())
+		);
+		validatePayActionExcludeResponse(payActionResponse);
+		order.cancel();
+	}
+
+	@Transactional(readOnly = true)
+	public CookieOrderPaymentStatusResponse getCookieOrderPaymentStatus(
+		Long userId,
+		String billingName,
+		Integer orderAmount
+	) {
+		validatePaymentStatusRequest(billingName, orderAmount);
+
+		return cookieOrderRepository.findByUserIdAndBillingNameAndOrderAmount(
+				userId,
+				billingName,
+				orderAmount
+			)
+			.map(order -> order.isPaid()
+				? CookieOrderPaymentStatusResponse.paid(order.getCookieAmount())
+				: CookieOrderPaymentStatusResponse.unconfirmed(order.getStatus().name()))
+			.orElseGet(() -> CookieOrderPaymentStatusResponse.unconfirmed("UNCONFIRMED"));
 	}
 
 	LocalDateTime currentKoreaDateTime() {
@@ -78,15 +121,30 @@ public class CookieOrderService {
 	}
 
 	String nextBillingNameCandidate() {
-		StringBuilder builder = new StringBuilder(4);
-		for (int index = 0; index < 4; index++) {
-			builder.append(BILLING_NAME_CHARS.charAt(secureRandom.nextInt(BILLING_NAME_CHARS.length())));
-		}
-		return builder.toString();
+		return billingNameGenerator.generate();
 	}
 
 	private void validateRequest(CreateCookieOrderRequest request) {
 		if (request == null || request.cookieAmount() == null || request.orderAmount() == null) {
+			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
+		}
+		if (request.cookieAmount() <= 0 || request.orderAmount() <= 0) {
+			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
+		}
+	}
+
+	private void validateCancelRequest(CancelCookieOrderRequest request) {
+		if (request == null
+			|| request.billingName() == null
+			|| request.billingName().isBlank()
+			|| request.orderAmount() == null
+			|| request.orderAmount() <= 0) {
+			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
+		}
+	}
+
+	private void validatePaymentStatusRequest(String billingName, Integer orderAmount) {
+		if (billingName == null || billingName.isBlank() || orderAmount == null || orderAmount <= 0) {
 			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
 		}
 	}
@@ -118,22 +176,19 @@ public class CookieOrderService {
 	}
 
 	private String nextOrderNumber(LocalDate orderDate) {
-		String prefix = "CK" + orderDate.format(ORDER_DATE_PREFIX_FORMATTER);
+		String prefix = orderNumberGenerator.prefix(orderDate);
 		int nextSequence = cookieOrderRepository.findTopByOrderNumberStartingWithOrderByOrderNumberDesc(prefix)
 			.map(CookieOrder::getOrderNumber)
 			.map(orderNumber -> Integer.parseInt(orderNumber.substring(prefix.length())) + 1)
 			.orElse(1);
-		return prefix + String.format("%06d", nextSequence);
+		return orderNumberGenerator.generate(orderDate, nextSequence);
 	}
 
 	private String generateUniqueBillingName(Integer orderAmount) {
 		for (int attempt = 0; attempt < MAX_BILLING_NAME_ATTEMPTS; attempt++) {
 			String billingName = nextBillingNameCandidate();
-			if (!cookieOrderRepository.existsByBillingNameAndOrderAmountAndStatus(
-				billingName,
-				orderAmount,
-				OrderStatus.PENDING
-			)) {
+			if (!cookieOrderRepository.existsByBillingNameAndStatus(billingName, OrderStatus.PAYMENT_PENDING)
+				&& !cookieOrderRepository.existsByBillingNameAndStatus(billingName, OrderStatus.PENDING)) {
 				return billingName;
 			}
 		}
@@ -152,7 +207,7 @@ public class CookieOrderService {
 	}
 
 	private String toIsoOffsetString(LocalDateTime localDateTime) {
-		return OffsetDateTime.of(localDateTime, ZoneOffset.ofHours(9)).toString();
+		return OffsetDateTime.of(localDateTime, ZoneOffset.ofHours(9)).format(PAYACTION_ORDER_DATE_FORMATTER);
 	}
 
 	private PayActionCreateOrderResponse createPayActionOrder(PayActionCreateOrderRequest request) {
@@ -166,6 +221,17 @@ public class CookieOrderService {
 		}
 	}
 
+	private PayActionCreateOrderResponse excludePayActionOrder(PayActionOrderExcludeRequest request) {
+		try {
+			return payActionClient.excludeOrder(request);
+		} catch (RestClientException exception) {
+			throw new GlobalException(
+				GlobalErrorCode.PAYACTION_ORDER_EXCLUDE_FAILED,
+				"페이액션 주문 매칭 제외 실패: " + exception.getMessage()
+			);
+		}
+	}
+
 	private void validatePayActionResponse(PayActionCreateOrderResponse response) {
 		if (response != null && response.isSuccess()) {
 			return;
@@ -175,6 +241,17 @@ public class CookieOrderService {
 			? response.response().message()
 			: GlobalErrorCode.PAYACTION_ORDER_CREATE_FAILED.getMessage();
 		throw new GlobalException(GlobalErrorCode.PAYACTION_ORDER_CREATE_FAILED, "페이액션 주문 등록 실패: " + message);
+	}
+
+	private void validatePayActionExcludeResponse(PayActionCreateOrderResponse response) {
+		if (response != null && response.isSuccess()) {
+			return;
+		}
+
+		String message = response != null && response.response() != null && response.response().message() != null
+			? response.response().message()
+			: GlobalErrorCode.PAYACTION_ORDER_EXCLUDE_FAILED.getMessage();
+		throw new GlobalException(GlobalErrorCode.PAYACTION_ORDER_EXCLUDE_FAILED, "페이액션 주문 매칭 제외 실패: " + message);
 	}
 
 	private boolean isOrderNumberCollision(DataIntegrityViolationException exception) {

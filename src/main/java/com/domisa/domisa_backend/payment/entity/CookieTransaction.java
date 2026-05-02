@@ -32,8 +32,8 @@ public class CookieTransaction {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "order_id", nullable = false)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "order_id")
 	private CookieOrder order;
 
 	@Column(name = "amount", nullable = false)
@@ -43,18 +43,32 @@ public class CookieTransaction {
 	@Column(name = "type", nullable = false, length = 20)
 	private CookieTransactionType type;
 
+	@Column(name = "description", length = 100)
+	private String description;
+
 	@Column(name = "created_at", nullable = false)
 	private LocalDateTime createdAt;
 
-	private CookieTransaction(User user, CookieOrder order, Integer amount, CookieTransactionType type) {
+	private CookieTransaction(
+		User user,
+		CookieOrder order,
+		Integer amount,
+		CookieTransactionType type,
+		String description
+	) {
 		this.user = user;
 		this.order = order;
 		this.amount = amount;
 		this.type = type;
+		this.description = description;
 	}
 
 	public static CookieTransaction charge(User user, CookieOrder order, Integer amount) {
-		return new CookieTransaction(user, order, amount, CookieTransactionType.CHARGE);
+		return new CookieTransaction(user, order, amount, CookieTransactionType.CHARGE, "쿠키 충전");
+	}
+
+	public static CookieTransaction use(User user, Integer amount, String description) {
+		return new CookieTransaction(user, null, amount, CookieTransactionType.USE, description);
 	}
 
 	@PrePersist

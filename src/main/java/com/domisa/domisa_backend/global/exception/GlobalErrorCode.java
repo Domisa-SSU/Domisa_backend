@@ -32,6 +32,11 @@ public enum GlobalErrorCode {
 		"PAYACTION_ORDER_CREATE_FAILED",
 		"페이액션 주문 등록에 실패했습니다."
 	),
+	PAYACTION_ORDER_EXCLUDE_FAILED(
+		HttpStatus.BAD_GATEWAY,
+		"PAYACTION_ORDER_EXCLUDE_FAILED",
+		"페이액션 주문 매칭 제외에 실패했습니다."
+	),
 	PAYACTION_WEBHOOK_UNAUTHORIZED(
 		HttpStatus.UNAUTHORIZED,
 		"PAYACTION_WEBHOOK_UNAUTHORIZED",
