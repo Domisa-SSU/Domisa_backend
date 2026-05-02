@@ -4,7 +4,7 @@ import java.util.List;
 
 public record DatingProfileListResponse(
 	int profileNum,
-	int freeBlurRemaining,
+	int freeLikeRemaining,
 	List<ProfileSummary> profiles
 ) {
 	public record ProfileSummary(

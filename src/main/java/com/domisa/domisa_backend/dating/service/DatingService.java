@@ -45,7 +45,7 @@ public class DatingService {
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
 		User requester = getRequiredUser(authUser);
 
-		int freeBlurRemaining = getFreeBlurRemaining(requester);
+		int freeLikeRemaining = getFreeLikeRemaining(requester);
 
 		List<Long> nowShowIds = requester.getNowShows() == null
 			? Collections.emptyList()
@@ -69,7 +69,7 @@ public class DatingService {
 			))
 			.toList();
 
-		return new DatingProfileListResponse(profiles.size(), freeBlurRemaining, profiles);
+		return new DatingProfileListResponse(profiles.size(), freeLikeRemaining, profiles);
 	}
 
 	@Transactional
@@ -80,7 +80,7 @@ public class DatingService {
 
 		boolean isBlurred = requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId());
 		boolean hasSentLike = requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId());
-		int freeBlurRemaining = getFreeBlurRemaining(requester);
+		int freeLikeRemaining = getFreeLikeRemaining(requester);
 
 		String profileUrl = isBlurred
 			? s3ObjectUrlService.getOriginBlurUrl(targetUser.getProfileImage())
@@ -104,7 +104,7 @@ public class DatingService {
 			contact,
 			isBlurred,
 			hasSentLike,
-			freeBlurRemaining
+			freeLikeRemaining
 		);
 	}
 
@@ -270,13 +270,22 @@ public class DatingService {
 			throw new GlobalException(GlobalErrorCode.CANNOT_LIKE_SELF);
 		}
 
-		// 블러 해제한 상대에게만 호감 보내기 가능
-		if (requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId())) {
-			throw new GlobalException(GlobalErrorCode.NOT_UNBLURRED);
-		}
-
 		if (requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId())) {
 			throw new GlobalException(GlobalErrorCode.ALREADY_LIKED);
+		}
+
+		// 2시간에 3번 무료, 초과 시 쿠키 1개
+		int freeLikeRemaining = getFreeLikeRemaining(requester);
+		if (freeLikeRemaining > 0) {
+			requester.setFreeLikeCount(requester.getFreeLikeCount() + 1);
+			if (requester.getFreeLikeResetAt() == null) {
+				requester.setFreeLikeResetAt(LocalDateTime.now());
+			}
+		} else {
+			if (requester.getCookies() == null || requester.getCookies() < 1) {
+				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
+			}
+			requester.setCookies(requester.getCookies() - 1);
 		}
 
 		if (requester.getMyTypes() == null) {
