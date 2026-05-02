@@ -1,6 +1,7 @@
 package com.domisa.domisa_backend.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.when;
 
 import com.domisa.domisa_backend.notification.dto.NotificationActiveResponse;
@@ -48,7 +49,7 @@ class NotificationServiceTest {
 		targetUser.setNickname("배고파요");
 
 		when(notificationRepository.findAllByUserIdOrderByCreatedAtAsc(1L)).thenReturn(List.of(notification));
-		when(userRepository.findAllByIdIn(List.of(1L, 2L))).thenReturn(List.of(owner, targetUser));
+		when(userRepository.findAllByIdIn(anyCollection())).thenReturn(List.of(owner, targetUser));
 
 		NotificationListResponse response = notificationService.getNotifications(1L);
 

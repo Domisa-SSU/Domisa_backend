@@ -51,3 +51,14 @@ app:
       origin-blur-kernel-size: ${PROFILE_IMAGE_ORIGIN_BLUR_KERNEL_SIZE:21}
       batch-size: ${PROFILE_IMAGE_BATCH_SIZE:10}
       max-retry-count: ${PROFILE_IMAGE_MAX_RETRY_COUNT:5}
+
+payaction:
+  base-url: ${PAYACTION_BASE_URL:https://api.payaction.app}
+  api-key: ${PAYACTION_API_KEY:}
+  mall-id: ${PAYACTION_MALL_ID:}
+  webhook-key: ${PAYACTION_WEBHOOK_KEY:}
+  deposit:
+    bank-name: ${PAYACTION_DEPOSIT_BANK_NAME:국민은행}
+    bank-code: ${PAYACTION_DEPOSIT_BANK_CODE:004}
+    account-number: ${PAYACTION_DEPOSIT_ACCOUNT_NUMBER:}
+    account-holder: ${PAYACTION_DEPOSIT_ACCOUNT_HOLDER:}

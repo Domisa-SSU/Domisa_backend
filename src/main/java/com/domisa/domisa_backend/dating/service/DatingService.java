@@ -1,5 +1,6 @@
 package com.domisa.domisa_backend.dating.service;
 
+import com.domisa.domisa_backend.cookie.repository.CookieWalletRepository;
 import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
@@ -37,6 +38,7 @@ public class DatingService {
 	private final UserRepository userRepository;
 	private final IntroductionRepository introductionRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
+	private final CookieWalletRepository cookieWalletRepository;
 
 	@Transactional
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
@@ -188,14 +190,14 @@ public class DatingService {
 				requester.setFreeLikeResetAt(LocalDateTime.now());
 			}
 			usedFreeChance = true;
-		}
-		else {
-			if(requester.getCookies() == null || requester.getCookies() < 1) {
+		} else {
+			if (requester.getCookieBalance() < 1) {
 				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
 			}
-			requester.setCookies(requester.getCookies() - 1);
+			requester.subtractCookies(1);
+			cookieWalletRepository.findByUserId(requester.getId()).ifPresent(wallet -> wallet.subtract(1));
 		}
-		return new LikeSendResponse(usedFreeChance, requester.getCookies());
+		return new LikeSendResponse(usedFreeChance, requester.getCookieBalance());
 	}
 
 	private String generateUniqueLinkCode() {

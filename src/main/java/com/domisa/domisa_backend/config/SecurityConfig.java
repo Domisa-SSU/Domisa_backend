@@ -36,13 +36,14 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/health").permitAll()
-                .requestMatchers("/api/introduction/**").permitAll()
-                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
-                .requestMatchers(
-                    "/v3/api-docs/**",
-                    "/swagger-ui/**",
+	            .authorizeHttpRequests(auth -> auth
+	                .requestMatchers("/health").permitAll()
+	                .requestMatchers("/api/introduction/**").permitAll()
+	                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+	                .requestMatchers("/api/webhooks/payaction/**").permitAll()
+	                .requestMatchers(
+	                    "/v3/api-docs/**",
+	                    "/swagger-ui/**",
                     "/swagger-ui.html"
                 ).permitAll()
                 .anyRequest().authenticated()
@@ -56,12 +57,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(frontendUrl, "http://localhost:8080", "http://localhost:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+	    public CorsConfigurationSource corsConfigurationSource() {
+	        CorsConfiguration config = new CorsConfiguration();
+	        config.setAllowedOrigins(List.of(
+	        	frontendUrl,
+	        	"http://localhost:8080",
+	        	"http://localhost:3000",
+	        	"http://localhost:5173",
+	        	"http://localhost:5174"
+	        ));
+	        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+	        config.setAllowedHeaders(List.of("*"));
+	        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
