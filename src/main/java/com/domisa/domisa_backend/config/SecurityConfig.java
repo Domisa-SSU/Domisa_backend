@@ -5,6 +5,7 @@ import com.domisa.domisa_backend.auth.jwt.JwtProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,6 +20,14 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private static final List<String> ALLOWED_ORIGINS = List.of(
+        "https://domisa.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:8080"
+    );
 
     private final JwtProvider jwtProvider;
 
@@ -37,6 +46,7 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 	            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 	                .requestMatchers("/health").permitAll()
 	                .requestMatchers("/api/introduction/**").permitAll()
 	                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
@@ -59,15 +69,15 @@ public class SecurityConfig {
     @Bean
 	    public CorsConfigurationSource corsConfigurationSource() {
 	        CorsConfiguration config = new CorsConfiguration();
-	        config.setAllowedOrigins(List.of(
-	        	frontendUrl,
-	        	"http://localhost:8080",
-	        	"http://localhost:3000",
-	        	"http://localhost:5173",
-	        	"http://localhost:5174"
-	        ));
+            List<String> allowedOrigins = frontendUrl == null || frontendUrl.isBlank()
+                ? ALLOWED_ORIGINS
+                : java.util.stream.Stream.concat(ALLOWED_ORIGINS.stream(), java.util.stream.Stream.of(frontendUrl))
+                    .distinct()
+                    .toList();
+	        config.setAllowedOrigins(allowedOrigins);
 	        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 	        config.setAllowedHeaders(List.of("*"));
+            config.setExposedHeaders(List.of("*"));
 	        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
