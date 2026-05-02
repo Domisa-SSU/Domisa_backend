@@ -127,6 +127,12 @@ public class User {
 
 	@Column(name = "free_blur_reset_at")
 	private LocalDateTime freeBlurResetAt;
+
+	@Column(name = "free_like_count", nullable = false)
+	private Integer freeLikeCount = 0;
+
+	@Column(name = "free_like_reset_at")
+	private LocalDateTime freeLikeResetAt;
 	private User(Long kakaoId) {
 		this.kakaoId = kakaoId;
 	}

@@ -2,6 +2,7 @@ package com.domisa.domisa_backend.dating.service;
 
 import com.domisa.domisa_backend.cookie.repository.CookieWalletRepository;
 import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
+import com.domisa.domisa_backend.dating.dto.DatingMatchListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
@@ -48,7 +49,10 @@ public class DatingService {
 
 		List<Long> nowShowIds = requester.getNowShows() == null
 			? Collections.emptyList()
-			: requester.getNowShows().stream().limit(MAX_DATING_PROFILE_COUNT).toList();
+			: requester.getNowShows().stream()
+				.filter(id -> requester.getMyFans() == null || !requester.getMyFans().contains(id))
+				.limit(MAX_DATING_PROFILE_COUNT)
+				.toList();
 		Set<Long> unblurIds = requester.getMyBlurs() == null
 			? Collections.emptySet()
 			: new HashSet<>(requester.getMyBlurs());
@@ -68,7 +72,7 @@ public class DatingService {
 		return new DatingProfileListResponse(profiles.size(), freeBlurRemaining, profiles);
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public DatingProfileResponse getDatingProfile(User authUser, String userId) {
 		User requester = getRequiredUser(authUser);
 		User targetUser = userRepository.findDatingProfileByPublicId(userId)
@@ -76,6 +80,7 @@ public class DatingService {
 
 		boolean isBlurred = requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId());
 		boolean hasSentLike = requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId());
+		int freeBlurRemaining = getFreeBlurRemaining(requester);
 
 		String profileUrl = isBlurred
 			? s3ObjectUrlService.getOriginBlurUrl(targetUser.getProfileImage())
@@ -98,7 +103,8 @@ public class DatingService {
 			targetUser.getCard() == null ? null : targetUser.getCard().getMbti(),
 			contact,
 			isBlurred,
-			hasSentLike
+			hasSentLike,
+			freeBlurRemaining
 		);
 	}
 
@@ -152,6 +158,39 @@ public class DatingService {
 	}
 
 	@Transactional(readOnly = true)
+	public DatingMatchListResponse getMatchList(User authUser) {
+		User requester = getRequiredUser(authUser);
+
+		if (requester.getMyTypes() == null || requester.getMyFans() == null) {
+			return new DatingMatchListResponse(0, Collections.emptyList());
+		}
+
+		// 내가 호감 보낸 사람 중에 나한테도 호감 보낸 사람 = 쌍방 매칭
+		Set<Long> myTypes = new HashSet<>(requester.getMyTypes());
+		List<Long> matchedIds = requester.getMyFans().stream()
+			.filter(myTypes::contains)
+			.toList();
+
+		if (matchedIds.isEmpty()) {
+			return new DatingMatchListResponse(0, Collections.emptyList());
+		}
+
+		List<DatingMatchListResponse.MatchSummary> matches = userRepository.findAllByIdIn(matchedIds).stream()
+			.map(user -> new DatingMatchListResponse.MatchSummary(
+				user.getPublicId(),
+				user.getNickname(),
+				user.getProfileImage() != null
+					? s3ObjectUrlService.getProfileImageUrl(user.getProfileImage())
+					: null,
+				user.getContactType() != null ? user.getContactType().name() : null,
+				user.getContact()
+			))
+			.toList();
+
+		return new DatingMatchListResponse(matches.size(), matches);
+	}
+
+	@Transactional(readOnly = true)
 	public DatingMatchCountResponse getMatchCount() {
 		return new DatingMatchCountResponse(userRepository.countMutualMatches());
 	}
@@ -170,6 +209,7 @@ public class DatingService {
 			return new UnblurProfileResponse(targetUser.getPublicId(), false, "이미 블러가 해제된 프로필입니다.");
 		}
 
+		// 일반 블러 해제: 2시간에 3번 무료, 초과 시 쿠키 1개
 		int freeBlurRemaining = getFreeBlurRemaining(requester);
 		if (freeBlurRemaining > 0) {
 			requester.setFreeBlurCount(requester.getFreeBlurCount() + 1);
@@ -189,6 +229,35 @@ public class DatingService {
 		requester.getMyBlurs().add(targetUser.getId());
 
 		return new UnblurProfileResponse(targetUser.getPublicId(), false, "프로필 블러가 해제되었습니다.");
+	}
+
+	// 받은 호감 전용 블러 해제 — 쿠키 2개
+	@Transactional
+	public UnblurProfileResponse unblurReceivedLike(User authUser, String publicId) {
+		User requester = getRequiredUser(authUser);
+		User targetUser = userRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		// 실제로 받은 호감인지 확인
+		if (requester.getMyFans() == null || !requester.getMyFans().contains(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.USER_NOT_FOUND);
+		}
+
+		if (requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId())) {
+			return new UnblurProfileResponse(targetUser.getPublicId(), false, "이미 블러가 해제된 프로필입니다.");
+		}
+
+		if (requester.getCookies() == null || requester.getCookies() < 2) {
+			throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
+		}
+		requester.setCookies(requester.getCookies() - 2);
+
+		if (requester.getMyBlurs() == null) {
+			requester.setMyBlurs(new java.util.ArrayList<>());
+		}
+		requester.getMyBlurs().add(targetUser.getId());
+
+		return new UnblurProfileResponse(targetUser.getPublicId(), false, "소개팅 카드 블러가 해제되었습니다.");
 	}
 
 	@Transactional
@@ -219,6 +288,23 @@ public class DatingService {
 			targetUser.setMyFans(new java.util.ArrayList<>());
 		}
 		targetUser.getMyFans().add(requester.getId());
+
+		// 쌍방 매칭 확인 — 상대도 나한테 호감 보낸 상태면 서로 myBlurs에 자동 추가 (연락처 공개)
+		boolean isMutual = targetUser.getMyTypes() != null && targetUser.getMyTypes().contains(requester.getId());
+		if (isMutual) {
+			if (targetUser.getMyBlurs() == null) {
+				targetUser.setMyBlurs(new java.util.ArrayList<>());
+			}
+			if (!targetUser.getMyBlurs().contains(requester.getId())) {
+				targetUser.getMyBlurs().add(requester.getId());
+			}
+			if (requester.getMyBlurs() == null) {
+				requester.setMyBlurs(new java.util.ArrayList<>());
+			}
+			if (!requester.getMyBlurs().contains(targetUser.getId())) {
+				requester.getMyBlurs().add(targetUser.getId());
+			}
+		}
 	}
 
 	@Transactional
@@ -243,11 +329,22 @@ public class DatingService {
 		return linkCode;
 	}
 
+	private int getFreeLikeRemaining(User user) {
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime resetAt = user.getFreeLikeResetAt();
+
+		if (resetAt == null || resetAt.plusHours(2).isBefore(now)) {
+			user.setFreeLikeCount(0);
+			user.setFreeLikeResetAt(now);
+		}
+		return Math.max(0, 3 - user.getFreeLikeCount());
+	}
+
 	private int getFreeBlurRemaining(User user) {
 		LocalDateTime now = LocalDateTime.now();
 		LocalDateTime resetAt = user.getFreeBlurResetAt();
 
-		if (resetAt == null || resetAt.toLocalDate().isBefore(now.toLocalDate())) {
+		if (resetAt == null || resetAt.plusHours(2).isBefore(now)) {
 			user.setFreeBlurCount(0);
 			user.setFreeBlurResetAt(now);
 		}

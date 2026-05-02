@@ -2,6 +2,7 @@ package com.domisa.domisa_backend.dating.controller;
 
 import com.domisa.domisa_backend.auth.annotation.AuthUser;
 import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
+import com.domisa.domisa_backend.dating.dto.DatingMatchListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
@@ -52,6 +53,11 @@ public class DatingController {
 		return ResponseEntity.ok(datingService.createIntroductionLink(authUser, request));
 	}
 
+	@GetMapping("/matches")
+	public ResponseEntity<DatingMatchListResponse> getMatchList(@AuthUser User authUser) {
+		return ResponseEntity.ok(datingService.getMatchList(authUser));
+	}
+
 	@GetMapping("/count")
 	public ResponseEntity<DatingMatchCountResponse> getMatchCount() {
 		return ResponseEntity.ok(datingService.getMatchCount());
@@ -69,6 +75,14 @@ public class DatingController {
 		@PathVariable String publicId
 	) {
 		return ResponseEntity.ok(datingService.unblurProfile(authUser, publicId));
+	}
+
+	@PostMapping("/likes/received/{publicId}/unblur")
+	public ResponseEntity<UnblurProfileResponse> unblurReceivedLike(
+		@AuthUser User authUser,
+		@PathVariable String publicId
+	) {
+		return ResponseEntity.ok(datingService.unblurReceivedLike(authUser, publicId));
 	}
 
 	@PostMapping("/likes/{publicId}")
