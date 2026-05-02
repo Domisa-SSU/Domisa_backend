@@ -12,6 +12,8 @@ import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
 import com.domisa.domisa_backend.introduction.entity.Introduction;
 import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
+import com.domisa.domisa_backend.payment.entity.CookieTransaction;
+import com.domisa.domisa_backend.payment.repository.CookieTransactionRepository;
 import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
@@ -37,6 +39,7 @@ public class DatingService {
 	private final UserRepository userRepository;
 	private final IntroductionRepository introductionRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
+	private final CookieTransactionRepository cookieTransactionRepository;
 
 	@Transactional
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
@@ -218,6 +221,7 @@ public class DatingService {
 				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
 			}
 			requester.setCookies(requester.getCookies() - 1);
+			saveCookieUseTransaction(requester, 1, "프로필 블러 해제");
 		}
 
 		if (requester.getMyBlurs() == null) {
@@ -248,6 +252,7 @@ public class DatingService {
 			throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
 		}
 		requester.setCookies(requester.getCookies() - 2);
+		saveCookieUseTransaction(requester, 2, "받은 호감 블러 해제");
 
 		if (requester.getMyBlurs() == null) {
 			requester.setMyBlurs(new java.util.ArrayList<>());
@@ -283,6 +288,7 @@ public class DatingService {
 				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
 			}
 			requester.setCookies(requester.getCookies() - 1);
+			saveCookieUseTransaction(requester, 1, "호감 보내기");
 		}
 
 		if (requester.getMyTypes() == null) {
@@ -324,7 +330,12 @@ public class DatingService {
 		List<Long> randomIds = userRepository.findRandomUserIds(requester.getId(), MAX_DATING_PROFILE_COUNT);
 		requester.setNowShows(new java.util.ArrayList<>(randomIds));
 		requester.setCookies(requester.getCookies() - 3);
+		saveCookieUseTransaction(requester, 3, "소개팅 카드 셔플");
 		requester.setRefreshAt(LocalDateTime.now());
+	}
+
+	private void saveCookieUseTransaction(User user, int amount, String description) {
+		cookieTransactionRepository.save(CookieTransaction.use(user, amount, description));
 	}
 
 	private String generateUniqueLinkCode() {
