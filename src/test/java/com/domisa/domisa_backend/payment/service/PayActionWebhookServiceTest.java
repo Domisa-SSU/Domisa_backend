@@ -31,6 +31,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -139,7 +140,7 @@ class PayActionWebhookServiceTest {
 		verify(notificationService).createNotification(NotificationType.COOKIE_PAYMENT, 1L, null);
 
 		ArgumentCaptor<PayActionWebhookLog> logCaptor = ArgumentCaptor.forClass(PayActionWebhookLog.class);
-		verify(payActionWebhookLogRepository).save(logCaptor.capture());
+		verify(payActionWebhookLogRepository).saveAndFlush(logCaptor.capture());
 		assertThat(logCaptor.getValue().getTraceId()).isEqualTo("trace-1");
 	}
 
@@ -169,7 +170,37 @@ class PayActionWebhookServiceTest {
 		verify(cookieWalletRepository, never()).findByUserIdWithLock(any());
 		verify(cookieTransactionRepository, never()).save(any());
 		verify(notificationService, never()).createNotification(any(), any(), any());
-		verify(payActionWebhookLogRepository).save(any());
+		verify(payActionWebhookLogRepository).saveAndFlush(any());
+	}
+
+	@Test
+	void handleMatchedWebhookIgnoresDuplicatedTraceIdWhenLogSaveConflicts() {
+		User user = createUser(1L, 5L);
+		CookieOrder order = CookieOrder.create(
+			user,
+			"CK20260502000001",
+			"A7B9",
+			10000,
+			100,
+			"홍길동",
+			LocalDateTime.of(2026, 5, 2, 15, 30)
+		);
+		order.markPaid(LocalDateTime.of(2026, 5, 2, 15, 32));
+		when(payActionWebhookLogRepository.existsByTraceId("trace-1")).thenReturn(false);
+		when(cookieOrderRepository.findByOrderNumberWithLock("CK20260502000001")).thenReturn(Optional.of(order));
+		when(payActionWebhookLogRepository.saveAndFlush(any(PayActionWebhookLog.class)))
+			.thenThrow(new DataIntegrityViolationException("duplicate trace"));
+
+		payActionWebhookService.handleMatchedWebhook(
+			"webhook-key",
+			"mall-id",
+			"trace-1",
+			new PayActionMatchedWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
+		);
+
+		verify(cookieWalletRepository, never()).findByUserIdWithLock(any());
+		verify(cookieTransactionRepository, never()).save(any());
+		verify(notificationService, never()).createNotification(any(), any(), any());
 	}
 
 	@Test

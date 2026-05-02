@@ -19,6 +19,7 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -109,12 +110,16 @@ public class PayActionWebhookService {
 		PayActionMatchedWebhookRequest request,
 		LocalDateTime processingDate
 	) {
-		payActionWebhookLogRepository.save(PayActionWebhookLog.create(
-			traceId,
-			request.orderNumber(),
-			request.orderStatus(),
-			processingDate,
-			LocalDateTime.now()
-		));
+		try {
+			payActionWebhookLogRepository.saveAndFlush(PayActionWebhookLog.create(
+				traceId,
+				request.orderNumber(),
+				request.orderStatus(),
+				processingDate,
+				LocalDateTime.now()
+			));
+		} catch (DataIntegrityViolationException exception) {
+			log.info("Duplicated PayAction webhook traceId={}", traceId);
+		}
 	}
 }
