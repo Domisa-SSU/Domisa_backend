@@ -10,12 +10,16 @@ import static org.mockito.Mockito.when;
 
 import com.domisa.domisa_backend.cookie.entity.CookieWallet;
 import com.domisa.domisa_backend.cookie.repository.CookieWalletRepository;
+import com.domisa.domisa_backend.notification.service.NotificationService;
+import com.domisa.domisa_backend.notification.type.NotificationType;
 import com.domisa.domisa_backend.payment.config.PayActionProperties;
 import com.domisa.domisa_backend.payment.dto.PayActionMatchedWebhookRequest;
 import com.domisa.domisa_backend.payment.entity.CookieOrder;
 import com.domisa.domisa_backend.payment.entity.CookieTransaction;
+import com.domisa.domisa_backend.payment.entity.PayActionWebhookLog;
 import com.domisa.domisa_backend.payment.repository.CookieOrderRepository;
 import com.domisa.domisa_backend.payment.repository.CookieTransactionRepository;
+import com.domisa.domisa_backend.payment.repository.PayActionWebhookLogRepository;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.user.entity.User;
 import java.time.LocalDateTime;
@@ -41,6 +45,12 @@ class PayActionWebhookServiceTest {
 	@Mock
 	private CookieTransactionRepository cookieTransactionRepository;
 
+	@Mock
+	private PayActionWebhookLogRepository payActionWebhookLogRepository;
+
+	@Mock
+	private NotificationService notificationService;
+
 	private PayActionWebhookService payActionWebhookService;
 
 	@BeforeEach
@@ -52,7 +62,9 @@ class PayActionWebhookServiceTest {
 			properties,
 			cookieOrderRepository,
 			cookieWalletRepository,
-			cookieTransactionRepository
+			cookieTransactionRepository,
+			payActionWebhookLogRepository,
+			notificationService
 		);
 	}
 
@@ -105,6 +117,7 @@ class PayActionWebhookServiceTest {
 			LocalDateTime.of(2026, 5, 2, 15, 30)
 		);
 		CookieWallet wallet = CookieWallet.create(user, 5);
+		when(payActionWebhookLogRepository.existsByTraceId("trace-1")).thenReturn(false);
 		when(cookieOrderRepository.findByOrderNumberWithLock("CK20260502000001")).thenReturn(Optional.of(order));
 		when(cookieWalletRepository.findByUserIdWithLock(1L)).thenReturn(Optional.of(wallet));
 
@@ -123,6 +136,11 @@ class PayActionWebhookServiceTest {
 		ArgumentCaptor<CookieTransaction> transactionCaptor = ArgumentCaptor.forClass(CookieTransaction.class);
 		verify(cookieTransactionRepository).save(transactionCaptor.capture());
 		assertThat(transactionCaptor.getValue().getAmount()).isEqualTo(100);
+		verify(notificationService).createNotification(NotificationType.COOKIE_PAYMENT, 1L, null);
+
+		ArgumentCaptor<PayActionWebhookLog> logCaptor = ArgumentCaptor.forClass(PayActionWebhookLog.class);
+		verify(payActionWebhookLogRepository).save(logCaptor.capture());
+		assertThat(logCaptor.getValue().getTraceId()).isEqualTo("trace-1");
 	}
 
 	@Test
@@ -138,6 +156,7 @@ class PayActionWebhookServiceTest {
 			LocalDateTime.of(2026, 5, 2, 15, 30)
 		);
 		order.markPaid(LocalDateTime.of(2026, 5, 2, 15, 32));
+		when(payActionWebhookLogRepository.existsByTraceId("trace-1")).thenReturn(false);
 		when(cookieOrderRepository.findByOrderNumberWithLock("CK20260502000001")).thenReturn(Optional.of(order));
 
 		payActionWebhookService.handleMatchedWebhook(
@@ -149,6 +168,8 @@ class PayActionWebhookServiceTest {
 
 		verify(cookieWalletRepository, never()).findByUserIdWithLock(any());
 		verify(cookieTransactionRepository, never()).save(any());
+		verify(notificationService, never()).createNotification(any(), any(), any());
+		verify(payActionWebhookLogRepository).save(any());
 	}
 
 	@Test
@@ -164,6 +185,8 @@ class PayActionWebhookServiceTest {
 			LocalDateTime.of(2026, 5, 2, 15, 30)
 		);
 		CookieWallet wallet = CookieWallet.create(user, 0);
+		when(payActionWebhookLogRepository.existsByTraceId("trace-1")).thenReturn(false);
+		when(payActionWebhookLogRepository.existsByTraceId("trace-2")).thenReturn(false);
 		when(cookieOrderRepository.findByOrderNumberWithLock("CK20260502000001")).thenReturn(Optional.of(order));
 		when(cookieWalletRepository.findByUserIdWithLock(1L)).thenReturn(Optional.of(wallet));
 
@@ -175,6 +198,23 @@ class PayActionWebhookServiceTest {
 		assertThat(wallet.getBalance()).isEqualTo(100);
 		assertThat(user.getCookieBalance()).isEqualTo(100L);
 		verify(cookieTransactionRepository, times(1)).save(any());
+		verify(notificationService, times(1)).createNotification(NotificationType.COOKIE_PAYMENT, 1L, null);
+	}
+
+	@Test
+	void handleMatchedWebhookReturnsWhenTraceIdAlreadyExists() {
+		when(payActionWebhookLogRepository.existsByTraceId("trace-1")).thenReturn(true);
+
+		payActionWebhookService.handleMatchedWebhook(
+			"webhook-key",
+			"mall-id",
+			"trace-1",
+			new PayActionMatchedWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
+		);
+
+		verify(cookieOrderRepository, never()).findByOrderNumberWithLock(any());
+		verify(cookieTransactionRepository, never()).save(any());
+		verify(notificationService, never()).createNotification(any(), any(), any());
 	}
 
 	private User createUser(Long id, Long cookies) {
