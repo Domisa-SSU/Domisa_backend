@@ -56,15 +56,16 @@ public class SecurityConfig {
                 .accessDeniedHandler((request, response, accessDeniedException) ->
                     writeSecurityError(request, response, HttpServletResponse.SC_FORBIDDEN, "FORBIDDEN"))
             )
-	            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-	                .requestMatchers("/health").permitAll()
-	                .requestMatchers("/api/introduction/**").permitAll()
-	                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
-	                .requestMatchers("/api/webhooks/payaction/**").permitAll()
-	                .requestMatchers(
-	                    "/v3/api-docs/**",
-	                    "/swagger-ui/**",
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/introduction/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/check-nickname").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+                .requestMatchers("/api/webhooks/payaction/**").permitAll()
+                .requestMatchers(
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
                     "/swagger-ui.html"
                 ).permitAll()
                 .anyRequest().authenticated()
@@ -78,18 +79,18 @@ public class SecurityConfig {
     }
 
     @Bean
-	    public CorsConfigurationSource corsConfigurationSource() {
-	        CorsConfiguration config = new CorsConfiguration();
-            List<String> allowedOrigins = frontendUrl == null || frontendUrl.isBlank()
-                ? ALLOWED_ORIGINS
-                : java.util.stream.Stream.concat(ALLOWED_ORIGINS.stream(), java.util.stream.Stream.of(frontendUrl))
-                    .distinct()
-                    .toList();
-	        config.setAllowedOrigins(allowedOrigins);
-	        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-	        config.setAllowedHeaders(List.of("*"));
-            config.setExposedHeaders(List.of("*"));
-	        config.setAllowCredentials(true);
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        List<String> allowedOrigins = frontendUrl == null || frontendUrl.isBlank()
+            ? ALLOWED_ORIGINS
+            : java.util.stream.Stream.concat(ALLOWED_ORIGINS.stream(), java.util.stream.Stream.of(frontendUrl))
+                .distinct()
+                .toList();
+        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
