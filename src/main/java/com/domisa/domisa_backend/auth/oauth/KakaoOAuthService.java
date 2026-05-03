@@ -2,7 +2,7 @@ package com.domisa.domisa_backend.auth.oauth;
 
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class KakaoOAuthService {
 	private String redirectUri;
 
 	@Value("${kakao.allowed-redirect-uris}")
-	private List<String> allowedRedirectUris;
+	private String allowedRedirectUris;
 
 	private final RestTemplate restTemplate = new RestTemplate();
 
@@ -84,7 +84,9 @@ public class KakaoOAuthService {
 		}
 
 		String normalizedRedirectUri = requestedRedirectUri.trim();
-		if (allowedRedirectUris.stream().map(String::trim).noneMatch(normalizedRedirectUri::equals)) {
+		if (Arrays.stream(allowedRedirectUris.split(","))
+			.map(String::trim)
+			.noneMatch(normalizedRedirectUri::equals)) {
 			throw new GlobalException(GlobalErrorCode.INVALID_KAKAO_REDIRECT_URI);
 		}
 
