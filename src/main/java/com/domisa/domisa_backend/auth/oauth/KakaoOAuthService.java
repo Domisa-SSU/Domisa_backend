@@ -2,8 +2,10 @@ package com.domisa.domisa_backend.auth.oauth;
 
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -13,10 +15,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
 public class KakaoOAuthService {
+
+	private static final Logger log = LoggerFactory.getLogger(KakaoOAuthService.class);
 
 	@Value("${kakao.client-id}")
 	private String clientId;
@@ -28,7 +33,7 @@ public class KakaoOAuthService {
 	private String redirectUri;
 
 	@Value("${kakao.allowed-redirect-uris}")
-	private List<String> allowedRedirectUris;
+	private String allowedRedirectUris;
 
 	private final RestTemplate restTemplate = new RestTemplate();
 
@@ -46,11 +51,29 @@ public class KakaoOAuthService {
 
 		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-		ResponseEntity<Map> response = restTemplate.postForEntity(
-			"https://kauth.kakao.com/oauth/token",
-			request,
-			Map.class
-		);
+		ResponseEntity<Map> response;
+		try {
+			response = restTemplate.postForEntity(
+				"https://kauth.kakao.com/oauth/token",
+				request,
+				Map.class
+			);
+		} catch (RestClientResponseException exception) {
+			String responseBody = exception.getResponseBodyAsString();
+			log.warn(
+				"Kakao token request failed. status={}, redirectUri={}, kakaoResponse={}",
+				exception.getStatusCode().value(),
+				resolvedRedirectUri,
+				responseBody
+			);
+			if (responseBody.contains("KOE303")) {
+				throw new GlobalException(
+					GlobalErrorCode.INVALID_KAKAO_REDIRECT_URI,
+					"카카오 redirect URI가 일치하지 않습니다. 카카오 인가 요청 redirect_uri와 로그인 요청 redirectUri를 동일하게 설정해 주세요."
+				);
+			}
+			throw new GlobalException(GlobalErrorCode.KAKAO_TOKEN_REQUEST_FAILED);
+		}
 
 		return (String) response.getBody().get("access_token");
 	}
@@ -61,7 +84,9 @@ public class KakaoOAuthService {
 		}
 
 		String normalizedRedirectUri = requestedRedirectUri.trim();
-		if (allowedRedirectUris.stream().map(String::trim).noneMatch(normalizedRedirectUri::equals)) {
+		if (Arrays.stream(allowedRedirectUris.split(","))
+			.map(String::trim)
+			.noneMatch(normalizedRedirectUri::equals)) {
 			throw new GlobalException(GlobalErrorCode.INVALID_KAKAO_REDIRECT_URI);
 		}
 

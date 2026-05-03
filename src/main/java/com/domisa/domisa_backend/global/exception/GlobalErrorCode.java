@@ -16,6 +16,7 @@ public enum GlobalErrorCode {
 	NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_NOT_FOUND", "알림을 찾을 수 없습니다."),
 	MISSING_REQUIRED_FIELD(HttpStatus.BAD_REQUEST, "MISSING_REQUIRED_FIELD", "필수 입력 항목이 누락되었습니다."),
 	INVALID_KAKAO_REDIRECT_URI(HttpStatus.BAD_REQUEST, "INVALID_KAKAO_REDIRECT_URI", "허용되지 않은 카카오 redirect URI입니다."),
+	KAKAO_TOKEN_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "KAKAO_TOKEN_REQUEST_FAILED", "카카오 토큰 요청에 실패했습니다."),
 	INVALID_NICKNAME_LENGTH(HttpStatus.BAD_REQUEST, "INVALID_NICKNAME_LENGTH", "닉네임은 최대 4글자까지 입력 가능합니다."),
 	DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "DUPLICATE_NICKNAME", "이미 사용 중인 닉네임입니다."),
 	CARD_NOT_FOUND(HttpStatus.NOT_FOUND, "CARD_NOT_FOUND", "소개팅 카드를 찾을 수 없습니다."),
