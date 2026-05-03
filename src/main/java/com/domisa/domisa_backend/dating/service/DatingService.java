@@ -80,7 +80,12 @@ public class DatingService {
 
 		boolean isBlurred = requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId());
 		boolean hasSentLike = requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId());
+		boolean hasReceivedLike = requester.getMyFans() != null && requester.getMyFans().contains(targetUser.getId());
+		boolean isMatched = hasSentLike && hasReceivedLike;
 		int freeLikeRemaining = getFreeLikeRemaining(requester);
+
+		String q3 = targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ3();
+		String idealType = targetUser.getCard() == null ? null : targetUser.getCard().getIdealType();
 
 		String profileUrl = isBlurred
 			? s3ObjectUrlService.getOriginBlurUrl(targetUser.getProfileImage())
@@ -97,13 +102,17 @@ public class DatingService {
 			profileUrl,
 			targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ1(),
 			targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ2(),
-			targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ3(),
+			isBlurred ? null : q3,
+			isBlurred && q3 != null ? q3.length() : null,
 			targetUser.getCard() == null ? null : targetUser.getCard().getDatingStyle(),
-			targetUser.getCard() == null ? null : targetUser.getCard().getIdealType(),
+			isBlurred ? null : idealType,
+			isBlurred && idealType != null ? idealType.length() : null,
 			targetUser.getCard() == null ? null : targetUser.getCard().getMbti(),
 			contact,
 			isBlurred,
 			hasSentLike,
+			hasReceivedLike,
+			isMatched,
 			freeLikeRemaining
 		);
 	}
