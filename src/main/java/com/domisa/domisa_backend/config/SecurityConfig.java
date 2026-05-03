@@ -58,15 +58,19 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers("/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/introduction/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/check-nickname").permitAll()
                 .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
                 .requestMatchers("/api/webhooks/payaction/**").permitAll()
                 .requestMatchers(
+                    "/v3/api-docs",
                     "/v3/api-docs/**",
+                    "/swagger-ui",
                     "/swagger-ui/**",
-                    "/swagger-ui.html"
+                    "/swagger-ui.html",
+                    "/webjars/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
