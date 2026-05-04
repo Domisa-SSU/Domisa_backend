@@ -48,7 +48,7 @@ public class ProfileService {
 		long totalUserCount = Math.max(0, userRepository.count() - 1);
 
 		return new ProfileRegisterResponse(
-				user.getPublicId(),
+				user.getId(),
 				new ProfileRegisterResponse.StatusDto(
 						user.getIsRegistered(),
 						user.hasIntroduction(),
@@ -77,7 +77,7 @@ public class ProfileService {
 		user.setAnimalProfile(request.animalProfile());
 
 		return new ProfileUpdateResponse(
-				user.getPublicId(),
+				user.getId(),
 				user.getNickname(),
 				user.getGender(),
 				user.getBirthYear(),
