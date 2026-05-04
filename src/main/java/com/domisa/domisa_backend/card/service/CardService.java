@@ -55,6 +55,7 @@ public class CardService {
         // 연락처 저장
         user.setContactType(request.contactType());
         user.setContact(request.contact());
+        user.setNotificationPhone(request.notificationPhone());
 
         // 카드 생성 완료
         user.setIsProfileCompleted(true);
@@ -101,6 +102,7 @@ public class CardService {
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
         user.setContactType(request.contactType());
         user.setContact(request.contact());
+        user.setNotificationPhone(request.notificationPhone());
 
         return new CardResponse(
                 card.getId(),

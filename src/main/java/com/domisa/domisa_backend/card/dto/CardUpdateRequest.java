@@ -9,6 +9,6 @@ public record CardUpdateRequest(
         String idealType,
         String imageKey,
         ContactType contactType,
-        String contact
-) {
-}
+        String contact,
+        String notificationPhone // 알림 받을 전화번호 (문자 안받을래요 체크 시 null)
+) {}
