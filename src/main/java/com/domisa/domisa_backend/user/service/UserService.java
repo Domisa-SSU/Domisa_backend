@@ -33,7 +33,7 @@ public class UserService {
 		String profileImageUrl = s3ObjectUrlService.getProfileImageUrl(user.getProfileImage());
 
 		return new UserMeResponse(
-			user.getId(),
+			user.getPublicId(),
 			user.getNickname(),
 			user.getBirthYear(),
 			user.getGender(),

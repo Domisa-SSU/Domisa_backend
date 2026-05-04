@@ -3,7 +3,7 @@ package com.domisa.domisa_backend.user.dto;
 import com.domisa.domisa_backend.user.type.AnimalProfile;
 
 public record UserMeResponse(
-		Long userId,
+		String userId,
 		String nickname,
 		Long birthYear,
 		Boolean gender,
