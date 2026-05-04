@@ -1,6 +1,7 @@
 package com.domisa.domisa_backend.user.controller;
 
 import com.domisa.domisa_backend.auth.annotation.AuthUser;
+import com.domisa.domisa_backend.auth.service.AuthCookieManager;
 import com.domisa.domisa_backend.profile.dto.MyIntroductionResponse;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterResponse;
@@ -8,12 +9,15 @@ import com.domisa.domisa_backend.profile.dto.ProfileUpdateRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateResponse;
 import com.domisa.domisa_backend.profile.service.ProfileService;
 import com.domisa.domisa_backend.user.dto.UserCookiesResponse;
+import com.domisa.domisa_backend.user.dto.UserDeleteResponse;
 import com.domisa.domisa_backend.user.dto.UserLikesReceivedResponse;
 import com.domisa.domisa_backend.user.dto.UserLikesSentResponse;
 import com.domisa.domisa_backend.user.dto.UserMeResponse;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,6 +36,7 @@ public class UserController {
 
 	private final UserService userService;
 	private final ProfileService profileService;
+	private final AuthCookieManager authCookieManager;
 
 	// 닉네임 중복 조회
 	@GetMapping("/check-nickname")
@@ -81,5 +86,16 @@ public class UserController {
 			@RequestBody ProfileUpdateRequest request
 	) {
 		return ResponseEntity.ok(profileService.updateProfile(authUser.getId(), request));
+	}
+
+	@DeleteMapping("/me")
+	public ResponseEntity<UserDeleteResponse> deleteMe(
+			@AuthUser User authUser,
+			HttpServletResponse response
+	) {
+		userService.deleteMe(authUser);
+		authCookieManager.expireCookie(response, "accessToken");
+		authCookieManager.expireCookie(response, "refreshToken");
+		return ResponseEntity.ok(new UserDeleteResponse("회원탈퇴가 완료되었습니다."));
 	}
 }

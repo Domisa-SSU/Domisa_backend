@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface CardRepository extends JpaRepository<Card, Long> {
 
 	Optional<Card> findByUserId(Long userId);
+
+	void deleteByUserId(Long userId);
 }
