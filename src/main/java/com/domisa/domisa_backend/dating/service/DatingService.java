@@ -132,7 +132,10 @@ public class DatingService {
 		User authUser,
 		DatingIntroductionLinkCreateRequest request
 	) {
-		User introducer = getRequiredUser(authUser);
+		User introducer = (authUser != null && authUser.getId() != null)
+			? userRepository.findById(authUser.getId()).orElse(null)
+			: null;
+
 		String linkCode = generateUniqueLinkCode();
 
 		introductionRepository.save(Introduction.create(
