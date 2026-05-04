@@ -61,7 +61,7 @@ public class CardService {
         user.setIsProfileCompleted(true);
 
         return new CardCreateResponse(
-                user.getId(),
+                user.getPublicId(),
                 new StatusDto(user.getIsRegistered(),
                         user.hasIntroduction(),
                         user.hasCard()

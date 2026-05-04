@@ -1,7 +1,7 @@
 package com.domisa.domisa_backend.card.dto;
 
 public record CardCreateResponse(
-        Long userId,
+        String userId,
         StatusDto status
 ) {
     public record StatusDto(

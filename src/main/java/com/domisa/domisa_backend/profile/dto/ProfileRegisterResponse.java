@@ -1,7 +1,7 @@
 package com.domisa.domisa_backend.profile.dto;
 
 public record ProfileRegisterResponse(
-        Long userId,
+        String userId,
         StatusDto status,
         long totalUserCount
 ) {

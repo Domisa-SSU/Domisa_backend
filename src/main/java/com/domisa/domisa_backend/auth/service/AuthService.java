@@ -73,7 +73,7 @@ public class AuthService {
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
 		return new AuthMeResponse(
-			user.getId(),
+			user.getPublicId(),
 			Math.toIntExact(user.getCookieBalance()),
 			new AuthMeResponse.StatusDto(
 				user.getIsRegistered(),
