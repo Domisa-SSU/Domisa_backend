@@ -61,6 +61,7 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/introduction/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/datings/introduction-links").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/check-nickname").permitAll()
                 .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
                 .requestMatchers("/api/webhooks/payaction/**").permitAll()
