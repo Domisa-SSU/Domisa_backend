@@ -122,6 +122,9 @@ public class User {
 	@Column(name = "is_profile_completed", nullable = false)
 	private Boolean isProfileCompleted = false;
 
+	@Column(name = "notification_phone", length = 20)
+	private String notificationPhone; // 알림 받을 전화번호 (문자 안받을래요 체크 시 null)
+
 	@Column(name = "free_blur_count", nullable = false)
 	private Integer freeBlurCount = 0;
 
