@@ -12,6 +12,8 @@ public interface ProfileImageRepository extends JpaRepository<ProfileImage, Long
 
 	Optional<ProfileImage> findByUserId(Long userId);
 
+	void deleteByUserId(Long userId);
+
 	List<ProfileImage> findByProcessingStatusInOrderByIdAsc(
 		Collection<ProfileImageProcessingStatus> statuses,
 		Pageable pageable

@@ -1,9 +1,20 @@
 package com.domisa.domisa_backend.user.service;
 
+import com.domisa.domisa_backend.card.repository.CardRepository;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
+import com.domisa.domisa_backend.global.s3.service.S3ObjectStorageService;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
+import com.domisa.domisa_backend.introduction.entity.Introduction;
+import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
+import com.domisa.domisa_backend.notification.repository.NotificationRepository;
+import com.domisa.domisa_backend.payment.repository.CookieOrderRepository;
+import com.domisa.domisa_backend.payment.repository.CookieTransactionRepository;
+import com.domisa.domisa_backend.payment.repository.PayActionWebhookLogRepository;
+import com.domisa.domisa_backend.payment.service.CookieOrderService;
 import com.domisa.domisa_backend.profile.dto.MyIntroductionResponse;
+import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
+import com.domisa.domisa_backend.profileimage.repository.ProfileImageRepository;
 import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.user.dto.UserCookiesResponse;
 import com.domisa.domisa_backend.user.dto.UserMeResponse;
@@ -11,6 +22,7 @@ import com.domisa.domisa_backend.user.dto.UserLikesReceivedResponse;
 import com.domisa.domisa_backend.user.dto.UserLikesSentResponse;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
+import java.util.List;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -24,6 +36,15 @@ public class UserService {
 
 	private final UserRepository userRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
+	private final S3ObjectStorageService s3ObjectStorageService;
+	private final NotificationRepository notificationRepository;
+	private final CookieTransactionRepository cookieTransactionRepository;
+	private final CookieOrderRepository cookieOrderRepository;
+	private final PayActionWebhookLogRepository payActionWebhookLogRepository;
+	private final CookieOrderService cookieOrderService;
+	private final ProfileImageRepository profileImageRepository;
+	private final CardRepository cardRepository;
+	private final IntroductionRepository introductionRepository;
 
 	// 내 정보 조회(마이페이지용)
 	@Transactional(readOnly = true)
@@ -99,6 +120,59 @@ public class UserService {
 			.toList();
 
 		return new UserLikesSentResponse(myTypes.size(), myTypes);
+	}
+
+	@Transactional
+	public void deleteMe(User authUser) {
+		User user = getRequiredUser(authUser);
+		Long userId = user.getId();
+
+		deleteProfileImage(user);
+		notificationRepository.deleteByUserIdOrTargetUserId(userId, userId);
+		userRepository.deleteBlurRelations(userId);
+		userRepository.deleteFanRelations(userId);
+		userRepository.deleteTypeRelations(userId);
+		userRepository.deleteNowShowRelations(userId);
+
+		cookieOrderService.excludePendingOrdersForUser(userId);
+		payActionWebhookLogRepository.deleteByCookieOrderUserId(userId);
+		cookieTransactionRepository.deleteAllRelatedToUser(userId);
+		cookieOrderRepository.deleteByUserId(userId);
+
+		cardRepository.deleteByUserId(userId);
+		deleteIntroductions(userId);
+
+		userRepository.delete(user);
+	}
+
+	private void deleteProfileImage(User user) {
+		ProfileImage profileImage = user.getProfileImage();
+		if (profileImage == null) {
+			return;
+		}
+
+		if (profileImage.hasAnyKey()) {
+			s3ObjectStorageService.deleteAll(List.of(
+				profileImage.getProfileOriginKey(),
+				profileImage.getProfileThumbnailKey(),
+				profileImage.getProfileThumbnailBlurKey(),
+				profileImage.getProfileOriginBlurKey()
+			));
+		}
+		profileImageRepository.delete(profileImage);
+		user.setProfileImage(null);
+	}
+
+	private void deleteIntroductions(Long userId) {
+		List<Introduction> introductions = introductionRepository.findAllByParticipantIdOrIntroducerId(userId, userId);
+		for (Introduction introduction : introductions) {
+			User participant = introduction.getParticipant();
+			if (participant != null) {
+				participant.setIntroduction(null);
+				participant.setHasIntroduction(false);
+			}
+		}
+		introductionRepository.deleteAll(introductions);
 	}
 
 	private LinkedHashMap<Long, User> getUsersById(java.util.List<Long> userIds) {

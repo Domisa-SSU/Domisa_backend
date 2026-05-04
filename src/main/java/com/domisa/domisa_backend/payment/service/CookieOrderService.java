@@ -21,6 +21,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -95,6 +96,21 @@ public class CookieOrderService {
 		);
 		validatePayActionExcludeResponse(payActionResponse);
 		order.cancel();
+	}
+
+	@Transactional
+	public void excludePendingOrdersForUser(Long userId) {
+		List<CookieOrder> pendingOrders = cookieOrderRepository.findByUserIdAndStatusIn(
+			userId,
+			List.of(OrderStatus.PAYMENT_PENDING, OrderStatus.PENDING)
+		);
+		for (CookieOrder order : pendingOrders) {
+			PayActionCreateOrderResponse payActionResponse = excludePayActionOrder(
+				new PayActionOrderExcludeRequest(order.getOrderNumber())
+			);
+			validatePayActionExcludeResponse(payActionResponse);
+			order.cancel();
+		}
 	}
 
 	@Transactional(readOnly = true)
