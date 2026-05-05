@@ -63,6 +63,14 @@ public class Introduction {
 		participant.setHasIntroduction(true);
 	}
 
+	public void update(String q1, String q2, String q3, User introducer, String linkCode) {
+		this.q1 = q1;
+		this.q2 = q2;
+		this.q3 = q3;
+		this.introducer = introducer;
+		this.linkCode = linkCode;
+	}
+
 	public void clearParticipant() {
 		if (this.participant == null) {
 			return;
