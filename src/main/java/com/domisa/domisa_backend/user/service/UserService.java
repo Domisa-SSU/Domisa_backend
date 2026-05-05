@@ -140,6 +140,7 @@ public class UserService {
 		cookieOrderRepository.deleteByUserId(userId);
 
 		cardRepository.deleteByUserId(userId);
+		user.setCard(null);
 		deleteIntroductions(userId);
 
 		userRepository.delete(user);
