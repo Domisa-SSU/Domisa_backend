@@ -227,12 +227,15 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 
 	private void applyRelations(List<User> users) {
 		int size = users.size();
-		for (int index = 0; index < size; index++) {
-			User user = users.get(index);
+		for (User user : users) {
 			user.setNowShows(new ArrayList<>());
 			user.setMyFans(new ArrayList<>());
 			user.setMyTypes(new ArrayList<>());
 			user.setMyBlurs(new ArrayList<>());
+		}
+
+		for (int index = 0; index < size; index++) {
+			User user = users.get(index);
 
 			for (int offset = 1; offset < size; offset++) {
 				user.getNowShows().add(users.get((index + offset) % size).getId());
@@ -251,13 +254,30 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 	}
 
 	private void addLike(User requester, User target) {
+		ensureRelationLists(requester);
+		ensureRelationLists(target);
 		addUnique(requester.getMyTypes(), target.getId());
 		addUnique(target.getMyFans(), requester.getId());
 	}
 
 	private void addUnique(List<Long> values, Long value) {
-		if (!values.contains(value)) {
+		if (value != null && !values.contains(value)) {
 			values.add(value);
+		}
+	}
+
+	private void ensureRelationLists(User user) {
+		if (user.getNowShows() == null) {
+			user.setNowShows(new ArrayList<>());
+		}
+		if (user.getMyFans() == null) {
+			user.setMyFans(new ArrayList<>());
+		}
+		if (user.getMyTypes() == null) {
+			user.setMyTypes(new ArrayList<>());
+		}
+		if (user.getMyBlurs() == null) {
+			user.setMyBlurs(new ArrayList<>());
 		}
 	}
 
