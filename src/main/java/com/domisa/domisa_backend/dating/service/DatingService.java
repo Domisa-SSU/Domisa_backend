@@ -45,6 +45,16 @@ public class DatingService {
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
 		User requester = getRequiredUser(authUser);
 
+		// 2시간이 지났으면 자동으로 새 카드 발급
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime refreshAt = requester.getRefreshAt();
+		boolean isExpired = refreshAt == null || refreshAt.plus(REFRESH_INTERVAL).isBefore(now);
+		if (isExpired) {
+			List<Long> randomIds = userRepository.findRandomUserIds(requester.getId(), MAX_DATING_PROFILE_COUNT);
+			requester.setNowShows(new java.util.ArrayList<>(randomIds));
+			requester.setRefreshAt(now);
+		}
+
 		int freeLikeRemaining = getFreeLikeRemaining(requester);
 
 		List<Long> nowShowIds = requester.getNowShows() == null
@@ -117,13 +127,26 @@ public class DatingService {
 		);
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public DatingRefreshTimeResponse getDatingRefreshTime(User authUser) {
 		User user = getRequiredUser(authUser);
+		LocalDateTime now = LocalDateTime.now();
+
 		LocalDateTime refreshAvailableAt = user.getRefreshAt() == null
-			? null
+			? now
 			: user.getRefreshAt().plus(REFRESH_INTERVAL);
-		boolean canRefresh = refreshAvailableAt == null || !LocalDateTime.now().isBefore(refreshAvailableAt);
+
+		boolean canRefresh = !now.isBefore(refreshAvailableAt);
+
+		// 시간이 지났으면 자동으로 새 카드 발급
+		if (canRefresh && (user.getRefreshAt() != null)) {
+			List<Long> randomIds = userRepository.findRandomUserIds(user.getId(), MAX_DATING_PROFILE_COUNT);
+			user.setNowShows(new java.util.ArrayList<>(randomIds));
+			user.setRefreshAt(now);
+			refreshAvailableAt = now.plus(REFRESH_INTERVAL);
+			canRefresh = false;
+		}
+
 		return new DatingRefreshTimeResponse(refreshAvailableAt, canRefresh);
 	}
 
