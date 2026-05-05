@@ -19,6 +19,13 @@ public enum GlobalErrorCode {
 	KAKAO_TOKEN_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "KAKAO_TOKEN_REQUEST_FAILED", "카카오 토큰 요청에 실패했습니다."),
 	INVALID_NICKNAME_LENGTH(HttpStatus.BAD_REQUEST, "INVALID_NICKNAME_LENGTH", "닉네임은 최대 4글자까지 입력 가능합니다."),
 	DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "DUPLICATE_NICKNAME", "이미 사용 중인 닉네임입니다."),
+	DUMMY_ADMIN_KEY_NOT_CONFIGURED(
+		HttpStatus.SERVICE_UNAVAILABLE,
+		"DUMMY_ADMIN_KEY_NOT_CONFIGURED",
+		"더미 데이터 관리자 키가 설정되지 않았습니다."
+	),
+	DUMMY_ADMIN_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "DUMMY_ADMIN_UNAUTHORIZED", "더미 데이터 관리자 키가 유효하지 않습니다."),
+	INVALID_DUMMY_USER_COUNT(HttpStatus.BAD_REQUEST, "INVALID_DUMMY_USER_COUNT", "더미 유저 생성 수가 유효하지 않습니다."),
 	CARD_NOT_FOUND(HttpStatus.NOT_FOUND, "CARD_NOT_FOUND", "소개팅 카드를 찾을 수 없습니다."),
 	CARD_ALREADY_EXISTS(HttpStatus.CONFLICT, "CARD_ALREADY_EXISTS", "이미 소개팅 카드가 존재합니다."),
 	USER_NOT_REGISTERED(HttpStatus.FORBIDDEN, "USER_NOT_REGISTERED", "회원가입이 완료되지 않은 사용자입니다."),

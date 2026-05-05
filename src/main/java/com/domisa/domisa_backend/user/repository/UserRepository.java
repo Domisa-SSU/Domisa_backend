@@ -18,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	Optional<User> findByPublicId(String publicId);
 
+	List<User> findByKakaoIdBetweenOrderByKakaoIdAsc(Long startKakaoId, Long endKakaoId);
+
 	@EntityGraph(attributePaths = "profileImage")
 	Optional<User> findWithProfileImageById(Long id);
 

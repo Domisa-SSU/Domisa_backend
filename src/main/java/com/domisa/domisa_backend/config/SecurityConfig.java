@@ -65,6 +65,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/datings/count").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/check-nickname").permitAll()
                 .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+                .requestMatchers("/api/dummy/**").permitAll()
                 .requestMatchers("/api/webhooks/payaction/**").permitAll()
                 .requestMatchers(
                     "/v3/api-docs",
