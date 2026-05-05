@@ -62,7 +62,11 @@ public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 
 			log.info("Uploaded dummy profile image variants. index={}", index);
 		} catch (Exception exception) {
-			log.warn("Failed to upload dummy profile image variants. index={}", index, exception);
+			log.warn(
+				"Failed to upload dummy profile image variants. index={}, reason={}",
+				index,
+				exception.getMessage()
+			);
 		}
 	}
 
@@ -79,10 +83,16 @@ public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 	}
 
 	private boolean existsAll(DummyImageKeys keys) {
-		return s3ObjectStorageService.exists(keys.origin())
-			&& s3ObjectStorageService.exists(keys.thumbnail())
-			&& s3ObjectStorageService.exists(keys.thumbnailBlur())
-			&& s3ObjectStorageService.exists(keys.originBlur());
+		try {
+			return s3ObjectStorageService.exists(keys.origin())
+				&& s3ObjectStorageService.exists(keys.thumbnail())
+				&& s3ObjectStorageService.exists(keys.thumbnailBlur())
+				&& s3ObjectStorageService.exists(keys.originBlur());
+		} catch (Exception exception) {
+			log.warn("Could not verify existing dummy profile image assets. Upload will be attempted. reason={}",
+				exception.getMessage());
+			return false;
+		}
 	}
 
 	private byte[] writeJpeg(BufferedImage image) throws IOException {
