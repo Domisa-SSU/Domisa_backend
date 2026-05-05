@@ -38,6 +38,8 @@ jwt:
 
 app:
   frontend-url: ${FRONTEND_URL}
+  dummy:
+    admin-key: ${DUMMY_ADMIN_KEY:}
   auth:
     cookie:
       secure: ${APP_AUTH_COOKIE_SECURE:true}

@@ -27,6 +27,8 @@ jwt:
 
 app:
   frontend-url: ${LOCAL_FRONTEND_URL:http://localhost:5173}
+  dummy:
+    admin-key: ${LOCAL_DUMMY_ADMIN_KEY:${DUMMY_ADMIN_KEY:}}
   auth:
     cookie:
       secure: ${LOCAL_APP_AUTH_COOKIE_SECURE}
