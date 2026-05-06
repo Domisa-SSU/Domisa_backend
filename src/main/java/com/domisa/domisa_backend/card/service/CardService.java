@@ -33,11 +33,6 @@ public class CardService {
             throw new GlobalException(GlobalErrorCode.USER_NOT_REGISTERED);
         }
 
-        // 소개서 수락 여부 체크
-        if (!user.hasIntroduction()) {
-            throw new GlobalException(GlobalErrorCode.INTRODUCTION_NOT_FOUND);
-        }
-
         // 이미 카드가 있을 경우에는 불가능
         if(cardRepository.findByUserId(userId).isPresent()) {
             throw new GlobalException(GlobalErrorCode.CARD_ALREADY_EXISTS);

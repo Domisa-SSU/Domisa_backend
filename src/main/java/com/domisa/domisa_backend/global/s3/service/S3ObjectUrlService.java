@@ -11,7 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class S3ObjectUrlService {
 
 	private final S3Client s3Client;
 	private final S3Properties s3Properties;
+	private final S3Presigner s3Presigner;
 
 	public String getProfileImageUrl(ProfileImage profileImage) {
 		// 일반 프로필 조회는 origin 이미지를 기준으로 응답한다.
@@ -85,6 +89,46 @@ public class S3ObjectUrlService {
 		} catch (SdkException exception) {
 			throw new S3Exception(S3ErrorCode.OBJECT_URL_RESOLUTION_FAILED, exception);
 		}
+	}
+
+	public String buildPresignedGetUrl(String objectKey) {
+		String normalizedKey = normalizeObjectKey(objectKey);
+		GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+			.bucket(s3Properties.bucket())
+			.key(normalizedKey)
+			.build();
+		GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+			.signatureDuration(s3Properties.presignedUrlExpiration())
+			.getObjectRequest(getObjectRequest)
+			.build();
+		try {
+			PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignRequest);
+			return presigned.url().toString();
+		} catch (SdkException exception) {
+			throw new S3Exception(S3ErrorCode.PRESIGNED_URL_GENERATION_FAILED, exception);
+		}
+	}
+
+	public String getThumbnailPresignedUrl(ProfileImage profileImage) {
+		if (profileImage == null) return null;
+		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailKey())) {
+			return buildPresignedGetUrl(profileImage.getProfileThumbnailKey());
+		}
+		if (profileImage.hasOriginKey()) {
+			return buildPresignedGetUrl(profileImage.getProfileOriginKey());
+		}
+		return null;
+	}
+
+	public String getThumbnailBlurPresignedUrl(ProfileImage profileImage) {
+		if (profileImage == null) return null;
+		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailBlurKey())) {
+			return buildPresignedGetUrl(profileImage.getProfileThumbnailBlurKey());
+		}
+		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailKey())) {
+			return buildPresignedGetUrl(profileImage.getProfileThumbnailKey());
+		}
+		return null;
 	}
 
 	public String buildStoredObjectUrl(String objectKey) {

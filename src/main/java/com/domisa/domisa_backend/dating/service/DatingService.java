@@ -74,8 +74,8 @@ public class DatingService {
 			.map(targetUser -> new DatingProfileListResponse.ProfileSummary(
 				targetUser.getPublicId(),
 				unblurIds.contains(targetUser.getId())
-					? s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
-					: s3ObjectUrlService.getThumbnailBlurUrl(targetUser.getProfileImage())
+					? s3ObjectUrlService.getThumbnailPresignedUrl(targetUser.getProfileImage())
+					: s3ObjectUrlService.getThumbnailBlurPresignedUrl(targetUser.getProfileImage())
 			))
 			.toList();
 
@@ -132,21 +132,20 @@ public class DatingService {
 		User user = getRequiredUser(authUser);
 		LocalDateTime now = LocalDateTime.now();
 
-		LocalDateTime refreshAvailableAt = user.getRefreshAt() == null
-			? now
-			: user.getRefreshAt().plus(REFRESH_INTERVAL);
+		LocalDateTime refreshAt = user.getRefreshAt();
+		boolean isExpired = refreshAt == null || refreshAt.plus(REFRESH_INTERVAL).isBefore(now);
 
-		boolean canRefresh = !now.isBefore(refreshAvailableAt);
-
-		// 시간이 지났으면 자동으로 새 카드 발급
-		if (canRefresh && (user.getRefreshAt() != null)) {
+		if (isExpired) {
+			// 시간이 지났으면 자동으로 새 카드 발급
 			List<Long> randomIds = userRepository.findRandomUserIds(user.getId(), MAX_DATING_PROFILE_COUNT);
 			user.setNowShows(new java.util.ArrayList<>(randomIds));
 			user.setRefreshAt(now);
-			refreshAvailableAt = now.plus(REFRESH_INTERVAL);
-			canRefresh = false;
+			// 응답으로 현재 시간보다 이전 시간이 오면 안 됨 → now + REFRESH_INTERVAL 반환
+			return new DatingRefreshTimeResponse(now.plus(REFRESH_INTERVAL), false);
 		}
 
+		LocalDateTime refreshAvailableAt = refreshAt.plus(REFRESH_INTERVAL);
+		boolean canRefresh = !now.isBefore(refreshAvailableAt);
 		return new DatingRefreshTimeResponse(refreshAvailableAt, canRefresh);
 	}
 
