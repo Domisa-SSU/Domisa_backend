@@ -2,7 +2,8 @@ package com.domisa.domisa_backend.card.dto;
 
 public record CardCreateResponse(
         String publicId,
-        StatusDto status
+        StatusDto status,
+        long totalUserCount
 ) {
     public record StatusDto(
             boolean isRegistered,
