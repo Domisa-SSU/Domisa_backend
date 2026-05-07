@@ -54,8 +54,8 @@ app:
       fixed-delay-ms: ${PROFILE_IMAGE_FIXED_DELAY_MS:30000}
       thumbnail-size: ${PROFILE_IMAGE_THUMBNAIL_SIZE:300}
       origin-max-size: ${PROFILE_IMAGE_ORIGIN_MAX_SIZE:1080}
-      thumbnail-blur-kernel-size: ${PROFILE_IMAGE_THUMBNAIL_BLUR_KERNEL_SIZE:17}
-      origin-blur-kernel-size: ${PROFILE_IMAGE_ORIGIN_BLUR_KERNEL_SIZE:21}
+      thumbnail-blur-kernel-size: ${PROFILE_IMAGE_THUMBNAIL_BLUR_KERNEL_SIZE:25}
+      origin-blur-kernel-size: ${PROFILE_IMAGE_ORIGIN_BLUR_KERNEL_SIZE:31}
       batch-size: ${PROFILE_IMAGE_BATCH_SIZE:10}
       max-retry-count: ${PROFILE_IMAGE_MAX_RETRY_COUNT:5}
 

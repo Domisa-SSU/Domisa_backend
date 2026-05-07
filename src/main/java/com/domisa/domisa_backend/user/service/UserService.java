@@ -107,11 +107,12 @@ public class UserService {
 
 	@Transactional(readOnly = true)
 	public UserLikesSentResponse getSentLikes(User authUser) {
-		// 보낸 좋아요 목록은 항상 일반 썸네일로 응답한다.
+		// 보낸 좋아요 목록도 myBlurs에 있으면 일반 썸네일, 아니면 블러 썸네일을 사용한다.
 		User user = getRequiredUser(authUser);
 
 		var typeIds = user.getMyTypes() == null ? Collections.<Long>emptyList() : user.getMyTypes();
 		var matchIds = user.getMyMatches() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyMatches());
+		var unblurIds = user.getMyBlurs() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyBlurs());
 		var usersById = getUsersById(typeIds);
 
 		var myTypes = typeIds.stream()
@@ -120,7 +121,9 @@ public class UserService {
 			.filter(targetUser -> targetUser != null)
 			.map(targetUser -> new UserLikesSentResponse.UserType(
 				targetUser.getPublicId(),
-				s3ObjectUrlService.getThumbnailPresignedUrl(targetUser.getProfileImage())
+				unblurIds.contains(targetUser.getId())
+					? s3ObjectUrlService.getThumbnailPresignedUrl(targetUser.getProfileImage())
+					: s3ObjectUrlService.getThumbnailBlurPresignedUrl(targetUser.getProfileImage())
 			))
 			.toList();
 
