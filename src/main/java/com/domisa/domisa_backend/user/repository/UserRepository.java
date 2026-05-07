@@ -119,4 +119,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	@Modifying
 	@Query(value = "delete from user_now_shows where user_id = :userId or target_user_id = :userId", nativeQuery = true)
 	void deleteNowShowRelations(@Param("userId") Long userId);
+
+	@Modifying
+	@Query(value = "delete from user_before_shows where user_id = :userId or target_user_id = :userId", nativeQuery = true)
+	void deleteBeforeShowRelations(@Param("userId") Long userId);
 }
