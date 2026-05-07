@@ -110,6 +110,7 @@ public class DummyDataService {
 		user.setMyTypes(new ArrayList<>());
 		user.setMyBlurs(new ArrayList<>());
 		user.setNowShows(new ArrayList<>());
+		user.setBeforeShows(new ArrayList<>());
 		return user;
 	}
 
@@ -181,6 +182,7 @@ public class DummyDataService {
 	private Set<Long> collectRelationUserIds(User user) {
 		Set<Long> userIds = new LinkedHashSet<>();
 		addAll(userIds, user.getNowShows());
+		addAll(userIds, user.getBeforeShows());
 		addAll(userIds, user.getMyFans());
 		addAll(userIds, user.getMyTypes());
 		addAll(userIds, user.getMyMatches());

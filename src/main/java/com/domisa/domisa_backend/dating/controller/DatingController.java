@@ -71,14 +71,6 @@ public class DatingController {
 		return ResponseEntity.ok().build();
 	}
 
-	@PostMapping("/profiles/{publicId}/unblur")
-	public ResponseEntity<UnblurProfileResponse> unblurProfile(
-		@AuthUser User authUser,
-		@PathVariable String publicId
-	) {
-		return ResponseEntity.ok(datingService.unblurProfile(authUser, publicId));
-	}
-
 	@PostMapping("/likes/received/{publicId}/unblur")
 	public ResponseEntity<UnblurProfileResponse> unblurReceivedLike(
 		@AuthUser User authUser,

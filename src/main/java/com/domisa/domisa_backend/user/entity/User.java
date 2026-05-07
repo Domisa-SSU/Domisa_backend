@@ -106,6 +106,11 @@ public class User {
 	@Column(name = "target_user_id")
 	private List<Long> nowShows;
 
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "user_before_shows", joinColumns = @JoinColumn(name = "user_id"))
+	@Column(name = "target_user_id")
+	private List<Long> beforeShows;
+
 	@Column(name = "refresh_at")
 	private LocalDateTime refreshAvailableAt;
 
@@ -130,17 +135,9 @@ public class User {
 	@Column(name = "notification_phone", length = 20)
 	private String notificationPhone; // 알림 받을 전화번호 (문자 안받을래요 체크 시 null)
 
-	@Column(name = "free_blur_count", nullable = false)
-	private Integer freeBlurCount = 3;
-
-	@Column(name = "free_blur_reset_at")
-	private LocalDateTime freeBlurResetAt;
-
 	@Column(name = "free_like_count", nullable = false)
-	private Integer freeLikeCount = 0;
+	private Integer freeLikeCount = 3;
 
-	@Column(name = "free_like_reset_at")
-	private LocalDateTime freeLikeResetAt;
 	private User(Long kakaoId) {
 		this.kakaoId = kakaoId;
 	}

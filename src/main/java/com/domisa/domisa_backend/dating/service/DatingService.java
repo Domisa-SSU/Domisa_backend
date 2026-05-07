@@ -13,6 +13,8 @@ import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
 import com.domisa.domisa_backend.introduction.entity.Introduction;
 import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
+import com.domisa.domisa_backend.notification.service.NotificationService;
+import com.domisa.domisa_backend.notification.type.NotificationType;
 import com.domisa.domisa_backend.payment.entity.CookieTransaction;
 import com.domisa.domisa_backend.payment.repository.CookieTransactionRepository;
 import com.domisa.domisa_backend.user.dto.ContactDTO;
@@ -42,6 +44,7 @@ public class DatingService {
 	private final IntroductionRepository introductionRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
 	private final CookieTransactionRepository cookieTransactionRepository;
+	private final NotificationService notificationService;
 
 	@Transactional
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
@@ -57,8 +60,6 @@ public class DatingService {
 		List<Long> nowShowIds = requester.getNowShows() == null
 			? Collections.emptyList()
 			: requester.getNowShows().stream()
-				.filter(id -> requester.getMyFans() == null || !requester.getMyFans().contains(id))
-				.filter(id -> requester.getMyMatches() == null || !requester.getMyMatches().contains(id))
 				.limit(MAX_DATING_PROFILE_COUNT)
 				.toList();
 		Set<Long> unblurIds = requester.getMyBlurs() == null
@@ -86,16 +87,17 @@ public class DatingService {
 		User targetUser = userRepository.findDatingProfileByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
-		boolean isPaidUnblur = requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId());
+		boolean isUnblurred = requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId());
 		boolean isMatched = requester.getMyMatches() != null && requester.getMyMatches().contains(targetUser.getId());
+		boolean isPaidUnblur = !isMatched && isUnblurred;
 		boolean hasSentLike = requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId());
 		boolean hasReceivedLike = requester.getMyFans() != null && requester.getMyFans().contains(targetUser.getId());
 		int freeLikeRemaining = getFreeLikeRemaining(requester);
 
-		// default: 쌍방매칭 or 쿠키 지불해서 블러 해제 → 모두 공개
+		// default: 쌍방매칭 or 블러 해제 → 프로필 정보 공개
 		// a (NORMAL): 일반 조회 → 사진만 블러
 		// b (FAN): 받은 호감 조회 → 사진 + q3 + idealType 블러
-		boolean isDefault = isMatched || isPaidUnblur;
+		boolean isDefault = isMatched || isUnblurred;
 		DatingProfileDetailRequest.ViewType viewType = request != null && request.viewType() != null
 			? request.viewType()
 			: DatingProfileDetailRequest.ViewType.NORMAL;
@@ -111,7 +113,7 @@ public class DatingService {
 			? s3ObjectUrlService.getThumbnailBlurPresignedUrl(targetUser.getProfileImage())
 			: s3ObjectUrlService.getThumbnailPresignedUrl(targetUser.getProfileImage());
 
-		ContactDTO contact = isDefault
+		ContactDTO contact = isMatched
 			? new ContactDTO(targetUser.getContactType(), targetUser.getContact())
 			: null;
 
@@ -224,43 +226,6 @@ public class DatingService {
 		return new DatingMatchCountResponse(userRepository.countMutualMatches());
 	}
 
-	@Transactional
-	public UnblurProfileResponse unblurProfile(User authUser, String publicId) {
-		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findByPublicId(publicId)
-			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
-
-		if (requester.getId().equals(targetUser.getId())) {
-			throw new GlobalException(GlobalErrorCode.CANNOT_LIKE_SELF);
-		}
-
-		if (requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId())) {
-			return new UnblurProfileResponse(targetUser.getPublicId(), false, "이미 블러가 해제된 프로필입니다.");
-		}
-
-		// 일반 블러 해제: 2시간에 3번 무료, 초과 시 쿠키 1개
-		int freeBlurRemaining = getFreeBlurRemaining(requester);
-		if (freeBlurRemaining > 0) {
-			requester.setFreeBlurCount(freeBlurRemaining - 1);
-			if (requester.getFreeBlurResetAt() == null) {
-				requester.setFreeBlurResetAt(LocalDateTime.now());
-			}
-		} else {
-			if (requester.getCookies() == null || requester.getCookies() < 1) {
-				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
-			}
-			requester.setCookies(requester.getCookies() - 1);
-			saveCookieUseTransaction(requester, 1, "프로필 블러 해제");
-		}
-
-		if (requester.getMyBlurs() == null) {
-			requester.setMyBlurs(new java.util.ArrayList<>());
-		}
-		requester.getMyBlurs().add(targetUser.getId());
-
-		return new UnblurProfileResponse(targetUser.getPublicId(), false, "프로필 블러가 해제되었습니다.");
-	}
-
 	// 받은 호감 전용 블러 해제 — 쿠키 2개
 	@Transactional
 	public UnblurProfileResponse unblurReceivedLike(User authUser, String publicId) {
@@ -310,6 +275,8 @@ public class DatingService {
 		}
 
 		addMatch(requester, targetUser);
+		notificationService.createNotification(NotificationType.MATCH, requester.getId(), targetUser.getId());
+		notificationService.createNotification(NotificationType.MATCH, targetUser.getId(), requester.getId());
 	}
 
 	@Transactional
@@ -329,14 +296,8 @@ public class DatingService {
 			throw new GlobalException(GlobalErrorCode.ALREADY_LIKED);
 		}
 
-		// 2시간에 3번 무료, 초과 시 쿠키 1개
-		int freeLikeRemaining = getFreeLikeRemaining(requester);
-		if (freeLikeRemaining > 0) {
-			requester.setFreeLikeCount(requester.getFreeLikeCount() + 1);
-			if (requester.getFreeLikeResetAt() == null) {
-				requester.setFreeLikeResetAt(LocalDateTime.now());
-			}
-		} else {
+		// 호감 보내기: 셔플마다 충전되는 무료 횟수를 먼저 쓰고, 없으면 쿠키 1개를 사용한다.
+		if (!consumeFreeLikeAllowance(requester)) {
 			if (requester.getCookies() == null || requester.getCookies() < 1) {
 				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
 			}
@@ -347,18 +308,13 @@ public class DatingService {
 		if (requester.getMyTypes() == null) {
 			requester.setMyTypes(new java.util.ArrayList<>());
 		}
-		requester.getMyTypes().add(targetUser.getId());
+		addUnique(requester.getMyTypes(), targetUser.getId());
 
 		if (targetUser.getMyFans() == null) {
 			targetUser.setMyFans(new java.util.ArrayList<>());
 		}
-		targetUser.getMyFans().add(requester.getId());
-
-		// 쌍방 매칭 확인 — 상대도 나한테 호감 보낸 상태면 match 목록으로 이동한다.
-		boolean isMutual = targetUser.getMyTypes() != null && targetUser.getMyTypes().contains(requester.getId());
-		if (isMutual) {
-			addMatch(requester, targetUser);
-		}
+		addUnique(targetUser.getMyFans(), requester.getId());
+		notificationService.createNotification(NotificationType.LIKE, targetUser.getId(), requester.getId());
 	}
 
 	@Transactional
@@ -391,82 +347,42 @@ public class DatingService {
 	}
 
 	private void refreshNowShows(User user, LocalDateTime now) {
+		List<Long> currentShows = user.getNowShows() == null
+			? new ArrayList<>()
+			: new ArrayList<>(user.getNowShows());
+		user.setBeforeShows(currentShows);
 		user.setNowShows(new ArrayList<>(findRandomOppositeGenderUserIds(user)));
 		user.setRefreshAvailableAt(nextRefreshAvailableAt(now));
-		user.setFreeBlurCount(3);
-		user.setFreeBlurResetAt(now);
+		user.setFreeLikeCount(3);
 	}
 
 	private void addMatch(User user, User target) {
-		addUniqueRelation(user, target.getId(), RelationType.MY_MATCHES);
-		addUniqueRelation(target, user.getId(), RelationType.MY_MATCHES);
-		addUniqueRelation(user, target.getId(), RelationType.MY_BLURS);
-		addUniqueRelation(target, user.getId(), RelationType.MY_BLURS);
-		removeRelation(user, target.getId(), RelationType.MY_FANS);
-		removeRelation(user, target.getId(), RelationType.MY_TYPES);
-		removeRelation(user, target.getId(), RelationType.NOW_SHOWS);
-		removeRelation(target, user.getId(), RelationType.MY_FANS);
-		removeRelation(target, user.getId(), RelationType.MY_TYPES);
-		removeRelation(target, user.getId(), RelationType.NOW_SHOWS);
+		if (user.getMyMatches() == null) {
+			user.setMyMatches(new ArrayList<>());
+		}
+		if (target.getMyMatches() == null) {
+			target.setMyMatches(new ArrayList<>());
+		}
+		if (user.getMyBlurs() == null) {
+			user.setMyBlurs(new ArrayList<>());
+		}
+
+		addUnique(user.getMyMatches(), target.getId());
+		addUnique(target.getMyMatches(), user.getId());
+		addUnique(user.getMyBlurs(), target.getId());
+
+		if (user.getMyFans() != null) {
+			user.getMyFans().remove(target.getId());
+		}
+		if (target.getMyTypes() != null) {
+			target.getMyTypes().remove(user.getId());
+		}
 	}
 
-	private void addUniqueRelation(User user, Long targetUserId, RelationType relationType) {
-		List<Long> values = getOrCreateRelationList(user, relationType);
+	private void addUnique(List<Long> values, Long targetUserId) {
 		if (!values.contains(targetUserId)) {
 			values.add(targetUserId);
 		}
-	}
-
-	private void removeRelation(User user, Long targetUserId, RelationType relationType) {
-		List<Long> values = getRelationList(user, relationType);
-		if (values != null) {
-			values.remove(targetUserId);
-		}
-	}
-
-	private List<Long> getOrCreateRelationList(User user, RelationType relationType) {
-		return switch (relationType) {
-			case MY_TYPES -> {
-				if (user.getMyTypes() == null) {
-					user.setMyTypes(new ArrayList<>());
-				}
-				yield user.getMyTypes();
-			}
-			case MY_MATCHES -> {
-				if (user.getMyMatches() == null) {
-					user.setMyMatches(new ArrayList<>());
-				}
-				yield user.getMyMatches();
-			}
-			case MY_FANS -> {
-				if (user.getMyFans() == null) {
-					user.setMyFans(new ArrayList<>());
-				}
-				yield user.getMyFans();
-			}
-			case MY_BLURS -> {
-				if (user.getMyBlurs() == null) {
-					user.setMyBlurs(new ArrayList<>());
-				}
-				yield user.getMyBlurs();
-			}
-			case NOW_SHOWS -> {
-				if (user.getNowShows() == null) {
-					user.setNowShows(new ArrayList<>());
-				}
-				yield user.getNowShows();
-			}
-		};
-	}
-
-	private List<Long> getRelationList(User user, RelationType relationType) {
-		return switch (relationType) {
-			case MY_TYPES -> user.getMyTypes();
-			case MY_MATCHES -> user.getMyMatches();
-			case MY_FANS -> user.getMyFans();
-			case MY_BLURS -> user.getMyBlurs();
-			case NOW_SHOWS -> user.getNowShows();
-		};
 	}
 
 	private boolean canHaveNowShows(User user) {
@@ -483,8 +399,14 @@ public class DatingService {
 		if (user.getMyFans() != null) {
 			excludedUserIds.addAll(user.getMyFans());
 		}
+		if (user.getMyTypes() != null) {
+			excludedUserIds.addAll(user.getMyTypes());
+		}
 		if (user.getMyMatches() != null) {
 			excludedUserIds.addAll(user.getMyMatches());
+		}
+		if (user.getBeforeShows() != null) {
+			excludedUserIds.addAll(user.getBeforeShows());
 		}
 		if (excludedUserIds.isEmpty()) {
 			return userRepository.findRandomOppositeGenderUserIds(
@@ -518,32 +440,16 @@ public class DatingService {
 	}
 
 	private int getFreeLikeRemaining(User user) {
-		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime resetAt = user.getFreeLikeResetAt();
+		return Math.max(0, user.getFreeLikeCount() == null ? 0 : user.getFreeLikeCount());
+	}
 
-		if (resetAt == null || resetAt.plusHours(2).isBefore(now)) {
-			user.setFreeLikeCount(0);
-			user.setFreeLikeResetAt(now);
+	private boolean consumeFreeLikeAllowance(User user) {
+		int remaining = getFreeLikeRemaining(user);
+		if (remaining <= 0) {
+			return false;
 		}
-		return Math.max(0, 3 - user.getFreeLikeCount());
+		user.setFreeLikeCount(remaining - 1);
+		return true;
 	}
 
-	private int getFreeBlurRemaining(User user) {
-		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime resetAt = user.getFreeBlurResetAt();
-
-		if (user.getFreeBlurCount() == null || resetAt == null || resetAt.plusHours(2).isBefore(now)) {
-			user.setFreeBlurCount(3);
-			user.setFreeBlurResetAt(now);
-		}
-		return Math.max(0, user.getFreeBlurCount());
-	}
-
-	private enum RelationType {
-		MY_TYPES,
-		MY_MATCHES,
-		MY_FANS,
-		MY_BLURS,
-		NOW_SHOWS
-	}
 }
