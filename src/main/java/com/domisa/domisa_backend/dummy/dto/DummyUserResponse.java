@@ -22,6 +22,7 @@ public record DummyUserResponse(
 	List<String> nowShows,
 	List<String> myFans,
 	List<String> myTypes,
+	List<String> myMatches,
 	List<String> myBlurs
 ) {
 
@@ -42,6 +43,7 @@ public record DummyUserResponse(
 			toPublicIds(user.getNowShows(), publicIdsByUserId),
 			toPublicIds(user.getMyFans(), publicIdsByUserId),
 			toPublicIds(user.getMyTypes(), publicIdsByUserId),
+			toPublicIds(user.getMyMatches(), publicIdsByUserId),
 			toPublicIds(user.getMyBlurs(), publicIdsByUserId)
 		);
 	}

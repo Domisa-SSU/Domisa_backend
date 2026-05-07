@@ -97,6 +97,11 @@ public class User {
 	private List<Long> myTypes;
 
 	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name = "user_my_matches", joinColumns = @JoinColumn(name = "user_id"))
+	@Column(name = "target_user_id")
+	private List<Long> myMatches;
+
+	@ElementCollection(fetch = FetchType.LAZY)
 	@CollectionTable(name = "user_now_shows", joinColumns = @JoinColumn(name = "user_id"))
 	@Column(name = "target_user_id")
 	private List<Long> nowShows;
@@ -126,7 +131,7 @@ public class User {
 	private String notificationPhone; // 알림 받을 전화번호 (문자 안받을래요 체크 시 null)
 
 	@Column(name = "free_blur_count", nullable = false)
-	private Integer freeBlurCount = 0;
+	private Integer freeBlurCount = 3;
 
 	@Column(name = "free_blur_reset_at")
 	private LocalDateTime freeBlurResetAt;

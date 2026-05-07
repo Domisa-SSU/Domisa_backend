@@ -161,7 +161,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		user.setIsProfileCompleted(true);
 		user.setHasIntroduction(true);
 		user.setRefreshAvailableAt(LocalDateTime.now().withNano(0).plusHours(2));
-		user.setFreeBlurCount(0);
+		user.setFreeBlurCount(3);
 		user.setFreeBlurResetAt(LocalDateTime.now());
 		user.setFreeLikeCount(0);
 		user.setFreeLikeResetAt(LocalDateTime.now());
@@ -231,6 +231,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 			user.setNowShows(new ArrayList<>());
 			user.setMyFans(new ArrayList<>());
 			user.setMyTypes(new ArrayList<>());
+			user.setMyMatches(new ArrayList<>());
 			user.setMyBlurs(new ArrayList<>());
 		}
 
@@ -250,6 +251,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 			if (index % 2 == 0) {
 				User mutualTarget = users.get((index + 1) % size);
 				addLike(mutualTarget, user);
+				addMatch(user, mutualTarget);
 				addUnique(user.getMyBlurs(), mutualTarget.getId());
 				addUnique(mutualTarget.getMyBlurs(), user.getId());
 			}
@@ -261,6 +263,19 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		ensureRelationLists(target);
 		addUnique(requester.getMyTypes(), target.getId());
 		addUnique(target.getMyFans(), requester.getId());
+	}
+
+	private void addMatch(User user, User target) {
+		ensureRelationLists(user);
+		ensureRelationLists(target);
+		addUnique(user.getMyMatches(), target.getId());
+		addUnique(target.getMyMatches(), user.getId());
+		user.getMyFans().remove(target.getId());
+		user.getMyTypes().remove(target.getId());
+		user.getNowShows().remove(target.getId());
+		target.getMyFans().remove(user.getId());
+		target.getMyTypes().remove(user.getId());
+		target.getNowShows().remove(user.getId());
 	}
 
 	private void addUnique(List<Long> values, Long value) {
@@ -278,6 +293,9 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		}
 		if (user.getMyTypes() == null) {
 			user.setMyTypes(new ArrayList<>());
+		}
+		if (user.getMyMatches() == null) {
+			user.setMyMatches(new ArrayList<>());
 		}
 		if (user.getMyBlurs() == null) {
 			user.setMyBlurs(new ArrayList<>());
