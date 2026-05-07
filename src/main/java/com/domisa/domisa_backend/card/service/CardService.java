@@ -9,6 +9,7 @@ import com.domisa.domisa_backend.card.entity.Card;
 import com.domisa.domisa_backend.card.repository.CardRepository;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
+import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -76,7 +77,8 @@ public class CardService {
                 card.getMbti(),
                 card.getDatingStyle(),
                 card.getIdealType(),
-                card.getImageKey()
+                card.getImageKey(),
+                new ContactDTO(card.getUser().getContactType(), card.getUser().getContact())
         );
     }
 
@@ -105,7 +107,8 @@ public class CardService {
                 card.getMbti(),
                 card.getDatingStyle(),
                 card.getIdealType(),
-                card.getImageKey()
+                card.getImageKey(),
+                new ContactDTO(user.getContactType(), user.getContact())
         );
     }
 
