@@ -102,7 +102,7 @@ public class User {
 	private List<Long> nowShows;
 
 	@Column(name = "refresh_at")
-	private LocalDateTime refreshAt;
+	private LocalDateTime refreshAvailableAt;
 
 	@Column(name = "kakao_id", nullable = false, unique = true)
 	private Long kakaoId;
