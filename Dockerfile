@@ -7,8 +7,9 @@ RUN gradle clean bootJar --no-daemon
 FROM eclipse-temurin:21-jre
 
 WORKDIR /app
+ENV TZ=Asia/Seoul
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Seoul", "-jar", "/app/app.jar"]
