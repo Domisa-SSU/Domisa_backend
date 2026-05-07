@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 
-	private static final int DUMMY_IMAGE_COUNT = 6;
+	private static final int DUMMY_IMAGE_COUNT = 20;
 	private static final String[] SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png"};
 
 	private final ResourceLoader resourceLoader;
