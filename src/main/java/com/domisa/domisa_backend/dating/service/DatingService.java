@@ -83,9 +83,9 @@ public class DatingService {
 	}
 
 	@Transactional
-	public DatingProfileResponse getDatingProfile(User authUser, String userId) {
+	public DatingProfileResponse getDatingProfile(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findDatingProfileByPublicId(userId)
+		User targetUser = userRepository.findDatingProfileByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
 		boolean isBlurred = requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId());
