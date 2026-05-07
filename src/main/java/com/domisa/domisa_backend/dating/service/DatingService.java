@@ -20,7 +20,6 @@ import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -412,7 +411,7 @@ public class DatingService {
 	}
 
 	private LocalDateTime nextRefreshAvailableAt(LocalDateTime now) {
-		return now.truncatedTo(ChronoUnit.MINUTES).plus(REFRESH_INTERVAL);
+		return now.withNano(0).plus(REFRESH_INTERVAL);
 	}
 
 	private String generateUniqueLinkCode() {

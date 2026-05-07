@@ -12,7 +12,6 @@ import com.domisa.domisa_backend.user.type.AnimalProfile;
 import com.domisa.domisa_backend.user.type.ContactType;
 import com.domisa.domisa_backend.user.type.Mbti;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -161,7 +160,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		user.setIsRegistered(true);
 		user.setIsProfileCompleted(true);
 		user.setHasIntroduction(true);
-		user.setRefreshAvailableAt(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).plusHours(2));
+		user.setRefreshAvailableAt(LocalDateTime.now().withNano(0).plusHours(2));
 		user.setFreeBlurCount(0);
 		user.setFreeBlurResetAt(LocalDateTime.now());
 		user.setFreeLikeCount(0);
