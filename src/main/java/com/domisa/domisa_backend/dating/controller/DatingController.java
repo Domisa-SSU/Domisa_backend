@@ -5,6 +5,7 @@ import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
 import com.domisa.domisa_backend.dating.dto.DatingMatchListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
+import com.domisa.domisa_backend.dating.dto.DatingProfileDetailRequest;
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
@@ -32,12 +33,13 @@ public class DatingController {
 		return ResponseEntity.ok(datingService.getDatingProfiles(authUser));
 	}
 
-	@GetMapping("/profiles/{publicId}")
+	@PostMapping("/profiles/{publicId}")
 	public ResponseEntity<DatingProfileResponse> getDatingProfile(
 		@AuthUser User authUser,
-		@PathVariable String publicId
+		@PathVariable String publicId,
+		@RequestBody(required = false) DatingProfileDetailRequest request
 	) {
-		return ResponseEntity.ok(datingService.getDatingProfile(authUser, publicId));
+		return ResponseEntity.ok(datingService.getDatingProfile(authUser, publicId, request));
 	}
 
 	@GetMapping("/refresh-time")

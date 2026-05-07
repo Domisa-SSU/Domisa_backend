@@ -3,6 +3,7 @@ import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
 import com.domisa.domisa_backend.dating.dto.DatingMatchListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateResponse;
+import com.domisa.domisa_backend.dating.dto.DatingProfileDetailRequest;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
@@ -80,26 +81,39 @@ public class DatingService {
 	}
 
 	@Transactional
-	public DatingProfileResponse getDatingProfile(User authUser, String publicId) {
+	public DatingProfileResponse getDatingProfile(User authUser, String publicId, DatingProfileDetailRequest request) {
 		User requester = getRequiredUser(authUser);
 		User targetUser = userRepository.findDatingProfileByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
-		boolean isBlurred = requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId());
+		boolean isPaidUnblur = requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId());
 		boolean hasSentLike = requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId());
 		boolean hasReceivedLike = requester.getMyFans() != null && requester.getMyFans().contains(targetUser.getId());
 		boolean isMatched = hasSentLike && hasReceivedLike;
 		int freeLikeRemaining = getFreeLikeRemaining(requester);
 
+		// default: 쌍방매칭 or 쿠키 지불해서 블러 해제 → 모두 공개
+		// a (NORMAL): 일반 조회 → 사진만 블러
+		// b (FAN): 받은 호감 조회 → 사진 + q3 + idealType 블러
+		boolean isDefault = isMatched || isPaidUnblur;
+		DatingProfileDetailRequest.ViewType viewType = request != null && request.viewType() != null
+			? request.viewType()
+			: DatingProfileDetailRequest.ViewType.NORMAL;
+
+		boolean photoBlurred = !isDefault;
+		boolean textBlurred = !isDefault && viewType == DatingProfileDetailRequest.ViewType.FAN;
+
 		String q3 = targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ3();
 		String idealType = targetUser.getCard() == null ? null : targetUser.getCard().getIdealType();
 
-		String profileUrl = isBlurred
-			? s3ObjectUrlService.getOriginBlurUrl(targetUser.getProfileImage())
-			: s3ObjectUrlService.getProfileImageUrl(targetUser.getProfileImage());
-		ContactDTO contact = isBlurred
-			? null
-			: new ContactDTO(targetUser.getContactType(), targetUser.getContact());
+		// Presigned URL 사용
+		String profileUrl = photoBlurred
+			? s3ObjectUrlService.getThumbnailBlurPresignedUrl(targetUser.getProfileImage())
+			: s3ObjectUrlService.getThumbnailPresignedUrl(targetUser.getProfileImage());
+
+		ContactDTO contact = isDefault
+			? new ContactDTO(targetUser.getContactType(), targetUser.getContact())
+			: null;
 
 		return new DatingProfileResponse(
 			targetUser.getPublicId(),
@@ -110,14 +124,15 @@ public class DatingService {
 			profileUrl,
 			targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ1(),
 			targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ2(),
-			isBlurred ? null : q3,
-			isBlurred && q3 != null ? q3.length() : null,
+			textBlurred ? null : q3,
+			textBlurred && q3 != null ? q3.length() : null,
 			targetUser.getCard() == null ? null : targetUser.getCard().getDatingStyle(),
-			isBlurred ? null : idealType,
-			isBlurred && idealType != null ? idealType.length() : null,
+			textBlurred ? null : idealType,
+			textBlurred && idealType != null ? idealType.length() : null,
 			targetUser.getCard() == null ? null : targetUser.getCard().getMbti(),
 			contact,
-			isBlurred,
+			photoBlurred,
+			isPaidUnblur,
 			hasSentLike,
 			hasReceivedLike,
 			isMatched,
@@ -345,13 +360,13 @@ public class DatingService {
 	public void shuffle(User authUser) {
 		User requester = getRequiredUser(authUser);
 
-		if (requester.getCookies() == null || requester.getCookies() < 3) {
+		if (requester.getCookies() == null || requester.getCookies() < 2) {
 			throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
 		}
 
 		refreshNowShows(requester, LocalDateTime.now());
-		requester.setCookies(requester.getCookies() - 3);
-		saveCookieUseTransaction(requester, 3, "소개팅 카드 셔플");
+		requester.setCookies(requester.getCookies() - 2);
+		saveCookieUseTransaction(requester, 2, "소개팅 카드 셔플");
 	}
 
 	@Transactional
