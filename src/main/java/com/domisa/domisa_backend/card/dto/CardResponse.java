@@ -8,7 +8,7 @@ public record CardResponse(
         Mbti mbti,
         String datingStyle,
         String idealType,
-        String imageKey,
+        String imageUrl,
         ContactType contactType,
         String contact,
         String notificationPhone

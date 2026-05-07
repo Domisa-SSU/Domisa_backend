@@ -9,6 +9,7 @@ import com.domisa.domisa_backend.card.entity.Card;
 import com.domisa.domisa_backend.card.repository.CardRepository;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
+import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class CardService {
 
     private final CardRepository cardRepository;
     private final UserRepository userRepository;
+    private final S3ObjectUrlService s3ObjectUrlService;
 
     // 소개팅 카드 생성
     @Transactional
@@ -76,7 +78,7 @@ public class CardService {
                 card.getMbti(),
                 card.getDatingStyle(),
                 card.getIdealType(),
-                card.getImageKey(),
+                toImageUrl(card.getImageKey()),
                 card.getUser().getContactType(),
                 card.getUser().getContact(),
                 card.getUser().getNotificationPhone()
@@ -108,11 +110,18 @@ public class CardService {
                 card.getMbti(),
                 card.getDatingStyle(),
                 card.getIdealType(),
-                card.getImageKey(),
+                toImageUrl(card.getImageKey()),
                 user.getContactType(),
                 user.getContact(),
                 user.getNotificationPhone()
         );
+    }
+
+    private String toImageUrl(String imageKey) {
+        if (imageKey == null || imageKey.isBlank()) {
+            return null;
+        }
+        return s3ObjectUrlService.buildPresignedGetUrl(imageKey);
     }
 
 }
