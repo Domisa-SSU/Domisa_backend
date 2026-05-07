@@ -87,6 +87,15 @@ public class DatingController {
 		return ResponseEntity.ok(datingService.unblurReceivedLike(authUser, publicId));
 	}
 
+	@PostMapping("/likes/received/{publicId}/match")
+	public ResponseEntity<Void> matchReceivedLike(
+		@AuthUser User authUser,
+		@PathVariable String publicId
+	) {
+		datingService.matchReceivedLike(authUser, publicId);
+		return ResponseEntity.ok().build();
+	}
+
 	@PostMapping("/likes/{publicId}")
 	public ResponseEntity<Void> sendLike(
 		@AuthUser User authUser,
