@@ -20,6 +20,8 @@ import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -46,14 +48,9 @@ public class DatingService {
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
 		User requester = getRequiredUser(authUser);
 
-		// 2시간이 지났으면 자동으로 새 카드 발급
 		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime refreshAt = requester.getRefreshAt();
-		boolean isExpired = refreshAt == null || refreshAt.plus(REFRESH_INTERVAL).isBefore(now);
-		if (isExpired) {
-			List<Long> randomIds = userRepository.findRandomUserIds(requester.getId(), MAX_DATING_PROFILE_COUNT);
-			requester.setNowShows(new java.util.ArrayList<>(randomIds));
-			requester.setRefreshAt(now);
+		if (isRefreshDue(requester.getRefreshAvailableAt(), now)) {
+			refreshNowShows(requester, now);
 		}
 
 		int freeLikeRemaining = getFreeLikeRemaining(requester);
@@ -148,21 +145,11 @@ public class DatingService {
 		User user = getRequiredUser(authUser);
 		LocalDateTime now = LocalDateTime.now();
 
-		LocalDateTime refreshAt = user.getRefreshAt();
-		boolean isExpired = refreshAt == null || refreshAt.plus(REFRESH_INTERVAL).isBefore(now);
-
-		if (isExpired) {
-			// 시간이 지났으면 자동으로 새 카드 발급
-			List<Long> randomIds = userRepository.findRandomUserIds(user.getId(), MAX_DATING_PROFILE_COUNT);
-			user.setNowShows(new java.util.ArrayList<>(randomIds));
-			user.setRefreshAt(now);
-			// 응답으로 현재 시간보다 이전 시간이 오면 안 됨 → now + REFRESH_INTERVAL 반환
-			return new DatingRefreshTimeResponse(now.plus(REFRESH_INTERVAL), false);
+		if (isRefreshDue(user.getRefreshAvailableAt(), now)) {
+			refreshNowShows(user, now);
 		}
 
-		LocalDateTime refreshAvailableAt = refreshAt.plus(REFRESH_INTERVAL);
-		boolean canRefresh = !now.isBefore(refreshAvailableAt);
-		return new DatingRefreshTimeResponse(refreshAvailableAt, canRefresh);
+		return new DatingRefreshTimeResponse(user.getRefreshAvailableAt());
 	}
 
 	@Transactional
@@ -377,15 +364,45 @@ public class DatingService {
 			throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
 		}
 
-		List<Long> randomIds = userRepository.findRandomUserIds(requester.getId(), MAX_DATING_PROFILE_COUNT);
-		requester.setNowShows(new java.util.ArrayList<>(randomIds));
+		refreshNowShows(requester, LocalDateTime.now());
 		requester.setCookies(requester.getCookies() - 2);
 		saveCookieUseTransaction(requester, 2, "소개팅 카드 셔플");
-		requester.setRefreshAt(LocalDateTime.now());
+	}
+
+	@Transactional
+	public int refreshReadyNowShows() {
+		LocalDateTime now = LocalDateTime.now();
+		List<User> users = userRepository.findUsersReadyForNowShowRefresh(now);
+		users.forEach(user -> refreshNowShows(user, now));
+		return users.size();
 	}
 
 	private void saveCookieUseTransaction(User user, int amount, String description) {
 		cookieTransactionRepository.save(CookieTransaction.use(user, amount, description));
+	}
+
+	private void refreshNowShows(User user, LocalDateTime now) {
+		user.setNowShows(new ArrayList<>(findRandomOppositeGenderUserIds(user)));
+		user.setRefreshAvailableAt(nextRefreshAvailableAt(now));
+	}
+
+	private List<Long> findRandomOppositeGenderUserIds(User user) {
+		if (user.getGender() == null) {
+			return Collections.emptyList();
+		}
+		return userRepository.findRandomOppositeGenderUserIds(
+			user.getId(),
+			user.getGender(),
+			MAX_DATING_PROFILE_COUNT
+		);
+	}
+
+	private boolean isRefreshDue(LocalDateTime refreshAvailableAt, LocalDateTime now) {
+		return refreshAvailableAt == null || !refreshAvailableAt.isAfter(now);
+	}
+
+	private LocalDateTime nextRefreshAvailableAt(LocalDateTime now) {
+		return now.truncatedTo(ChronoUnit.MINUTES).plus(REFRESH_INTERVAL);
 	}
 
 	private String generateUniqueLinkCode() {

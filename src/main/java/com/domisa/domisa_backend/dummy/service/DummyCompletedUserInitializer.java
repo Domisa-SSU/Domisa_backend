@@ -12,6 +12,7 @@ import com.domisa.domisa_backend.user.type.AnimalProfile;
 import com.domisa.domisa_backend.user.type.ContactType;
 import com.domisa.domisa_backend.user.type.Mbti;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -160,7 +161,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		user.setIsRegistered(true);
 		user.setIsProfileCompleted(true);
 		user.setHasIntroduction(true);
-		user.setRefreshAt(LocalDateTime.now());
+		user.setRefreshAvailableAt(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES).plusHours(2));
 		user.setFreeBlurCount(0);
 		user.setFreeBlurResetAt(LocalDateTime.now());
 		user.setFreeLikeCount(0);
@@ -238,7 +239,10 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 			User user = users.get(index);
 
 			for (int offset = 1; offset < size; offset++) {
-				user.getNowShows().add(users.get((index + offset) % size).getId());
+				User target = users.get((index + offset) % size);
+				if (user.getGender() != null && target.getGender() != null && !user.getGender().equals(target.getGender())) {
+					user.getNowShows().add(target.getId());
+				}
 			}
 
 			addLike(user, users.get((index + 1) % size));

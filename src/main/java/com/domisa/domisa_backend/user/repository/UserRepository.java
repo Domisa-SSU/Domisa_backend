@@ -1,6 +1,7 @@
 package com.domisa.domisa_backend.user.repository;
 
 import com.domisa.domisa_backend.user.entity.User;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -60,13 +61,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			SELECT u.id FROM users u
 			WHERE u.id != :userId
 			AND u.is_profile_completed = true
+			AND u.gender <> :gender
 			ORDER BY RAND()
 			LIMIT :limit
 			""",
 		nativeQuery = true
 	)
-	List<Long> findRandomUserIds(@org.springframework.data.repository.query.Param("userId") Long userId,
+	List<Long> findRandomOppositeGenderUserIds(@org.springframework.data.repository.query.Param("userId") Long userId,
+		@org.springframework.data.repository.query.Param("gender") Boolean gender,
 		@org.springframework.data.repository.query.Param("limit") int limit);
+
+	@Query("""
+		select u from User u
+		where u.isProfileCompleted = true
+		and (u.refreshAvailableAt is null or u.refreshAvailableAt <= :now)
+		""")
+	List<User> findUsersReadyForNowShowRefresh(@Param("now") LocalDateTime now);
 
 	@Modifying
 	@Query(value = "delete from user_my_blurs where user_id = :userId or target_user_id = :userId", nativeQuery = true)
