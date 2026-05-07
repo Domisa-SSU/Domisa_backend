@@ -121,7 +121,7 @@ public class NotificationService {
 	}
 
 	private boolean requiresTargetUser(NotificationType type) {
-		return type == NotificationType.LIKE || type == NotificationType.MATCH;
+		return type == NotificationType.LIKE || type == NotificationType.MATCH || type == NotificationType.REFERRAL;
 	}
 
 	private Map<Long, User> getUsersById(List<Notification> notifications) {

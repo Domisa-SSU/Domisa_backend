@@ -67,6 +67,10 @@ public class CookieTransaction {
 		return new CookieTransaction(user, order, amount, CookieTransactionType.CHARGE, "쿠키 충전");
 	}
 
+	public static CookieTransaction reward(User user, Integer amount, String description) {
+		return new CookieTransaction(user, null, amount, CookieTransactionType.CHARGE, description);
+	}
+
 	public static CookieTransaction use(User user, Integer amount, String description) {
 		return new CookieTransaction(user, null, amount, CookieTransactionType.USE, description);
 	}

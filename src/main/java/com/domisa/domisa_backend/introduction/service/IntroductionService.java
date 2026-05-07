@@ -5,6 +5,10 @@ import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.introduction.dto.IntroductionResponse;
 import com.domisa.domisa_backend.introduction.entity.Introduction;
 import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
+import com.domisa.domisa_backend.notification.service.NotificationService;
+import com.domisa.domisa_backend.notification.type.NotificationType;
+import com.domisa.domisa_backend.payment.entity.CookieTransaction;
+import com.domisa.domisa_backend.payment.repository.CookieTransactionRepository;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class IntroductionService {
 
+	private static final long PARTICIPANT_SIGNUP_REWARD_COOKIES = 1L;
+	private static final long INTRODUCER_REFERRAL_REWARD_COOKIES = 2L;
+
 	private final IntroductionRepository introductionRepository;
 	private final UserRepository userRepository;
+	private final NotificationService notificationService;
+	private final CookieTransactionRepository cookieTransactionRepository;
 
 	@Transactional(readOnly = true)
 	public IntroductionResponse getIntroductionByLinkCode(String linkCode) {
@@ -43,11 +52,38 @@ public class IntroductionService {
 
 		// 기존 소개서가 있으면 먼저 연결을 해제하고 새 소개서로 갈아탄다.
 		Introduction currentIntroduction = participant.getIntroduction();
+		boolean isFirstIntroductionSignup = currentIntroduction == null;
 		if (currentIntroduction != null && !currentIntroduction.getId().equals(introduction.getId())) {
 			currentIntroduction.clearParticipant();
 		}
 
 		// 유저에도 등록, 소개서에서도 유저 등록
 		introduction.assignParticipant(participant);
+		if (isFirstIntroductionSignup) {
+			rewardIntroductionSignup(introduction, participant);
+		}
+	}
+
+	private void rewardIntroductionSignup(Introduction introduction, User participant) {
+		User introducer = introduction.getIntroducer();
+		boolean hasValidIntroducer = introducer != null && !introducer.getId().equals(participant.getId());
+
+		if (hasValidIntroducer) {
+			introducer.addCookies(INTRODUCER_REFERRAL_REWARD_COOKIES);
+			cookieTransactionRepository.save(CookieTransaction.reward(
+				introducer,
+				Math.toIntExact(INTRODUCER_REFERRAL_REWARD_COOKIES),
+				"소개서 작성 보상"
+			));
+			notificationService.createNotification(NotificationType.REFERRAL, introducer.getId(), participant.getId());
+		}
+
+		participant.addCookies(PARTICIPANT_SIGNUP_REWARD_COOKIES);
+		cookieTransactionRepository.save(CookieTransaction.reward(
+			participant,
+			Math.toIntExact(PARTICIPANT_SIGNUP_REWARD_COOKIES),
+			"소개서 가입 보상"
+		));
+		notificationService.createNotification(NotificationType.SIGNUP, participant.getId(), null);
 	}
 }
