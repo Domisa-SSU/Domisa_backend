@@ -95,8 +95,8 @@ public class UserService {
 			.map(targetUser -> new UserLikesReceivedResponse.UserFan(
 				targetUser.getPublicId(),
 				unblurIds.contains(targetUser.getId())
-					? s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
-					: s3ObjectUrlService.getThumbnailBlurUrl(targetUser.getProfileImage())
+					? s3ObjectUrlService.getThumbnailPresignedUrl(targetUser.getProfileImage())
+					: s3ObjectUrlService.getThumbnailBlurPresignedUrl(targetUser.getProfileImage())
 			))
 			.toList();
 
@@ -116,7 +116,7 @@ public class UserService {
 			.filter(targetUser -> targetUser != null)
 			.map(targetUser -> new UserLikesSentResponse.UserType(
 				targetUser.getPublicId(),
-				s3ObjectUrlService.getThumbnailUrl(targetUser.getProfileImage())
+				s3ObjectUrlService.getThumbnailPresignedUrl(targetUser.getProfileImage())
 			))
 			.toList();
 
