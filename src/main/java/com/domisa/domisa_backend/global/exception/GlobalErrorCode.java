@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 
 public enum GlobalErrorCode {
 
+	LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "LOGIN_REQUIRED", "로그인이 필요합니다."),
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "유저를 찾을 수 없습니다."),
 	USER_PUBLIC_ID_GENERATION_FAILED(
 		HttpStatus.INTERNAL_SERVER_ERROR,
