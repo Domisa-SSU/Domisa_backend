@@ -60,7 +60,8 @@ public class CardService {
                 new StatusDto(user.getIsRegistered(),
                         user.hasIntroduction(),
                         user.hasCard()
-                )
+                ),
+                userRepository.count()
         );
     }
 
