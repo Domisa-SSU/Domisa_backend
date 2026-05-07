@@ -299,6 +299,30 @@ public class DatingService {
 	}
 
 	@Transactional
+	public void matchReceivedLike(User authUser, String publicId) {
+		User requester = getRequiredUser(authUser);
+		User targetUser = userRepository.findByPublicId(publicId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		if (requester.getId().equals(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.CANNOT_LIKE_SELF);
+		}
+
+		if (requester.getMyFans() == null || !requester.getMyFans().contains(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.USER_NOT_FOUND);
+		}
+
+		if (requester.getMyBlurs() == null || !requester.getMyBlurs().contains(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.NOT_UNBLURRED);
+		}
+
+		addUniqueRelation(requester, targetUser.getId(), RelationType.MY_TYPES);
+		addUniqueRelation(targetUser, requester.getId(), RelationType.MY_FANS);
+		addUniqueRelation(requester, targetUser.getId(), RelationType.MY_BLURS);
+		addUniqueRelation(targetUser, requester.getId(), RelationType.MY_BLURS);
+	}
+
+	@Transactional
 	public void sendLike(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
 		User targetUser = userRepository.findByPublicId(publicId)
@@ -389,6 +413,36 @@ public class DatingService {
 		user.setRefreshAvailableAt(nextRefreshAvailableAt(now));
 	}
 
+	private void addUniqueRelation(User user, Long targetUserId, RelationType relationType) {
+		List<Long> values = getOrCreateRelationList(user, relationType);
+		if (!values.contains(targetUserId)) {
+			values.add(targetUserId);
+		}
+	}
+
+	private List<Long> getOrCreateRelationList(User user, RelationType relationType) {
+		return switch (relationType) {
+			case MY_TYPES -> {
+				if (user.getMyTypes() == null) {
+					user.setMyTypes(new ArrayList<>());
+				}
+				yield user.getMyTypes();
+			}
+			case MY_FANS -> {
+				if (user.getMyFans() == null) {
+					user.setMyFans(new ArrayList<>());
+				}
+				yield user.getMyFans();
+			}
+			case MY_BLURS -> {
+				if (user.getMyBlurs() == null) {
+					user.setMyBlurs(new ArrayList<>());
+				}
+				yield user.getMyBlurs();
+			}
+		};
+	}
+
 	private boolean canHaveNowShows(User user) {
 		return Boolean.TRUE.equals(user.getIsRegistered())
 			&& user.hasIntroduction()
@@ -442,5 +496,11 @@ public class DatingService {
 			user.setFreeBlurResetAt(now);
 		}
 		return Math.max(0, 3 - user.getFreeBlurCount());
+	}
+
+	private enum RelationType {
+		MY_TYPES,
+		MY_FANS,
+		MY_BLURS
 	}
 }
