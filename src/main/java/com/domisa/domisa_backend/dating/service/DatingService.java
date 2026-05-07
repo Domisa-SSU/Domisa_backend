@@ -20,7 +20,6 @@ import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -49,7 +48,7 @@ public class DatingService {
 		User requester = getRequiredUser(authUser);
 
 		LocalDateTime now = LocalDateTime.now();
-		if (isRefreshDue(requester.getRefreshAvailableAt(), now)) {
+		if (canHaveNowShows(requester) && isRefreshDue(requester.getRefreshAvailableAt(), now)) {
 			refreshNowShows(requester, now);
 		}
 
@@ -145,7 +144,7 @@ public class DatingService {
 		User user = getRequiredUser(authUser);
 		LocalDateTime now = LocalDateTime.now();
 
-		if (isRefreshDue(user.getRefreshAvailableAt(), now)) {
+		if (canHaveNowShows(user) && isRefreshDue(user.getRefreshAvailableAt(), now)) {
 			refreshNowShows(user, now);
 		}
 
@@ -364,6 +363,10 @@ public class DatingService {
 			throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
 		}
 
+		if (!canHaveNowShows(requester)) {
+			throw new GlobalException(GlobalErrorCode.PROFILE_NOT_COMPLETED);
+		}
+
 		refreshNowShows(requester, LocalDateTime.now());
 		requester.setCookies(requester.getCookies() - 2);
 		saveCookieUseTransaction(requester, 2, "소개팅 카드 셔플");
@@ -386,6 +389,12 @@ public class DatingService {
 		user.setRefreshAvailableAt(nextRefreshAvailableAt(now));
 	}
 
+	private boolean canHaveNowShows(User user) {
+		return Boolean.TRUE.equals(user.getIsRegistered())
+			&& user.hasIntroduction()
+			&& user.hasCard();
+	}
+
 	private List<Long> findRandomOppositeGenderUserIds(User user) {
 		if (user.getGender() == null) {
 			return Collections.emptyList();
@@ -402,7 +411,7 @@ public class DatingService {
 	}
 
 	private LocalDateTime nextRefreshAvailableAt(LocalDateTime now) {
-		return now.truncatedTo(ChronoUnit.MINUTES).plus(REFRESH_INTERVAL);
+		return now.withNano(0).plus(REFRESH_INTERVAL);
 	}
 
 	private String generateUniqueLinkCode() {

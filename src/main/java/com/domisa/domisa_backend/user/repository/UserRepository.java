@@ -60,6 +60,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 		value = """
 			SELECT u.id FROM users u
 			WHERE u.id != :userId
+			AND u.is_registered = true
+			AND u.has_introduction = true
 			AND u.is_profile_completed = true
 			AND u.gender <> :gender
 			ORDER BY RAND()
@@ -73,7 +75,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@Query("""
 		select u from User u
-		where u.isProfileCompleted = true
+		where u.isRegistered = true
+		and u.hasIntroduction = true
+		and u.isProfileCompleted = true
 		and (u.refreshAvailableAt is null or u.refreshAvailableAt <= :now)
 		""")
 	List<User> findUsersReadyForNowShowRefresh(@Param("now") LocalDateTime now);
