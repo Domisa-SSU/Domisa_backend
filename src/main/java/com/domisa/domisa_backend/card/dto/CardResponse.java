@@ -1,5 +1,6 @@
 package com.domisa.domisa_backend.card.dto;
 
+import com.domisa.domisa_backend.user.dto.ContactDTO;
 import com.domisa.domisa_backend.user.type.Mbti;
 
 public record CardResponse(
@@ -7,5 +8,6 @@ public record CardResponse(
         Mbti mbti,
         String datingStyle,
         String idealType,
-        String imageKey
+        String imageKey,
+        ContactDTO contact
 ) {}

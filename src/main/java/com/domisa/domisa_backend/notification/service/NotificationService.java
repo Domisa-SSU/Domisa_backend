@@ -55,9 +55,9 @@ public class NotificationService {
 			.stream()
 			.map(notification -> new NotificationListResponse.NotificationItem(
 				notification.getId(),
-				notification.getUserId(),
+				getPublicId(usersById.get(notification.getUserId())),
 				notification.getType(),
-				notification.getTargetUserId(),
+				getPublicId(usersById.get(notification.getTargetUserId())),
 				getAnimalProfile(usersById.get(notification.getTargetUserId())),
 				getPersonNickname(usersById.get(notification.getTargetUserId())),
 				notification.isRead(),
@@ -145,6 +145,10 @@ public class NotificationService {
 
 	private AnimalProfile getAnimalProfile(User user) {
 		return user == null ? null : user.getAnimalProfile();
+	}
+
+	private String getPublicId(User user) {
+		return user == null ? null : user.getPublicId();
 	}
 
 	private String getPersonNickname(User user) {

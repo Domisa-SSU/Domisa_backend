@@ -8,6 +8,11 @@ public record UserMeResponse(
 		Long birthYear,
 		Boolean gender,
 		AnimalProfile animalProfile,
-		ContactDTO contact,
-		String profileImageUrl
-) {}
+		StatusDto status
+) {
+	public record StatusDto(
+			boolean isRegistered,
+			boolean hasIntroduction,
+			boolean isProfileCompleted
+	) {}
+}

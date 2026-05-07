@@ -43,8 +43,10 @@ class NotificationServiceTest {
 
 		User owner = User.create(100L);
 		owner.setId(1L);
+		owner.setPublicId("OWNER01");
 		User targetUser = User.create(200L);
 		targetUser.setId(2L);
+		targetUser.setPublicId("TARGET01");
 		targetUser.setAnimalProfile(AnimalProfile.OTTER);
 		targetUser.setNickname("배고파요");
 
@@ -56,9 +58,9 @@ class NotificationServiceTest {
 		assertThat(response.notifications()).hasSize(1);
 		NotificationListResponse.NotificationItem item = response.notifications().getFirst();
 		assertThat(item.notificationId()).isEqualTo(10L);
-		assertThat(item.userId()).isEqualTo(1L);
+		assertThat(item.publicId()).isEqualTo("OWNER01");
 		assertThat(item.type()).isEqualTo(NotificationType.LIKE);
-		assertThat(item.targetUserId()).isEqualTo(2L);
+		assertThat(item.targetUserId()).isEqualTo("TARGET01");
 		assertThat(item.animalProfile()).isEqualTo(AnimalProfile.OTTER);
 		assertThat(item.personNickname()).isEqualTo("배고파요");
 		assertThat(item.isRead()).isFalse();
