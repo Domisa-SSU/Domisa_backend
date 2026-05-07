@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProfileImageProcessor {
 
+	private static final int BLUR_PASS_COUNT = 2;
+
 	private final ProfileImageProcessingProperties properties;
 
 	public ProcessedProfileImageSet generateVariants(BufferedImage originImage) {
@@ -71,7 +73,17 @@ public class ProfileImageProcessor {
 
 	private BufferedImage blur(BufferedImage sourceImage, int kernelSize) {
 		validateKernelSize(kernelSize);
-		// 정규화된 박스 커널을 사용해 같은 파이프라인에서 블러 강도만 조절한다.
+		BufferedImage blurredImage = toRgb(sourceImage);
+		for (int pass = 0; pass < BLUR_PASS_COUNT; pass++) {
+			blurredImage = boxBlurWithMirroredEdges(blurredImage, kernelSize);
+		}
+		return blurredImage;
+	}
+
+	private BufferedImage boxBlurWithMirroredEdges(BufferedImage sourceImage, int kernelSize) {
+		int radius = kernelSize / 2;
+		BufferedImage paddedImage = mirrorPad(sourceImage, radius);
+
 		float[] kernelData = new float[kernelSize * kernelSize];
 		float value = 1.0f / (kernelSize * kernelSize);
 		for (int index = 0; index < kernelData.length; index++) {
@@ -83,7 +95,60 @@ public class ProfileImageProcessor {
 			ConvolveOp.EDGE_NO_OP,
 			null
 		);
-		return toRgb(convolveOp.filter(sourceImage, null));
+		BufferedImage blurredPaddedImage = convolveOp.filter(paddedImage, null);
+		return cropCenter(blurredPaddedImage, radius, sourceImage.getWidth(), sourceImage.getHeight());
+	}
+
+	private BufferedImage mirrorPad(BufferedImage sourceImage, int padding) {
+		int width = sourceImage.getWidth();
+		int height = sourceImage.getHeight();
+		BufferedImage paddedImage = new BufferedImage(
+			width + padding * 2,
+			height + padding * 2,
+			BufferedImage.TYPE_INT_RGB
+		);
+
+		for (int y = 0; y < paddedImage.getHeight(); y++) {
+			int sourceY = mirrorIndex(y - padding, height);
+			for (int x = 0; x < paddedImage.getWidth(); x++) {
+				int sourceX = mirrorIndex(x - padding, width);
+				paddedImage.setRGB(x, y, sourceImage.getRGB(sourceX, sourceY));
+			}
+		}
+		return paddedImage;
+	}
+
+	private int mirrorIndex(int index, int size) {
+		if (size <= 1) {
+			return 0;
+		}
+		while (index < 0 || index >= size) {
+			if (index < 0) {
+				index = -index - 1;
+			} else {
+				index = size * 2 - index - 1;
+			}
+		}
+		return index;
+	}
+
+	private BufferedImage cropCenter(BufferedImage image, int padding, int width, int height) {
+		BufferedImage croppedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		Graphics2D graphics = croppedImage.createGraphics();
+		graphics.drawImage(
+			image,
+			0,
+			0,
+			width,
+			height,
+			padding,
+			padding,
+			padding + width,
+			padding + height,
+			null
+		);
+		graphics.dispose();
+		return croppedImage;
 	}
 
 	private byte[] writeJpeg(BufferedImage image) throws IOException {
