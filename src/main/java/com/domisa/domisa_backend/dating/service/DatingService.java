@@ -216,7 +216,7 @@ public class DatingService {
 				user.getPublicId(),
 				user.getNickname(),
 				user.getProfileImage() != null
-					? s3ObjectUrlService.getProfileImageUrl(user.getProfileImage())
+					? s3ObjectUrlService.getThumbnailPresignedUrl(user.getProfileImage())
 					: null,
 				user.getContactType() != null ? user.getContactType().name() : null,
 				user.getContact()
