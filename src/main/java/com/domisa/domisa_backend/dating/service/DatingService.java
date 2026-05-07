@@ -310,8 +310,6 @@ public class DatingService {
 		}
 
 		addMatch(requester, targetUser);
-		addUniqueRelation(requester, targetUser.getId(), RelationType.MY_BLURS);
-		addUniqueRelation(targetUser, requester.getId(), RelationType.MY_BLURS);
 	}
 
 	@Transactional
@@ -360,8 +358,6 @@ public class DatingService {
 		boolean isMutual = targetUser.getMyTypes() != null && targetUser.getMyTypes().contains(requester.getId());
 		if (isMutual) {
 			addMatch(requester, targetUser);
-			addUniqueRelation(requester, targetUser.getId(), RelationType.MY_BLURS);
-			addUniqueRelation(targetUser, requester.getId(), RelationType.MY_BLURS);
 		}
 	}
 
@@ -404,6 +400,8 @@ public class DatingService {
 	private void addMatch(User user, User target) {
 		addUniqueRelation(user, target.getId(), RelationType.MY_MATCHES);
 		addUniqueRelation(target, user.getId(), RelationType.MY_MATCHES);
+		addUniqueRelation(user, target.getId(), RelationType.MY_BLURS);
+		addUniqueRelation(target, user.getId(), RelationType.MY_BLURS);
 		removeRelation(user, target.getId(), RelationType.MY_FANS);
 		removeRelation(user, target.getId(), RelationType.MY_TYPES);
 		removeRelation(user, target.getId(), RelationType.NOW_SHOWS);
