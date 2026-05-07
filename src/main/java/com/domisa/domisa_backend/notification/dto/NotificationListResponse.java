@@ -10,9 +10,9 @@ public record NotificationListResponse(List<NotificationItem> notifications) {
 
 	public record NotificationItem(
 		Long notificationId,
-		Long userId,
+		String publicId,
 		NotificationType type,
-		Long targetUserId,
+		String targetUserId,
 		AnimalProfile animalProfile,
 		String personNickname,
 		boolean isRead,

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 public record DummyUserResponse(
-	Long userId,
 	String publicId,
 	Long kakaoId,
 	String nickname,
@@ -28,7 +27,6 @@ public record DummyUserResponse(
 
 	public static DummyUserResponse from(User user, Map<Long, String> publicIdsByUserId) {
 		return new DummyUserResponse(
-			user.getId(),
 			user.getPublicId(),
 			user.getKakaoId(),
 			user.getNickname(),

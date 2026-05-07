@@ -108,6 +108,7 @@ public class DatingService {
 			targetUser.getPublicId(),
 			targetUser.getNickname(),
 			targetUser.getAge(),
+			targetUser.getGender(),
 			targetUser.getAnimalProfile(),
 			profileUrl,
 			targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ1(),
