@@ -58,6 +58,7 @@ public class DatingService {
 			? Collections.emptyList()
 			: requester.getNowShows().stream()
 				.filter(id -> requester.getMyFans() == null || !requester.getMyFans().contains(id))
+				.filter(id -> requester.getMyMatches() == null || !requester.getMyMatches().contains(id))
 				.limit(MAX_DATING_PROFILE_COUNT)
 				.toList();
 		Set<Long> unblurIds = requester.getMyBlurs() == null
@@ -86,9 +87,9 @@ public class DatingService {
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
 		boolean isPaidUnblur = requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId());
+		boolean isMatched = requester.getMyMatches() != null && requester.getMyMatches().contains(targetUser.getId());
 		boolean hasSentLike = requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId());
 		boolean hasReceivedLike = requester.getMyFans() != null && requester.getMyFans().contains(targetUser.getId());
-		boolean isMatched = hasSentLike && hasReceivedLike;
 		int freeLikeRemaining = getFreeLikeRemaining(requester);
 
 		// default: 쌍방매칭 or 쿠키 지불해서 블러 해제 → 모두 공개
@@ -197,19 +198,11 @@ public class DatingService {
 	public DatingMatchListResponse getMatchList(User authUser) {
 		User requester = getRequiredUser(authUser);
 
-		if (requester.getMyTypes() == null || requester.getMyFans() == null) {
+		if (requester.getMyMatches() == null || requester.getMyMatches().isEmpty()) {
 			return new DatingMatchListResponse(0, Collections.emptyList());
 		}
 
-		// 내가 호감 보낸 사람 중에 나한테도 호감 보낸 사람 = 쌍방 매칭
-		Set<Long> myTypes = new HashSet<>(requester.getMyTypes());
-		List<Long> matchedIds = requester.getMyFans().stream()
-			.filter(myTypes::contains)
-			.toList();
-
-		if (matchedIds.isEmpty()) {
-			return new DatingMatchListResponse(0, Collections.emptyList());
-		}
+		List<Long> matchedIds = requester.getMyMatches();
 
 		List<DatingMatchListResponse.MatchSummary> matches = userRepository.findAllByIdIn(matchedIds).stream()
 			.map(user -> new DatingMatchListResponse.MatchSummary(
@@ -248,7 +241,7 @@ public class DatingService {
 		// 일반 블러 해제: 2시간에 3번 무료, 초과 시 쿠키 1개
 		int freeBlurRemaining = getFreeBlurRemaining(requester);
 		if (freeBlurRemaining > 0) {
-			requester.setFreeBlurCount(requester.getFreeBlurCount() + 1);
+			requester.setFreeBlurCount(freeBlurRemaining - 1);
 			if (requester.getFreeBlurResetAt() == null) {
 				requester.setFreeBlurResetAt(LocalDateTime.now());
 			}
@@ -316,8 +309,7 @@ public class DatingService {
 			throw new GlobalException(GlobalErrorCode.NOT_UNBLURRED);
 		}
 
-		addUniqueRelation(requester, targetUser.getId(), RelationType.MY_TYPES);
-		addUniqueRelation(targetUser, requester.getId(), RelationType.MY_FANS);
+		addMatch(requester, targetUser);
 		addUniqueRelation(requester, targetUser.getId(), RelationType.MY_BLURS);
 		addUniqueRelation(targetUser, requester.getId(), RelationType.MY_BLURS);
 	}
@@ -333,6 +325,9 @@ public class DatingService {
 		}
 
 		if (requester.getMyTypes() != null && requester.getMyTypes().contains(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.ALREADY_LIKED);
+		}
+		if (requester.getMyMatches() != null && requester.getMyMatches().contains(targetUser.getId())) {
 			throw new GlobalException(GlobalErrorCode.ALREADY_LIKED);
 		}
 
@@ -361,21 +356,12 @@ public class DatingService {
 		}
 		targetUser.getMyFans().add(requester.getId());
 
-		// 쌍방 매칭 확인 — 상대도 나한테 호감 보낸 상태면 서로 myBlurs에 자동 추가 (연락처 공개)
+		// 쌍방 매칭 확인 — 상대도 나한테 호감 보낸 상태면 match 목록으로 이동한다.
 		boolean isMutual = targetUser.getMyTypes() != null && targetUser.getMyTypes().contains(requester.getId());
 		if (isMutual) {
-			if (targetUser.getMyBlurs() == null) {
-				targetUser.setMyBlurs(new java.util.ArrayList<>());
-			}
-			if (!targetUser.getMyBlurs().contains(requester.getId())) {
-				targetUser.getMyBlurs().add(requester.getId());
-			}
-			if (requester.getMyBlurs() == null) {
-				requester.setMyBlurs(new java.util.ArrayList<>());
-			}
-			if (!requester.getMyBlurs().contains(targetUser.getId())) {
-				requester.getMyBlurs().add(targetUser.getId());
-			}
+			addMatch(requester, targetUser);
+			addUniqueRelation(requester, targetUser.getId(), RelationType.MY_BLURS);
+			addUniqueRelation(targetUser, requester.getId(), RelationType.MY_BLURS);
 		}
 	}
 
@@ -411,12 +397,32 @@ public class DatingService {
 	private void refreshNowShows(User user, LocalDateTime now) {
 		user.setNowShows(new ArrayList<>(findRandomOppositeGenderUserIds(user)));
 		user.setRefreshAvailableAt(nextRefreshAvailableAt(now));
+		user.setFreeBlurCount(3);
+		user.setFreeBlurResetAt(now);
+	}
+
+	private void addMatch(User user, User target) {
+		addUniqueRelation(user, target.getId(), RelationType.MY_MATCHES);
+		addUniqueRelation(target, user.getId(), RelationType.MY_MATCHES);
+		removeRelation(user, target.getId(), RelationType.MY_FANS);
+		removeRelation(user, target.getId(), RelationType.MY_TYPES);
+		removeRelation(user, target.getId(), RelationType.NOW_SHOWS);
+		removeRelation(target, user.getId(), RelationType.MY_FANS);
+		removeRelation(target, user.getId(), RelationType.MY_TYPES);
+		removeRelation(target, user.getId(), RelationType.NOW_SHOWS);
 	}
 
 	private void addUniqueRelation(User user, Long targetUserId, RelationType relationType) {
 		List<Long> values = getOrCreateRelationList(user, relationType);
 		if (!values.contains(targetUserId)) {
 			values.add(targetUserId);
+		}
+	}
+
+	private void removeRelation(User user, Long targetUserId, RelationType relationType) {
+		List<Long> values = getRelationList(user, relationType);
+		if (values != null) {
+			values.remove(targetUserId);
 		}
 	}
 
@@ -427,6 +433,12 @@ public class DatingService {
 					user.setMyTypes(new ArrayList<>());
 				}
 				yield user.getMyTypes();
+			}
+			case MY_MATCHES -> {
+				if (user.getMyMatches() == null) {
+					user.setMyMatches(new ArrayList<>());
+				}
+				yield user.getMyMatches();
 			}
 			case MY_FANS -> {
 				if (user.getMyFans() == null) {
@@ -440,6 +452,22 @@ public class DatingService {
 				}
 				yield user.getMyBlurs();
 			}
+			case NOW_SHOWS -> {
+				if (user.getNowShows() == null) {
+					user.setNowShows(new ArrayList<>());
+				}
+				yield user.getNowShows();
+			}
+		};
+	}
+
+	private List<Long> getRelationList(User user, RelationType relationType) {
+		return switch (relationType) {
+			case MY_TYPES -> user.getMyTypes();
+			case MY_MATCHES -> user.getMyMatches();
+			case MY_FANS -> user.getMyFans();
+			case MY_BLURS -> user.getMyBlurs();
+			case NOW_SHOWS -> user.getNowShows();
 		};
 	}
 
@@ -453,9 +481,24 @@ public class DatingService {
 		if (user.getGender() == null) {
 			return Collections.emptyList();
 		}
-		return userRepository.findRandomOppositeGenderUserIds(
+		Set<Long> excludedUserIds = new HashSet<>();
+		if (user.getMyFans() != null) {
+			excludedUserIds.addAll(user.getMyFans());
+		}
+		if (user.getMyMatches() != null) {
+			excludedUserIds.addAll(user.getMyMatches());
+		}
+		if (excludedUserIds.isEmpty()) {
+			return userRepository.findRandomOppositeGenderUserIds(
+				user.getId(),
+				user.getGender(),
+				MAX_DATING_PROFILE_COUNT
+			);
+		}
+		return userRepository.findRandomOppositeGenderUserIdsExcluding(
 			user.getId(),
 			user.getGender(),
+			excludedUserIds,
 			MAX_DATING_PROFILE_COUNT
 		);
 	}
@@ -491,16 +534,18 @@ public class DatingService {
 		LocalDateTime now = LocalDateTime.now();
 		LocalDateTime resetAt = user.getFreeBlurResetAt();
 
-		if (resetAt == null || resetAt.plusHours(2).isBefore(now)) {
-			user.setFreeBlurCount(0);
+		if (user.getFreeBlurCount() == null || resetAt == null || resetAt.plusHours(2).isBefore(now)) {
+			user.setFreeBlurCount(3);
 			user.setFreeBlurResetAt(now);
 		}
-		return Math.max(0, 3 - user.getFreeBlurCount());
+		return Math.max(0, user.getFreeBlurCount());
 	}
 
 	private enum RelationType {
 		MY_TYPES,
+		MY_MATCHES,
 		MY_FANS,
-		MY_BLURS
+		MY_BLURS,
+		NOW_SHOWS
 	}
 }

@@ -46,11 +46,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@org.springframework.data.jpa.repository.Query(
 		value = """
-			SELECT COUNT(*) FROM user_my_types a
-			JOIN user_my_types b
-			  ON a.user_id = b.target_user_id
-			 AND a.target_user_id = b.user_id
-			 AND a.user_id < b.user_id
+			SELECT COUNT(*) FROM user_my_matches m
+			WHERE m.user_id < m.target_user_id
 			""",
 		nativeQuery = true
 	)
@@ -73,6 +70,27 @@ public interface UserRepository extends JpaRepository<User, Long> {
 		@org.springframework.data.repository.query.Param("gender") Boolean gender,
 		@org.springframework.data.repository.query.Param("limit") int limit);
 
+	@org.springframework.data.jpa.repository.Query(
+		value = """
+			SELECT u.id FROM users u
+			WHERE u.id != :userId
+			AND u.is_registered = true
+			AND u.has_introduction = true
+			AND u.is_profile_completed = true
+			AND u.gender <> :gender
+			AND u.id NOT IN (:excludedUserIds)
+			ORDER BY RAND()
+			LIMIT :limit
+			""",
+		nativeQuery = true
+	)
+	List<Long> findRandomOppositeGenderUserIdsExcluding(
+		@org.springframework.data.repository.query.Param("userId") Long userId,
+		@org.springframework.data.repository.query.Param("gender") Boolean gender,
+		@org.springframework.data.repository.query.Param("excludedUserIds") Collection<Long> excludedUserIds,
+		@org.springframework.data.repository.query.Param("limit") int limit
+	);
+
 	@Query("""
 		select u from User u
 		where u.isRegistered = true
@@ -93,6 +111,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	@Modifying
 	@Query(value = "delete from user_my_types where user_id = :userId or target_user_id = :userId", nativeQuery = true)
 	void deleteTypeRelations(@Param("userId") Long userId);
+
+	@Modifying
+	@Query(value = "delete from user_my_matches where user_id = :userId or target_user_id = :userId", nativeQuery = true)
+	void deleteMatchRelations(@Param("userId") Long userId);
 
 	@Modifying
 	@Query(value = "delete from user_now_shows where user_id = :userId or target_user_id = :userId", nativeQuery = true)

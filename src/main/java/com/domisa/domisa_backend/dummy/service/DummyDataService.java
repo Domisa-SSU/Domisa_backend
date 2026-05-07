@@ -183,6 +183,7 @@ public class DummyDataService {
 		addAll(userIds, user.getNowShows());
 		addAll(userIds, user.getMyFans());
 		addAll(userIds, user.getMyTypes());
+		addAll(userIds, user.getMyMatches());
 		addAll(userIds, user.getMyBlurs());
 		return userIds;
 	}

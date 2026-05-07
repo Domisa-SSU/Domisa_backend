@@ -86,10 +86,12 @@ public class UserService {
 		User user = getRequiredUser(authUser);
 
 		var fanIds = user.getMyFans() == null ? Collections.<Long>emptyList() : user.getMyFans();
+		var matchIds = user.getMyMatches() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyMatches());
 		var unblurIds = user.getMyBlurs() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyBlurs());
 		var usersById = getUsersById(fanIds);
 
 		var fans = fanIds.stream()
+			.filter(id -> !matchIds.contains(id))
 			.map(usersById::get)
 			.filter(targetUser -> targetUser != null)
 			.map(targetUser -> new UserLikesReceivedResponse.UserFan(
@@ -109,9 +111,11 @@ public class UserService {
 		User user = getRequiredUser(authUser);
 
 		var typeIds = user.getMyTypes() == null ? Collections.<Long>emptyList() : user.getMyTypes();
+		var matchIds = user.getMyMatches() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyMatches());
 		var usersById = getUsersById(typeIds);
 
 		var myTypes = typeIds.stream()
+			.filter(id -> !matchIds.contains(id))
 			.map(usersById::get)
 			.filter(targetUser -> targetUser != null)
 			.map(targetUser -> new UserLikesSentResponse.UserType(
@@ -133,6 +137,7 @@ public class UserService {
 		userRepository.deleteBlurRelations(userId);
 		userRepository.deleteFanRelations(userId);
 		userRepository.deleteTypeRelations(userId);
+		userRepository.deleteMatchRelations(userId);
 		userRepository.deleteNowShowRelations(userId);
 
 		cookieOrderService.excludePendingOrdersForUser(userId);
