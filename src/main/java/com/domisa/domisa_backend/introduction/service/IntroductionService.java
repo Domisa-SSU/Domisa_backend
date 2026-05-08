@@ -45,6 +45,7 @@ public class IntroductionService {
 		// 소개서의 등록된 사람이 있으면
 		if (introduction.getParticipant() != null) {
 			if (introduction.getParticipant().getId().equals(participant.getId())) {
+				participant.setHasIntroduction(true);
 				return;
 			}
 			throw new GlobalException(GlobalErrorCode.INTRODUCTION_ALREADY_ACCEPTED);

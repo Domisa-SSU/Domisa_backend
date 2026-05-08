@@ -2,6 +2,7 @@ package com.domisa.domisa_backend.profile.service;
 
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
+import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateResponse;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfileService {
 
 	private final UserRepository userRepository;
+	private final IntroductionRepository introductionRepository;
 
 	// 닉네임 중복 조회
 	@Transactional(readOnly = true)
@@ -52,11 +54,15 @@ public class ProfileService {
 				user.getPublicId(),
 				new ProfileRegisterResponse.StatusDto(
 						user.getIsRegistered(),
-						user.hasIntroduction(),
+						hasIntroduction(user.getId()),
 						user.hasCard()
 				),
 				totalUserCount
 		);
+	}
+
+	private boolean hasIntroduction(Long userId) {
+		return introductionRepository.existsByParticipantId(userId);
 	}
 
 	// 프로필 수정

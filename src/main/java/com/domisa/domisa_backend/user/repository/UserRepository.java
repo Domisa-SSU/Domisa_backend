@@ -65,7 +65,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			SELECT u.id FROM users u
 			WHERE u.id != :userId
 			AND u.is_registered = true
-			AND u.has_introduction = true
+			AND EXISTS (
+				SELECT 1
+				FROM introductions i
+				WHERE i.participant_id = u.id
+			)
 			AND u.is_profile_completed = true
 			AND u.gender <> :gender
 			ORDER BY RAND()
@@ -82,7 +86,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			SELECT u.id FROM users u
 			WHERE u.id != :userId
 			AND u.is_registered = true
-			AND u.has_introduction = true
+			AND EXISTS (
+				SELECT 1
+				FROM introductions i
+				WHERE i.participant_id = u.id
+			)
 			AND u.is_profile_completed = true
 			AND u.gender <> :gender
 			AND u.id NOT IN (:excludedUserIds)
@@ -101,7 +109,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	@Query("""
 		select u from User u
 		where u.isRegistered = true
-		and u.hasIntroduction = true
+		and exists (
+			select 1
+			from Introduction i
+			where i.participant = u
+		)
 		and u.isProfileCompleted = true
 		and (u.refreshAvailableAt is null or u.refreshAvailableAt <= :now)
 		""")

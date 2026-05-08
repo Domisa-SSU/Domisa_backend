@@ -3,6 +3,7 @@ package com.domisa.domisa_backend.profile.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterResponse;
 import com.domisa.domisa_backend.user.entity.User;
@@ -21,6 +22,9 @@ class ProfileServiceTest {
 	@Mock
 	private UserRepository userRepository;
 
+	@Mock
+	private IntroductionRepository introductionRepository;
+
 	@InjectMocks
 	private ProfileService profileService;
 
@@ -33,6 +37,7 @@ class ProfileServiceTest {
 		when(userRepository.existsByNickname("수빈")).thenReturn(false);
 		when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 		when(userRepository.count()).thenReturn(1L);
+		when(introductionRepository.existsByParticipantId(1L)).thenReturn(false);
 
 		ProfileRegisterResponse response = profileService.registerProfile(
 			1L,

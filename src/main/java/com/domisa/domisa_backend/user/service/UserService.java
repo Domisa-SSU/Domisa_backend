@@ -58,10 +58,14 @@ public class UserService {
 			user.getAnimalProfile(),
 			new UserMeResponse.StatusDto(
 				user.getIsRegistered(),
-				user.hasIntroduction(),
+				hasIntroduction(user.getId()),
 				user.hasCard()
 			)
 		);
+	}
+
+	private boolean hasIntroduction(Long userId) {
+		return introductionRepository.existsByParticipantId(userId);
 	}
 
 	@Transactional(readOnly = true)
