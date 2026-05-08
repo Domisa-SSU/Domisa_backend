@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.domisa.domisa_backend.card.entity.Card;
@@ -202,8 +203,8 @@ class DatingServiceTest {
 		assertThat(requester.getMyMatches()).containsExactly(2L);
 		assertThat(target.getMyTypes()).isEmpty();
 		assertThat(target.getMyMatches()).containsExactly(1L);
-		verify(notificationService).createNotification(NotificationType.MATCH, 1L, 2L);
 		verify(notificationService).createNotification(NotificationType.MATCH, 2L, 1L);
+		verifyNoMoreInteractions(notificationService);
 	}
 
 	@Test
