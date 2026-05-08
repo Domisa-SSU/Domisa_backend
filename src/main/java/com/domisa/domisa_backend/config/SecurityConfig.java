@@ -27,6 +27,8 @@ public class SecurityConfig {
 
     private static final List<String> ALLOWED_ORIGINS = List.of(
         "https://domisa.vercel.app",
+        "https://domisalove.me",
+        "https://www.domisalove.me",
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:5174",
@@ -97,7 +99,6 @@ public class SecurityConfig {
         config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
