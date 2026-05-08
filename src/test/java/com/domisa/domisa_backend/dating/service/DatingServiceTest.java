@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.domisa.domisa_backend.card.entity.Card;
 import com.domisa.domisa_backend.dating.dto.DatingProfileDetailRequest;
+import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
@@ -93,6 +94,53 @@ class DatingServiceTest {
 		assertThat(response.hasReceivedLike()).isTrue();
 		assertThat(response.isMatched()).isFalse();
 		assertThat(response.freeLikeRemaining()).isEqualTo(2);
+	}
+
+	@Test
+	void getDatingProfilesReturnsOpenThumbnailWhenTargetIsInMyBlurs() {
+		User requester = createUser(1L, "REQ001");
+		requester.setNowShows(List.of(2L, 3L));
+		requester.setMyBlurs(List.of(2L));
+		requester.setFreeLikeCount(2);
+
+		User unblurredTarget = createUser(2L, "TGT001");
+		User blurredTarget = createUser(3L, "TGT002");
+
+		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
+		when(userRepository.findAllByIdIn(List.of(2L, 3L))).thenReturn(List.of(unblurredTarget, blurredTarget));
+		when(s3ObjectUrlService.getThumbnailPresignedUrl(isNull())).thenReturn("https://example.com/open.jpg");
+		when(s3ObjectUrlService.getThumbnailBlurPresignedUrl(isNull())).thenReturn("https://example.com/blur.jpg");
+
+		DatingProfileListResponse response = datingService.getDatingProfiles(requester);
+
+		assertThat(response.profiles()).extracting(DatingProfileListResponse.ProfileSummary::publicId)
+			.containsExactly("TGT001", "TGT002");
+		assertThat(response.profiles()).extracting(DatingProfileListResponse.ProfileSummary::profile)
+			.containsExactly("https://example.com/open.jpg", "https://example.com/blur.jpg");
+		assertThat(response.freeLikeRemaining()).isEqualTo(2);
+	}
+
+	@Test
+	void getDatingProfilesReturnsOpenThumbnailWhenTargetIsInMyMatches() {
+		User requester = createUser(1L, "REQ001");
+		requester.setNowShows(List.of(2L, 3L));
+		requester.setMyMatches(List.of(2L));
+		requester.setFreeLikeCount(2);
+
+		User matchedTarget = createUser(2L, "TGT001");
+		User blurredTarget = createUser(3L, "TGT002");
+
+		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
+		when(userRepository.findAllByIdIn(List.of(2L, 3L))).thenReturn(List.of(matchedTarget, blurredTarget));
+		when(s3ObjectUrlService.getThumbnailPresignedUrl(isNull())).thenReturn("https://example.com/open.jpg");
+		when(s3ObjectUrlService.getThumbnailBlurPresignedUrl(isNull())).thenReturn("https://example.com/blur.jpg");
+
+		DatingProfileListResponse response = datingService.getDatingProfiles(requester);
+
+		assertThat(response.profiles()).extracting(DatingProfileListResponse.ProfileSummary::publicId)
+			.containsExactly("TGT001", "TGT002");
+		assertThat(response.profiles()).extracting(DatingProfileListResponse.ProfileSummary::profile)
+			.containsExactly("https://example.com/open.jpg", "https://example.com/blur.jpg");
 	}
 
 	@Test

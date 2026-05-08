@@ -22,6 +22,16 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
+logging:
+  level:
+    root: ${LOGGING_LEVEL_ROOT:WARN}
+    com.domisa.domisa_backend: ${LOGGING_LEVEL_APP:INFO}
+    org.springframework: ${LOGGING_LEVEL_SPRING:WARN}
+    org.hibernate: ${LOGGING_LEVEL_HIBERNATE:WARN}
+    org.hibernate.SQL: ${LOGGING_LEVEL_HIBERNATE_SQL:WARN}
+    org.hibernate.orm.jdbc.bind: ${LOGGING_LEVEL_HIBERNATE_BIND:WARN}
+    software.amazon.awssdk: ${LOGGING_LEVEL_AWS:WARN}
+
 aws:
   s3:
     bucket: ${AWS_S3_BUCKET}

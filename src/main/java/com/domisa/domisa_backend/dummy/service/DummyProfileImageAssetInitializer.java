@@ -39,14 +39,14 @@ public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 	private void uploadDummyImageIfNeeded(int index) {
 		Resource resource = findDummyImageResource(index);
 		if (resource == null) {
-			log.info("Dummy profile image resource not found. index={}", index);
+			log.debug("더미 프로필 이미지 리소스를 찾지 못했습니다. index={}", index);
 			return;
 		}
 
 		DummyImageKeys keys = DummyImageKeys.of(index, s3ProfileImageKeyService);
 		try (InputStream inputStream = resource.getInputStream()) {
 			if (existsAll(keys)) {
-				log.info("Dummy profile image already exists in S3. index={}", index);
+				log.debug("더미 프로필 이미지가 이미 S3에 존재합니다. index={}", index);
 				return;
 			}
 
@@ -59,10 +59,10 @@ public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 			s3ObjectStorageService.uploadJpeg(keys.thumbnailBlur(), variants.thumbnailBlur());
 			s3ObjectStorageService.uploadJpeg(keys.originBlur(), variants.originBlur());
 
-			log.info("Uploaded dummy profile image variants. index={}", index);
+			log.info("더미 프로필 이미지 파생본을 업로드했습니다. index={}", index);
 		} catch (Exception exception) {
 			log.warn(
-				"Failed to upload dummy profile image variants. index={}, reason={}",
+				"더미 프로필 이미지 파생본 업로드에 실패했습니다. index={}, reason={}",
 				index,
 				exception.getMessage()
 			);
@@ -88,7 +88,7 @@ public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 				&& s3ObjectStorageService.exists(keys.thumbnailBlur())
 				&& s3ObjectStorageService.exists(keys.originBlur());
 		} catch (Exception exception) {
-			log.warn("Could not verify existing dummy profile image assets. Upload will be attempted. reason={}",
+			log.warn("기존 더미 프로필 이미지 자산을 확인하지 못했습니다. 업로드를 시도합니다. reason={}",
 				exception.getMessage());
 			return false;
 		}

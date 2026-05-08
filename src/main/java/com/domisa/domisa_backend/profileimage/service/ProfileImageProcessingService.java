@@ -10,10 +10,12 @@ import com.domisa.domisa_backend.profileimage.type.ProfileImageProcessingStatus;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProfileImageProcessingService {
@@ -32,6 +34,9 @@ public class ProfileImageProcessingService {
 			PageRequest.of(0, properties.getBatchSize())
 		);
 
+		if (!candidates.isEmpty()) {
+			log.info("프로필 이미지 처리 배치를 시작합니다. candidateCount={}", candidates.size());
+		}
 		for (ProfileImage profileImage : candidates) {
 			processProfileImage(profileImage);
 		}
@@ -46,13 +51,18 @@ public class ProfileImageProcessingService {
 			return;
 		}
 
+		long startedAt = System.nanoTime();
 		try {
 			// 프론트가 presigned PUT으로 직접 업로드하므로 origin 객체가 실제로 생긴 뒤에만 처리한다.
 			if (!s3ObjectStorageService.exists(profileImage.getProfileOriginKey())) {
+				log.info("프로필 이미지 처리를 건너뜁니다. reason=origin_not_uploaded, profileImageId={}, userId={}",
+					profileImage.getId(), profileImage.getUser().getId());
 				return;
 			}
 
 			profileImage.markProcessing();
+			log.info("프로필 이미지 처리를 시작했습니다. profileImageId={}, userId={}, uploadKey={}",
+				profileImage.getId(), profileImage.getUser().getId(), profileImage.getProfileOriginKey());
 			byte[] originBytes = s3ObjectStorageService.read(profileImage.getProfileOriginKey());
 			BufferedImage originImage = profileImageProcessor.read(originBytes);
 			ProcessedProfileImageSet variants = profileImageProcessor.generateVariants(originImage);
@@ -73,8 +83,26 @@ public class ProfileImageProcessingService {
 				finalThumbnailKey,
 				finalThumbnailBlurKey
 			);
+			log.info(
+				"프로필 이미지 처리를 완료했습니다. profileImageId={}, userId={}, elapsedMs={}, originKey={}",
+				profileImage.getId(),
+				profileImage.getUser().getId(),
+				elapsedMillis(startedAt),
+				finalOriginKey
+			);
 		} catch (Exception exception) {
 			profileImage.markFailed(exception.getMessage());
+			log.warn(
+				"프로필 이미지 처리에 실패했습니다. profileImageId={}, userId={}, elapsedMs={}, reason={}",
+				profileImage.getId(),
+				profileImage.getUser().getId(),
+				elapsedMillis(startedAt),
+				exception.getMessage()
+			);
 		}
+	}
+
+	private long elapsedMillis(long startedAt) {
+		return (System.nanoTime() - startedAt) / 1_000_000;
 	}
 }

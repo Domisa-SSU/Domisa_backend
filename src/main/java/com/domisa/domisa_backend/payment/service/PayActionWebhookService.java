@@ -44,7 +44,7 @@ public class PayActionWebhookService {
 	) {
 		validateWebhookHeaders(webhookKey, mallId);
 		log.info(
-			"Received PayAction matched webhook traceId={}, orderNumber={}, orderStatus={}",
+			"페이액션 입금 매칭 웹훅을 수신했습니다. traceId={}, orderNumber={}, orderStatus={}",
 			traceId,
 			request.orderNumber(),
 			request.orderStatus()
@@ -115,7 +115,7 @@ public class PayActionWebhookService {
 				LocalDateTime.now()
 			));
 		} catch (DataIntegrityViolationException exception) {
-			log.info("Duplicated PayAction webhook traceId={}", traceId);
+			log.info("중복 페이액션 웹훅입니다. traceId={}", traceId);
 		}
 	}
 }
