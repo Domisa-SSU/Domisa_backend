@@ -142,7 +142,7 @@ public class UserService {
 		userRepository.deleteMatchRelations(userId);
 		userRepository.deleteNowShowRelations(userId);
 
-		cookieOrderService.excludePendingOrdersForUser(userId);
+		cookieOrderService.excludePendingOrdersForUser(user);
 		payActionWebhookLogRepository.deleteByCookieOrderUserId(userId);
 		cookieTransactionRepository.deleteAllRelatedToUser(userId);
 		cookieOrderRepository.deleteByUserId(userId);
