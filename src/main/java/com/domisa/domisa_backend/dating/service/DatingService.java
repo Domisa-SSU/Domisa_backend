@@ -57,8 +57,6 @@ public class DatingService {
 		List<Long> nowShowIds = requester.getNowShows() == null
 			? Collections.emptyList()
 			: requester.getNowShows().stream()
-				.filter(id -> requester.getMyFans() == null || !requester.getMyFans().contains(id))
-				.filter(id -> requester.getMyMatches() == null || !requester.getMyMatches().contains(id))
 				.limit(MAX_DATING_PROFILE_COUNT)
 				.toList();
 		Set<Long> unblurIds = requester.getMyBlurs() == null
