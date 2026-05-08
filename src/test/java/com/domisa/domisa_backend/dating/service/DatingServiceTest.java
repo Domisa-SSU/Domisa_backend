@@ -1,7 +1,6 @@
 package com.domisa.domisa_backend.dating.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -176,12 +175,11 @@ class DatingServiceTest {
 		completeProfile(requester);
 
 		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
-		when(userRepository.findRandomOppositeGenderUserIdsExcluding(1L, true, anyCollection(), 8))
+		when(userRepository.findRandomOppositeGenderUserIds(1L, true, 8))
 			.thenReturn(List.of(2L, 3L));
 
 		datingService.shuffle(requester);
 
-		assertThat(requester.getBeforeShows()).containsExactly(9L);
 		assertThat(requester.getNowShows()).containsExactly(2L, 3L);
 		assertThat(requester.getFreeLikeCount()).isEqualTo(3);
 		assertThat(requester.getCookies()).isZero();

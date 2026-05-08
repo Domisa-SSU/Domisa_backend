@@ -106,11 +106,6 @@ public class User {
 	@Column(name = "target_user_id")
 	private List<Long> nowShows;
 
-	@ElementCollection(fetch = FetchType.LAZY)
-	@CollectionTable(name = "user_before_shows", joinColumns = @JoinColumn(name = "user_id"))
-	@Column(name = "target_user_id")
-	private List<Long> beforeShows;
-
 	@Column(name = "refresh_at")
 	private LocalDateTime refreshAvailableAt;
 

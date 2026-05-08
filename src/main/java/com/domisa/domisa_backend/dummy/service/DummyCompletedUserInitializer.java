@@ -436,7 +436,6 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		int size = users.size();
 		for (User user : users) {
 			user.setNowShows(new ArrayList<>());
-			user.setBeforeShows(new ArrayList<>());
 			user.setMyFans(new ArrayList<>());
 			user.setMyTypes(new ArrayList<>());
 			user.setMyMatches(new ArrayList<>());

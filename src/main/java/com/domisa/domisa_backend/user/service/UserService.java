@@ -24,7 +24,6 @@ import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.List;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -86,12 +85,10 @@ public class UserService {
 		User user = getRequiredUser(authUser);
 
 		var fanIds = user.getMyFans() == null ? Collections.<Long>emptyList() : user.getMyFans();
-		var matchIds = user.getMyMatches() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyMatches());
-		var unblurIds = user.getMyBlurs() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyBlurs());
+		var unblurIds = user.getMyBlurs() == null ? Collections.<Long>emptySet() : new java.util.HashSet<>(user.getMyBlurs());
 		var usersById = getUsersById(fanIds);
 
 		var fans = fanIds.stream()
-			.filter(id -> !matchIds.contains(id))
 			.map(usersById::get)
 			.filter(targetUser -> targetUser != null)
 			.map(targetUser -> new UserLikesReceivedResponse.UserFan(
@@ -111,12 +108,10 @@ public class UserService {
 		User user = getRequiredUser(authUser);
 
 		var typeIds = user.getMyTypes() == null ? Collections.<Long>emptyList() : user.getMyTypes();
-		var matchIds = user.getMyMatches() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyMatches());
-		var unblurIds = user.getMyBlurs() == null ? Collections.<Long>emptySet() : new HashSet<>(user.getMyBlurs());
+		var unblurIds = user.getMyBlurs() == null ? Collections.<Long>emptySet() : new java.util.HashSet<>(user.getMyBlurs());
 		var usersById = getUsersById(typeIds);
 
 		var myTypes = typeIds.stream()
-			.filter(id -> !matchIds.contains(id))
 			.map(usersById::get)
 			.filter(targetUser -> targetUser != null)
 			.map(targetUser -> new UserLikesSentResponse.UserType(
@@ -142,7 +137,6 @@ public class UserService {
 		userRepository.deleteTypeRelations(userId);
 		userRepository.deleteMatchRelations(userId);
 		userRepository.deleteNowShowRelations(userId);
-		userRepository.deleteBeforeShowRelations(userId);
 
 		cookieOrderService.excludePendingOrdersForUser(userId);
 		payActionWebhookLogRepository.deleteByCookieOrderUserId(userId);

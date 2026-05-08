@@ -347,10 +347,6 @@ public class DatingService {
 	}
 
 	private void refreshNowShows(User user, LocalDateTime now) {
-		List<Long> currentShows = user.getNowShows() == null
-			? new ArrayList<>()
-			: new ArrayList<>(user.getNowShows());
-		user.setBeforeShows(currentShows);
 		user.setNowShows(new ArrayList<>(findRandomOppositeGenderUserIds(user)));
 		user.setRefreshAvailableAt(nextRefreshAvailableAt(now));
 		user.setFreeLikeCount(3);
@@ -399,14 +395,8 @@ public class DatingService {
 		if (user.getMyFans() != null) {
 			excludedUserIds.addAll(user.getMyFans());
 		}
-		if (user.getMyTypes() != null) {
-			excludedUserIds.addAll(user.getMyTypes());
-		}
 		if (user.getMyMatches() != null) {
 			excludedUserIds.addAll(user.getMyMatches());
-		}
-		if (user.getBeforeShows() != null) {
-			excludedUserIds.addAll(user.getBeforeShows());
 		}
 		if (excludedUserIds.isEmpty()) {
 			return userRepository.findRandomOppositeGenderUserIds(
