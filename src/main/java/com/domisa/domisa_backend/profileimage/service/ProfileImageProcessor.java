@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProfileImageProcessor {
 
-	private static final int BLUR_PASS_COUNT = 2;
+	private static final int BLUR_PASS_COUNT = 3;
 
 	private final ProfileImageProcessingProperties properties;
 
