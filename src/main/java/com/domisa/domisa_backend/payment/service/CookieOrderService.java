@@ -14,6 +14,7 @@ import com.domisa.domisa_backend.payment.entity.CookieCode;
 import com.domisa.domisa_backend.payment.entity.CookieOrder;
 import com.domisa.domisa_backend.payment.entity.OrderStatus;
 import com.domisa.domisa_backend.payment.repository.CookieOrderRepository;
+import com.domisa.domisa_backend.user.entity.User;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -38,11 +39,11 @@ public class CookieOrderService {
 	private final PayActionClient payActionClient;
 	private final CookieOrderTxService cookieOrderTxService;
 
-	public CreateCookieOrderResponse createCookieOrder(Long userId, CreateCookieOrderRequest request) {
+	public CreateCookieOrderResponse createCookieOrder(User user, CreateCookieOrderRequest request) {
 		CookieCode cookieCode = validateRequest(request);
 
 		LocalDateTime orderDate = currentKoreaDateTime();
-		CookieOrder order = cookieOrderTxService.createPendingOrder(userId, cookieCode, orderDate);
+		CookieOrder order = cookieOrderTxService.createPendingOrder(user.getId(), cookieCode, orderDate);
 
 		PayActionCreateOrderRequest payActionRequest = PayActionCreateOrderRequest.requiredOnly(
 				order.getOrderNumber(),
@@ -67,11 +68,11 @@ public class CookieOrderService {
 	}
 
 	@Transactional
-	public void cancelCookieOrder(Long userId, CancelCookieOrderRequest request) {
+	public void cancelCookieOrder(User user, CancelCookieOrderRequest request) {
 		validateCancelRequest(request);
 
 		CookieOrder order = cookieOrderRepository.findAllByUserIdAndBillingNameAndOrderAmountWithLock(
-						userId,
+						user.getId(),
 						request.billingName(),
 						request.orderAmount()
 				)
@@ -97,9 +98,9 @@ public class CookieOrderService {
 	}
 
 	@Transactional
-	public void excludePendingOrdersForUser(Long userId) {
+	public void excludePendingOrdersForUser(User user) {
 		List<CookieOrder> pendingOrders = cookieOrderRepository.findByUserIdAndStatusIn(
-				userId,
+				user.getId(),
 				List.of(OrderStatus.PAYMENT_PENDING, OrderStatus.PENDING)
 		);
 
@@ -116,14 +117,14 @@ public class CookieOrderService {
 
 	@Transactional(readOnly = true)
 	public CookieOrderPaymentStatusResponse getCookieOrderPaymentStatus(
-			Long userId,
+			User user,
 			String billingName,
 			Integer orderAmount
 	) {
 		validatePaymentStatusRequest(billingName, orderAmount);
 
 		return cookieOrderRepository.findFirstByUserIdAndBillingNameAndOrderAmountOrderByCreatedAtDesc(
-						userId,
+						user.getId(),
 						billingName,
 						orderAmount
 				)

@@ -6,6 +6,7 @@ import com.domisa.domisa_backend.payment.dto.CookieOrderPaymentStatusResponse;
 import com.domisa.domisa_backend.payment.dto.CreateCookieOrderRequest;
 import com.domisa.domisa_backend.payment.dto.CreateCookieOrderResponse;
 import com.domisa.domisa_backend.payment.service.CookieOrderService;
+import com.domisa.domisa_backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,27 +26,27 @@ public class CookieOrderController {
 
 	@PostMapping
 	public ResponseEntity<CreateCookieOrderResponse> createCookieOrder(
-		@AuthUser Long userId,
+		@AuthUser User user,
 		@RequestBody CreateCookieOrderRequest request
 	) {
-		return ResponseEntity.ok(cookieOrderService.createCookieOrder(userId, request));
+		return ResponseEntity.ok(cookieOrderService.createCookieOrder(user, request));
 	}
 
 	@PostMapping("/cancel")
 	public ResponseEntity<Void> cancelCookieOrder(
-		@AuthUser Long userId,
+		@AuthUser User user,
 		@RequestBody CancelCookieOrderRequest request
 	) {
-		cookieOrderService.cancelCookieOrder(userId, request);
+		cookieOrderService.cancelCookieOrder(user, request);
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
 
 	@GetMapping("/status")
 	public ResponseEntity<CookieOrderPaymentStatusResponse> getCookieOrderPaymentStatus(
-		@AuthUser Long userId,
+		@AuthUser User user,
 		@RequestParam("billing_name") String billingName,
 		@RequestParam("order_amount") Integer orderAmount
 	) {
-		return ResponseEntity.ok(cookieOrderService.getCookieOrderPaymentStatus(userId, billingName, orderAmount));
+		return ResponseEntity.ok(cookieOrderService.getCookieOrderPaymentStatus(user, billingName, orderAmount));
 	}
 }
