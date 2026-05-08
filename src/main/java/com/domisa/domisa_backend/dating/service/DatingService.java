@@ -30,9 +30,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DatingService {
@@ -65,6 +67,9 @@ public class DatingService {
 		Set<Long> unblurIds = requester.getMyBlurs() == null
 			? Collections.emptySet()
 			: new HashSet<>(requester.getMyBlurs());
+		Set<Long> matchedIds = requester.getMyMatches() == null
+			? Collections.emptySet()
+			: new HashSet<>(requester.getMyMatches());
 		LinkedHashMap<Long, User> usersById = getUsersById(nowShowIds);
 
 		List<DatingProfileListResponse.ProfileSummary> profiles = nowShowIds.stream()
@@ -72,7 +77,7 @@ public class DatingService {
 			.filter(targetUser -> targetUser != null)
 			.map(targetUser -> new DatingProfileListResponse.ProfileSummary(
 				targetUser.getPublicId(),
-				unblurIds.contains(targetUser.getId())
+				unblurIds.contains(targetUser.getId()) || matchedIds.contains(targetUser.getId())
 					? s3ObjectUrlService.getThumbnailPresignedUrl(targetUser.getProfileImage())
 					: s3ObjectUrlService.getThumbnailBlurPresignedUrl(targetUser.getProfileImage())
 			))
@@ -172,6 +177,8 @@ public class DatingService {
 			introducer,
 			linkCode
 		));
+		log.info("소개서 링크가 생성되었습니다. introducerId={}, linkCode={}",
+			introducer == null ? null : introducer.getId(), linkCode);
 
 		return new DatingIntroductionLinkCreateResponse(linkCode);
 	}
@@ -239,6 +246,8 @@ public class DatingService {
 		}
 
 		if (requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId())) {
+			log.info("받은 호감 블러 해제를 건너뜁니다. reason=already_unblurred, requesterId={}, targetId={}",
+				requester.getId(), targetUser.getId());
 			return new UnblurProfileResponse(targetUser.getPublicId(), false, "이미 블러가 해제된 프로필입니다.");
 		}
 
@@ -252,6 +261,8 @@ public class DatingService {
 			requester.setMyBlurs(new java.util.ArrayList<>());
 		}
 		requester.getMyBlurs().add(targetUser.getId());
+		log.info("받은 호감 블러를 해제했습니다. requesterId={}, targetId={}, usedCookies=2, remainingCookies={}",
+			requester.getId(), targetUser.getId(), requester.getCookieBalance());
 
 		return new UnblurProfileResponse(targetUser.getPublicId(), false, "소개팅 카드 블러가 해제되었습니다.");
 	}
@@ -277,6 +288,7 @@ public class DatingService {
 		addMatch(requester, targetUser);
 		notificationService.createNotification(NotificationType.MATCH, requester.getId(), targetUser.getId());
 		notificationService.createNotification(NotificationType.MATCH, targetUser.getId(), requester.getId());
+		log.info("소개팅 매칭을 수락했습니다. requesterId={}, targetId={}", requester.getId(), targetUser.getId());
 	}
 
 	@Transactional
@@ -297,7 +309,8 @@ public class DatingService {
 		}
 
 		// 호감 보내기: 셔플마다 충전되는 무료 횟수를 먼저 쓰고, 없으면 쿠키 1개를 사용한다.
-		if (!consumeFreeLikeAllowance(requester)) {
+		boolean usedFreeLike = consumeFreeLikeAllowance(requester);
+		if (!usedFreeLike) {
 			if (requester.getCookies() == null || requester.getCookies() < 1) {
 				throw new GlobalException(GlobalErrorCode.INSUFFICIENT_COOKIES);
 			}
@@ -315,6 +328,15 @@ public class DatingService {
 		}
 		addUnique(targetUser.getMyFans(), requester.getId());
 		notificationService.createNotification(NotificationType.LIKE, targetUser.getId(), requester.getId());
+		log.info(
+			"호감을 보냈습니다. requesterId={}, targetId={}, usedFreeLike={}, usedCookies={}, freeLikeRemaining={}, remainingCookies={}",
+			requester.getId(),
+			targetUser.getId(),
+			usedFreeLike,
+			usedFreeLike ? 0 : 1,
+			getFreeLikeRemaining(requester),
+			requester.getCookieBalance()
+		);
 	}
 
 	@Transactional
@@ -332,6 +354,8 @@ public class DatingService {
 		refreshNowShows(requester, LocalDateTime.now());
 		requester.setCookies(requester.getCookies() - 2);
 		saveCookieUseTransaction(requester, 2, "소개팅 카드 셔플");
+		log.info("소개팅 프로필을 셔플했습니다. userId={}, usedCookies=2, remainingCookies={}, nowShowCount={}",
+			requester.getId(), requester.getCookieBalance(), requester.getNowShows().size());
 	}
 
 	@Transactional
@@ -339,6 +363,9 @@ public class DatingService {
 		LocalDateTime now = LocalDateTime.now();
 		List<User> users = userRepository.findUsersReadyForNowShowRefresh(now);
 		users.forEach(user -> refreshNowShows(user, now));
+		if (!users.isEmpty()) {
+			log.info("소개팅 프로필을 자동 갱신했습니다. userCount={}", users.size());
+		}
 		return users.size();
 	}
 
@@ -350,6 +377,8 @@ public class DatingService {
 		user.setNowShows(new ArrayList<>(findRandomOppositeGenderUserIds(user)));
 		user.setRefreshAvailableAt(nextRefreshAvailableAt(now));
 		user.setFreeLikeCount(3);
+		log.info("소개팅 표시 목록을 갱신했습니다. userId={}, nowShowCount={}, nextRefreshAvailableAt={}",
+			user.getId(), user.getNowShows().size(), user.getRefreshAvailableAt());
 	}
 
 	private void addMatch(User user, User target) {

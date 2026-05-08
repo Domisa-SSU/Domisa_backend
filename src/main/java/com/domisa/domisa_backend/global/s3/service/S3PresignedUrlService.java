@@ -13,6 +13,7 @@ import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3PresignedUrlService {
@@ -62,6 +64,8 @@ public class S3PresignedUrlService {
 		}
 
 		profileImage.markPending();
+		log.info("프로필 이미지 업로드가 완료되어 처리 대기 상태로 변경했습니다. userId={}, publicId={}, uploadKey={}, status=PENDING",
+			user.getId(), user.getPublicId(), normalizedUploadKey);
 	}
 
 	@Transactional
@@ -85,6 +89,7 @@ public class S3PresignedUrlService {
 		));
 		profileImageRepository.delete(profileImage);
 		user.setProfileImage(null);
+		log.info("프로필 이미지를 삭제했습니다. userId={}, publicId={}", user.getId(), user.getPublicId());
 	}
 
 	private GeneratePresignedUploadUrlResponse createPresignedUploadUrl(User user, GeneratePresignedUploadUrlRequest request) {
@@ -115,6 +120,14 @@ public class S3PresignedUrlService {
 
 		try {
 			PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(putObjectPresignRequest);
+			log.info(
+				"프로필 이미지 업로드 URL을 발급했습니다. userId={}, publicId={}, uploadKey={}, contentType={}, fileSize={}",
+				user.getId(),
+				user.getPublicId(),
+				uploadKey,
+				contentType,
+				request.fileSize()
+			);
 			return new GeneratePresignedUploadUrlResponse(
 				uploadKey,
 				presignedRequest.url().toString(),

@@ -11,8 +11,8 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        show_sql: ${LOCAL_JPA_SHOW_SQL:true}
-        format_sql: ${LOCAL_JPA_FORMAT_SQL:true}
+        show_sql: ${LOCAL_JPA_SHOW_SQL:false}
+        format_sql: ${LOCAL_JPA_FORMAT_SQL:false}
 
 kakao:
   client-id: ${KAKAO_CLIENT_ID}

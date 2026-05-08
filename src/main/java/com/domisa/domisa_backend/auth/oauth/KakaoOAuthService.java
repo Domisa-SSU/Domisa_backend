@@ -61,7 +61,7 @@ public class KakaoOAuthService {
 		} catch (RestClientResponseException exception) {
 			String responseBody = exception.getResponseBodyAsString();
 			log.warn(
-				"Kakao token request failed. status={}, redirectUri={}, kakaoResponse={}",
+				"카카오 토큰 요청에 실패했습니다. status={}, redirectUri={}, kakaoResponse={}",
 				exception.getStatusCode().value(),
 				resolvedRedirectUri,
 				responseBody
