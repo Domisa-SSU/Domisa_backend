@@ -61,6 +61,11 @@ public enum GlobalErrorCode {
 		HttpStatus.BAD_REQUEST,
 		"INVALID_PAYACTION_ORDER_STATUS",
 		"처리할 수 없는 페이액션 주문 상태입니다."
+	),
+	INVALID_COOKIE_PRODUCT(
+			HttpStatus.BAD_REQUEST,
+			"INVALID_COOKIE_PRODUCT",
+			"유효하지 않은 쿠키 상품입니다."
 	);
 
 	private final HttpStatus httpStatus;

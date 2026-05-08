@@ -1,7 +1,9 @@
 package com.domisa.domisa_backend.payment.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record CreateCookieOrderRequest(
-	Integer cookieAmount,
-	Integer orderAmount
+		@JsonProperty("productCode") String productCode
 ) {
+
 }
