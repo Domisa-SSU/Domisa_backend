@@ -27,18 +27,18 @@ public class S3ObjectUrlService {
 
 	public String getProfileImageUrl(ProfileImage profileImage) {
 		// 일반 프로필 조회는 origin 이미지를 기준으로 응답한다.
-		if (profileImage == null || !profileImage.hasOriginKey()) {
+		if (profileImage == null || !isReady(profileImage) || !profileImage.hasOriginKey()) {
 			return null;
 		}
 		return buildStoredObjectUrl(profileImage.getProfileOriginKey());
 	}
 
 	public String getThumbnailUrl(ProfileImage profileImage) {
-		// 썸네일은 READY 상태에서만 사용하고, 그 전에는 origin 이미지로만 폴백한다.
-		if (profileImage == null) {
+		// temp 업로드 원본이 노출되지 않도록 READY 상태의 최종 이미지 키만 사용한다.
+		if (profileImage == null || !isReady(profileImage)) {
 			return null;
 		}
-		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailKey())) {
+		if (hasText(profileImage.getProfileThumbnailKey())) {
 			return buildStoredObjectUrl(profileImage.getProfileThumbnailKey());
 		}
 		if (profileImage.hasOriginKey()) {
@@ -49,13 +49,13 @@ public class S3ObjectUrlService {
 
 	public String getThumbnailBlurUrl(ProfileImage profileImage) {
 		// 블러 썸네일도 READY 상태에서만 사용하고, 없으면 일반 썸네일까지만 폴백한다.
-		if (profileImage == null) {
+		if (profileImage == null || !isReady(profileImage)) {
 			return null;
 		}
-		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailBlurKey())) {
+		if (hasText(profileImage.getProfileThumbnailBlurKey())) {
 			return buildStoredObjectUrl(profileImage.getProfileThumbnailBlurKey());
 		}
-		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailKey())) {
+		if (hasText(profileImage.getProfileThumbnailKey())) {
 			return buildStoredObjectUrl(profileImage.getProfileThumbnailKey());
 		}
 		return null;
@@ -63,10 +63,10 @@ public class S3ObjectUrlService {
 
 	public String getOriginBlurUrl(ProfileImage profileImage) {
 		// 블러 프로필 상세는 READY 상태의 origin blur만 사용한다.
-		if (profileImage == null) {
+		if (profileImage == null || !isReady(profileImage)) {
 			return null;
 		}
-		if (isReady(profileImage) && hasText(profileImage.getProfileOriginBlurKey())) {
+		if (hasText(profileImage.getProfileOriginBlurKey())) {
 			return buildStoredObjectUrl(profileImage.getProfileOriginBlurKey());
 		}
 		return null;
@@ -111,8 +111,8 @@ public class S3ObjectUrlService {
 	}
 
 	public String getThumbnailPresignedUrl(ProfileImage profileImage) {
-		if (profileImage == null) return null;
-		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailKey())) {
+		if (profileImage == null || !isReady(profileImage)) return null;
+		if (hasText(profileImage.getProfileThumbnailKey())) {
 			return buildPresignedGetUrl(profileImage.getProfileThumbnailKey());
 		}
 		if (profileImage.hasOriginKey()) {
@@ -122,11 +122,11 @@ public class S3ObjectUrlService {
 	}
 
 	public String getThumbnailBlurPresignedUrl(ProfileImage profileImage) {
-		if (profileImage == null) return null;
-		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailBlurKey())) {
+		if (profileImage == null || !isReady(profileImage)) return null;
+		if (hasText(profileImage.getProfileThumbnailBlurKey())) {
 			return buildPresignedGetUrl(profileImage.getProfileThumbnailBlurKey());
 		}
-		if (isReady(profileImage) && hasText(profileImage.getProfileThumbnailKey())) {
+		if (hasText(profileImage.getProfileThumbnailKey())) {
 			return buildPresignedGetUrl(profileImage.getProfileThumbnailKey());
 		}
 		return null;

@@ -1,13 +1,11 @@
 package com.domisa.domisa_backend.dummy.service;
 
 import com.domisa.domisa_backend.global.s3.service.S3ObjectStorageService;
+import com.domisa.domisa_backend.global.s3.service.S3ProfileImageKeyService;
 import com.domisa.domisa_backend.profileimage.dto.ProcessedProfileImageSet;
 import com.domisa.domisa_backend.profileimage.service.ProfileImageProcessor;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -28,6 +26,7 @@ public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 
 	private final ResourceLoader resourceLoader;
 	private final S3ObjectStorageService s3ObjectStorageService;
+	private final S3ProfileImageKeyService s3ProfileImageKeyService;
 	private final ProfileImageProcessor profileImageProcessor;
 
 	@Override
@@ -44,7 +43,7 @@ public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 			return;
 		}
 
-		DummyImageKeys keys = DummyImageKeys.of(index);
+		DummyImageKeys keys = DummyImageKeys.of(index, s3ProfileImageKeyService);
 		try (InputStream inputStream = resource.getInputStream()) {
 			if (existsAll(keys)) {
 				log.info("Dummy profile image already exists in S3. index={}", index);
@@ -55,7 +54,7 @@ public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 			BufferedImage originImage = profileImageProcessor.read(originBytes);
 			ProcessedProfileImageSet variants = profileImageProcessor.generateVariants(originImage);
 
-			s3ObjectStorageService.uploadJpeg(keys.origin(), writeJpeg(originImage));
+			s3ObjectStorageService.uploadJpeg(keys.origin(), variants.origin());
 			s3ObjectStorageService.uploadJpeg(keys.thumbnail(), variants.thumbnail());
 			s3ObjectStorageService.uploadJpeg(keys.thumbnailBlur(), variants.thumbnailBlur());
 			s3ObjectStorageService.uploadJpeg(keys.originBlur(), variants.originBlur());
@@ -95,13 +94,6 @@ public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 		}
 	}
 
-	private byte[] writeJpeg(BufferedImage image) throws IOException {
-		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-			ImageIO.write(image, "jpg", outputStream);
-			return outputStream.toByteArray();
-		}
-	}
-
 	private record DummyImageKeys(
 		String origin,
 		String thumbnail,
@@ -109,13 +101,12 @@ public class DummyProfileImageAssetInitializer implements ApplicationRunner {
 		String originBlur
 	) {
 
-		private static DummyImageKeys of(int index) {
-			String basePath = "dummy/profile-images/dummy" + index;
+		private static DummyImageKeys of(int index, S3ProfileImageKeyService s3ProfileImageKeyService) {
 			return new DummyImageKeys(
-				basePath + "/origin.jpg",
-				basePath + "/thumbnail.jpg",
-				basePath + "/thumbnail-blur.jpg",
-				basePath + "/origin-blur.jpg"
+				s3ProfileImageKeyService.buildDummyOriginKey(index),
+				s3ProfileImageKeyService.buildDummyThumbnailKey(index),
+				s3ProfileImageKeyService.buildDummyThumbnailBlurKey(index),
+				s3ProfileImageKeyService.buildDummyOriginBlurKey(index)
 			);
 		}
 	}

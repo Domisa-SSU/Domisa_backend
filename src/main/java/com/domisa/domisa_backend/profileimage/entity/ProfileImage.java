@@ -100,6 +100,19 @@ public class ProfileImage {
 		this.lastError = null;
 	}
 
+	public void markReady(
+		String profileOriginKey,
+		String profileOriginBlurKey,
+		String profileThumbnailKey,
+		String profileThumbnailBlurKey
+	) {
+		this.profileOriginKey = profileOriginKey;
+		this.profileOriginBlurKey = profileOriginBlurKey;
+		this.profileThumbnailKey = profileThumbnailKey;
+		this.profileThumbnailBlurKey = profileThumbnailBlurKey;
+		markReady();
+	}
+
 	public void markFailed(String lastError) {
 		this.processingStatus = ProfileImageProcessingStatus.FAILED;
 		this.retryCount = retryCount == null ? 1 : retryCount + 1;
