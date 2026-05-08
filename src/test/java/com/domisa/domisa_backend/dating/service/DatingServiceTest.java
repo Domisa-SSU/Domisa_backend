@@ -337,8 +337,7 @@ class DatingServiceTest {
 			user,
 			Mbti.INFJ,
 			"산책 같이 하고 싶어요",
-			"곰같은 남자",
-			null
+			"곰같은 남자"
 		);
 		user.setCard(card);
 		user.setIsRegistered(true);
@@ -349,7 +348,7 @@ class DatingServiceTest {
 	private void completeProfile(User user) {
 		user.setIsRegistered(true);
 		Introduction.create("q1", "q2", "q3", null, "LINK" + user.getId()).assignParticipant(user);
-		user.setCard(Card.create(user, Mbti.INFJ, "style", "ideal", null));
+		user.setCard(Card.create(user, Mbti.INFJ, "style", "ideal"));
 		user.setIsProfileCompleted(true);
 	}
 

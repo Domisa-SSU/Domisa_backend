@@ -381,8 +381,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 					user,
 					seed.mbti(),
 					seed.datingStyle(),
-					seed.idealType(),
-					DummyImageKeys.of(seed.index(), s3ProfileImageKeyService).origin()
+					seed.idealType()
 				);
 				user.setCard(created);
 				return cardRepository.save(created);
@@ -390,8 +389,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		card.update(
 			seed.mbti(),
 			seed.datingStyle(),
-			seed.idealType(),
-			DummyImageKeys.of(seed.index(), s3ProfileImageKeyService).origin()
+			seed.idealType()
 		);
 
 		ProfileImage profileImage = profileImageRepository.findByUserId(user.getId())

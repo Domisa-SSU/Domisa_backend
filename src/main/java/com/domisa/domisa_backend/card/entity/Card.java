@@ -41,28 +41,23 @@ public class Card {
 	@Enumerated(EnumType.STRING)
 	private Mbti mbti;
 
-	// S3 ObjectKey 저징
+	// Deprecated: card image is resolved from User.profileImage.
 	@Column(name = "image_key", length = 1024)
 	private String imageKey;
 
-	public static Card create(User user, Mbti mbti, String datingStyle, String idealType, String imageKey) {
+	public static Card create(User user, Mbti mbti, String datingStyle, String idealType) {
 		Card card = new Card();
 		card.user = user;
 		card.mbti = mbti;
 		card.datingStyle = datingStyle;
 		card.idealType = idealType;
-		card.imageKey = imageKey;
 		return card;
 	}
 
-	public void update(Mbti mbti, String datingStyle, String idealType, String imageKey) {
+	public void update(Mbti mbti, String datingStyle, String idealType) {
 		this.mbti = mbti;
 		this.datingStyle = datingStyle;
 		this.idealType = idealType;
-
-		if (imageKey != null) {
-			this.imageKey = imageKey;
-		}
 	}
 
 }
