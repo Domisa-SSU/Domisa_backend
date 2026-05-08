@@ -71,9 +71,9 @@ app:
 
 payaction:
   base-url: ${PAYACTION_BASE_URL:https://api.payaction.app}
-  api-key: ${PAYACTION_API_KEY:}
-  mall-id: ${PAYACTION_MALL_ID:}
-  webhook-key: ${PAYACTION_WEBHOOK_KEY:}
+  api-key: ${PAYACTION_API_KEY}
+  mall-id: ${PAYACTION_MALL_ID}
+  webhook-key: ${PAYACTION_WEBHOOK_KEY}
   deposit:
     bank-name: ${PAYMENT_BANK_NAME:${PAYACTION_DEPOSIT_BANK_NAME:국민은행}}
     bank-code: ${PAYMENT_BANK_CODE:${PAYACTION_DEPOSIT_BANK_CODE:004}}

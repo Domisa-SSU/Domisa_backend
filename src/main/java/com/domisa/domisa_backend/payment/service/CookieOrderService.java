@@ -22,10 +22,12 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CookieOrderService {
@@ -41,9 +43,12 @@ public class CookieOrderService {
 
 	public CreateCookieOrderResponse createCookieOrder(User user, CreateCookieOrderRequest request) {
 		CookieCode cookieCode = validateRequest(request);
+		log.info("쿠키 주문 생성을 시작합니다. userId={}, productCode={}", user.getId(), cookieCode.name());
 
 		LocalDateTime orderDate = currentKoreaDateTime();
 		CookieOrder order = cookieOrderTxService.createPendingOrder(user.getId(), cookieCode, orderDate);
+		log.info("쿠키 결제대기 주문을 생성했습니다. userId={}, orderNumber={}, orderAmount={}, cookieAmount={}",
+				user.getId(), order.getOrderNumber(), order.getOrderAmount(), order.getCookieAmount());
 
 		PayActionCreateOrderRequest payActionRequest = PayActionCreateOrderRequest.requiredOnly(
 				order.getOrderNumber(),
@@ -54,13 +59,19 @@ public class CookieOrderService {
 		);
 
 		try {
+			log.info("페이액션 주문 등록을 요청합니다. orderNumber={}", order.getOrderNumber());
 			PayActionCreateOrderResponse response = createPayActionOrder(payActionRequest);
 			validatePayActionResponse(response);
+			log.info("페이액션 주문 등록이 완료되었습니다. orderNumber={}", order.getOrderNumber());
 		} catch (GlobalException exception) {
+			log.warn("페이액션 주문 등록에 실패하여 주문을 실패 처리합니다. orderNumber={}, code={}",
+					order.getOrderNumber(), exception.getErrorCode().getCode());
 			cookieOrderTxService.markFailed(order.getId());
 			throw exception;
 		}
 
+		log.info("쿠키 주문 생성 응답을 반환합니다. orderNumber={}, billingName={}, orderAmount={}",
+				order.getOrderNumber(), order.getBillingName(), order.getOrderAmount());
 		return new CreateCookieOrderResponse(
 				order.getBillingName(),
 				order.getOrderAmount()
@@ -70,6 +81,8 @@ public class CookieOrderService {
 	@Transactional
 	public void cancelCookieOrder(User user, CancelCookieOrderRequest request) {
 		validateCancelRequest(request);
+		log.info("쿠키 주문 취소 요청을 수신했습니다. userId={}, billingName={}, orderAmount={}",
+				user.getId(), request.billingName(), request.orderAmount());
 
 		CookieOrder order = cookieOrderRepository.findAllByUserIdAndBillingNameAndOrderAmountWithLock(
 						user.getId(),
@@ -81,6 +94,7 @@ public class CookieOrderService {
 				.orElseThrow(() -> new GlobalException(GlobalErrorCode.COOKIE_ORDER_NOT_FOUND));
 
 		if (order.getStatus() == OrderStatus.CANCELED) {
+			log.info("이미 취소된 쿠키 주문입니다. orderNumber={}", order.getOrderNumber());
 			return;
 		}
 
@@ -95,6 +109,7 @@ public class CookieOrderService {
 		validatePayActionExcludeResponse(payActionResponse);
 
 		order.cancel();
+		log.info("쿠키 주문 취소가 완료되었습니다. orderNumber={}", order.getOrderNumber());
 	}
 
 	@Transactional
@@ -103,8 +118,11 @@ public class CookieOrderService {
 				user.getId(),
 				List.of(OrderStatus.PAYMENT_PENDING, OrderStatus.PENDING)
 		);
+		log.info("사용자의 결제대기 주문 매칭 제외를 시작합니다. userId={}, pendingOrderCount={}",
+				user.getId(), pendingOrders.size());
 
 		for (CookieOrder order : pendingOrders) {
+			log.info("페이액션 주문 매칭 제외를 요청합니다. orderNumber={}", order.getOrderNumber());
 			PayActionCreateOrderResponse payActionResponse = excludePayActionOrder(
 					new PayActionOrderExcludeRequest(order.getOrderNumber())
 			);
@@ -112,6 +130,7 @@ public class CookieOrderService {
 			validatePayActionExcludeResponse(payActionResponse);
 
 			order.cancel();
+			log.info("결제대기 주문 매칭 제외 및 취소가 완료되었습니다. orderNumber={}", order.getOrderNumber());
 		}
 	}
 
@@ -171,6 +190,8 @@ public class CookieOrderService {
 		try {
 			return payActionClient.createOrder(request);
 		} catch (RestClientException exception) {
+			log.warn("페이액션 주문 등록 API 호출에 실패했습니다. orderNumber={}, message={}",
+					request.orderNumber(), exception.getMessage());
 			throw new GlobalException(
 					GlobalErrorCode.PAYACTION_ORDER_CREATE_FAILED,
 					"페이액션 주문 등록 실패: " + exception.getMessage()
@@ -182,6 +203,8 @@ public class CookieOrderService {
 		try {
 			return payActionClient.excludeOrder(request);
 		} catch (RestClientException exception) {
+			log.warn("페이액션 주문 매칭 제외 API 호출에 실패했습니다. orderNumber={}, message={}",
+					request.orderNumber(), exception.getMessage());
 			throw new GlobalException(
 					GlobalErrorCode.PAYACTION_ORDER_EXCLUDE_FAILED,
 					"페이액션 주문 매칭 제외 실패: " + exception.getMessage()
@@ -191,6 +214,7 @@ public class CookieOrderService {
 
 	private void validatePayActionResponse(PayActionCreateOrderResponse response) {
 		if (response != null && response.isSuccess()) {
+			log.info("페이액션 주문 등록 응답이 성공입니다.");
 			return;
 		}
 
@@ -206,6 +230,7 @@ public class CookieOrderService {
 
 	private void validatePayActionExcludeResponse(PayActionCreateOrderResponse response) {
 		if (response != null && response.isSuccess()) {
+			log.info("페이액션 주문 매칭 제외 응답이 성공입니다.");
 			return;
 		}
 
