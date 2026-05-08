@@ -13,13 +13,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface CookieOrderRepository extends JpaRepository<CookieOrder, Long> {
 
-	Optional<CookieOrder> findByOrderNumber(String orderNumber);
-
 	Optional<CookieOrder> findByUserIdAndBillingNameAndOrderAmount(Long userId, String billingName, Integer orderAmount);
 
 	boolean existsByBillingNameAndStatus(String billingName, OrderStatus status);
-
-	Optional<CookieOrder> findTopByOrderNumberStartingWithOrderByOrderNumberDesc(String prefix);
 
 	void deleteByUserId(Long userId);
 
