@@ -7,8 +7,6 @@ import com.domisa.domisa_backend.profileimage.dto.ProcessedProfileImageSet;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.awt.image.ConvolveOp;
-import java.awt.image.Kernel;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -76,47 +74,94 @@ public class ProfileImageProcessor {
 		validateKernelSize(kernelSize);
 		BufferedImage blurredImage = toRgb(sourceImage);
 		for (int pass = 0; pass < BLUR_PASS_COUNT; pass++) {
-			blurredImage = boxBlurWithMirroredEdges(blurredImage, kernelSize);
+			blurredImage = separableBoxBlurWithMirroredEdges(blurredImage, kernelSize);
 		}
 		return blurredImage;
 	}
 
-	private BufferedImage boxBlurWithMirroredEdges(BufferedImage sourceImage, int kernelSize) {
+	private BufferedImage separableBoxBlurWithMirroredEdges(BufferedImage sourceImage, int kernelSize) {
 		int radius = kernelSize / 2;
-		BufferedImage paddedImage = mirrorPad(sourceImage, radius);
-
-		float[] kernelData = new float[kernelSize * kernelSize];
-		float value = 1.0f / (kernelSize * kernelSize);
-		for (int index = 0; index < kernelData.length; index++) {
-			kernelData[index] = value;
-		}
-
-		ConvolveOp convolveOp = new ConvolveOp(
-			new Kernel(kernelSize, kernelSize, kernelData),
-			ConvolveOp.EDGE_NO_OP,
-			null
-		);
-		BufferedImage blurredPaddedImage = convolveOp.filter(paddedImage, null);
-		return cropCenter(blurredPaddedImage, radius, sourceImage.getWidth(), sourceImage.getHeight());
-	}
-
-	private BufferedImage mirrorPad(BufferedImage sourceImage, int padding) {
 		int width = sourceImage.getWidth();
 		int height = sourceImage.getHeight();
-		BufferedImage paddedImage = new BufferedImage(
-			width + padding * 2,
-			height + padding * 2,
-			BufferedImage.TYPE_INT_RGB
-		);
+		int[] sourcePixels = sourceImage.getRGB(0, 0, width, height, null, 0, width);
+		int[] horizontalPixels = new int[sourcePixels.length];
+		int[] blurredPixels = new int[sourcePixels.length];
 
-		for (int y = 0; y < paddedImage.getHeight(); y++) {
-			int sourceY = mirrorIndex(y - padding, height);
-			for (int x = 0; x < paddedImage.getWidth(); x++) {
-				int sourceX = mirrorIndex(x - padding, width);
-				paddedImage.setRGB(x, y, sourceImage.getRGB(sourceX, sourceY));
+		blurHorizontal(sourcePixels, horizontalPixels, width, height, radius, kernelSize);
+		blurVertical(horizontalPixels, blurredPixels, width, height, radius, kernelSize);
+
+		BufferedImage blurredImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		blurredImage.setRGB(0, 0, width, height, blurredPixels, 0, width);
+		return blurredImage;
+	}
+
+	private void blurHorizontal(
+		int[] sourcePixels,
+		int[] targetPixels,
+		int width,
+		int height,
+		int radius,
+		int kernelSize
+	) {
+		for (int y = 0; y < height; y++) {
+			int rowOffset = y * width;
+			int redSum = 0;
+			int greenSum = 0;
+			int blueSum = 0;
+
+			for (int offset = -radius; offset <= radius; offset++) {
+				int pixel = sourcePixels[rowOffset + mirrorIndex(offset, width)];
+				redSum += red(pixel);
+				greenSum += green(pixel);
+				blueSum += blue(pixel);
+			}
+
+			for (int x = 0; x < width; x++) {
+				targetPixels[rowOffset + x] = rgb(redSum / kernelSize, greenSum / kernelSize, blueSum / kernelSize);
+
+				int removeX = mirrorIndex(x - radius, width);
+				int addX = mirrorIndex(x + radius + 1, width);
+				int removePixel = sourcePixels[rowOffset + removeX];
+				int addPixel = sourcePixels[rowOffset + addX];
+				redSum += red(addPixel) - red(removePixel);
+				greenSum += green(addPixel) - green(removePixel);
+				blueSum += blue(addPixel) - blue(removePixel);
 			}
 		}
-		return paddedImage;
+	}
+
+	private void blurVertical(
+		int[] sourcePixels,
+		int[] targetPixels,
+		int width,
+		int height,
+		int radius,
+		int kernelSize
+	) {
+		for (int x = 0; x < width; x++) {
+			int redSum = 0;
+			int greenSum = 0;
+			int blueSum = 0;
+
+			for (int offset = -radius; offset <= radius; offset++) {
+				int pixel = sourcePixels[mirrorIndex(offset, height) * width + x];
+				redSum += red(pixel);
+				greenSum += green(pixel);
+				blueSum += blue(pixel);
+			}
+
+			for (int y = 0; y < height; y++) {
+				targetPixels[y * width + x] = rgb(redSum / kernelSize, greenSum / kernelSize, blueSum / kernelSize);
+
+				int removeY = mirrorIndex(y - radius, height);
+				int addY = mirrorIndex(y + radius + 1, height);
+				int removePixel = sourcePixels[removeY * width + x];
+				int addPixel = sourcePixels[addY * width + x];
+				redSum += red(addPixel) - red(removePixel);
+				greenSum += green(addPixel) - green(removePixel);
+				blueSum += blue(addPixel) - blue(removePixel);
+			}
+		}
 	}
 
 	private int mirrorIndex(int index, int size) {
@@ -133,23 +178,20 @@ public class ProfileImageProcessor {
 		return index;
 	}
 
-	private BufferedImage cropCenter(BufferedImage image, int padding, int width, int height) {
-		BufferedImage croppedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		Graphics2D graphics = croppedImage.createGraphics();
-		graphics.drawImage(
-			image,
-			0,
-			0,
-			width,
-			height,
-			padding,
-			padding,
-			padding + width,
-			padding + height,
-			null
-		);
-		graphics.dispose();
-		return croppedImage;
+	private int red(int pixel) {
+		return pixel >> 16 & 0xff;
+	}
+
+	private int green(int pixel) {
+		return pixel >> 8 & 0xff;
+	}
+
+	private int blue(int pixel) {
+		return pixel & 0xff;
+	}
+
+	private int rgb(int red, int green, int blue) {
+		return red << 16 | green << 8 | blue;
 	}
 
 	private byte[] writeJpeg(BufferedImage image) throws IOException {
