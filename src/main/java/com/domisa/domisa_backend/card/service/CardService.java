@@ -10,6 +10,7 @@ import com.domisa.domisa_backend.card.repository.CardRepository;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
+import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class CardService {
     private final CardRepository cardRepository;
     private final UserRepository userRepository;
     private final S3ObjectUrlService s3ObjectUrlService;
+    private final IntroductionRepository introductionRepository;
 
     // 소개팅 카드 생성
     @Transactional
@@ -60,11 +62,15 @@ public class CardService {
         return new CardCreateResponse(
                 user.getPublicId(),
                 new StatusDto(user.getIsRegistered(),
-                        user.hasIntroduction(),
+                        hasIntroduction(user.getId()),
                         user.hasCard()
                 ),
                 userRepository.count()
         );
+    }
+
+    private boolean hasIntroduction(Long userId) {
+        return introductionRepository.existsByParticipantId(userId);
     }
 
     // 소개팅 카드 조회

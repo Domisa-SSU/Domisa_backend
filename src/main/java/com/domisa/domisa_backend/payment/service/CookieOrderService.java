@@ -70,11 +70,13 @@ public class CookieOrderService {
 	public void cancelCookieOrder(Long userId, CancelCookieOrderRequest request) {
 		validateCancelRequest(request);
 
-		CookieOrder order = cookieOrderRepository.findByUserIdAndBillingNameAndOrderAmountWithLock(
+		CookieOrder order = cookieOrderRepository.findAllByUserIdAndBillingNameAndOrderAmountWithLock(
 						userId,
 						request.billingName(),
 						request.orderAmount()
 				)
+				.stream()
+				.findFirst()
 				.orElseThrow(() -> new GlobalException(GlobalErrorCode.COOKIE_ORDER_NOT_FOUND));
 
 		if (order.getStatus() == OrderStatus.CANCELED) {
@@ -120,7 +122,7 @@ public class CookieOrderService {
 	) {
 		validatePaymentStatusRequest(billingName, orderAmount);
 
-		return cookieOrderRepository.findByUserIdAndBillingNameAndOrderAmount(
+		return cookieOrderRepository.findFirstByUserIdAndBillingNameAndOrderAmountOrderByCreatedAtDesc(
 						userId,
 						billingName,
 						orderAmount

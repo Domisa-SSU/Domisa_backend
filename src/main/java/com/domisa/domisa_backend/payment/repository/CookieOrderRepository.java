@@ -13,7 +13,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface CookieOrderRepository extends JpaRepository<CookieOrder, Long> {
 
-	Optional<CookieOrder> findByUserIdAndBillingNameAndOrderAmount(Long userId, String billingName, Integer orderAmount);
+	Optional<CookieOrder> findFirstByUserIdAndBillingNameAndOrderAmountOrderByCreatedAtDesc(
+		Long userId,
+		String billingName,
+		Integer orderAmount
+	);
 
 	boolean existsByBillingNameAndStatus(String billingName, OrderStatus status);
 
@@ -32,8 +36,9 @@ public interface CookieOrderRepository extends JpaRepository<CookieOrder, Long> 
 		where o.user.id = :userId
 			and o.billingName = :billingName
 			and o.orderAmount = :orderAmount
+		order by o.createdAt desc
 		""")
-	Optional<CookieOrder> findByUserIdAndBillingNameAndOrderAmountWithLock(
+	List<CookieOrder> findAllByUserIdAndBillingNameAndOrderAmountWithLock(
 		@Param("userId") Long userId,
 		@Param("billingName") String billingName,
 		@Param("orderAmount") Integer orderAmount

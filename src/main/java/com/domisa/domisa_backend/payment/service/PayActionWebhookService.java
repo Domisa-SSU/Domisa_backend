@@ -16,6 +16,7 @@ import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class PayActionWebhookService {
 		PayActionMatchedWebhookRequest request
 	) {
 		validateWebhookHeaders(webhookKey, mallId);
+		validateRequest(request);
 		log.info(
 			"페이액션 입금 매칭 웹훅을 수신했습니다. traceId={}, orderNumber={}, orderStatus={}",
 			traceId,
@@ -88,6 +90,18 @@ public class PayActionWebhookService {
 		}
 	}
 
+	private void validateRequest(PayActionMatchedWebhookRequest request) {
+		if (request == null
+			|| request.orderNumber() == null
+			|| request.orderNumber().isBlank()
+			|| request.orderStatus() == null
+			|| request.orderStatus().isBlank()
+			|| request.processingDate() == null
+			|| request.processingDate().isBlank()) {
+			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
+		}
+	}
+
 	private void validateTraceId(String traceId) {
 		if (traceId == null || traceId.isBlank()) {
 			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD, "페이액션 traceId가 누락되었습니다.");
@@ -98,7 +112,11 @@ public class PayActionWebhookService {
 		if (processingDate == null || processingDate.isBlank()) {
 			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD, "페이액션 처리일시가 누락되었습니다.");
 		}
-		return OffsetDateTime.parse(processingDate).toLocalDateTime();
+		try {
+			return OffsetDateTime.parse(processingDate).toLocalDateTime();
+		} catch (DateTimeParseException exception) {
+			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD, "페이액션 처리일시 형식이 올바르지 않습니다.");
+		}
 	}
 
 	private void saveWebhookLog(

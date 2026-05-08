@@ -6,6 +6,7 @@ import com.domisa.domisa_backend.auth.jwt.JwtProvider;
 import com.domisa.domisa_backend.auth.oauth.KakaoOAuthService;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
+import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import com.domisa.domisa_backend.user.util.UserPublicIdGenerator;
@@ -23,6 +24,7 @@ public class AuthService {
 
 	private final KakaoOAuthService kakaoOAuthService;
 	private final UserRepository userRepository;
+	private final IntroductionRepository introductionRepository;
 	private final JwtProvider jwtProvider;
 	private final AuthCookieManager authCookieManager;
 
@@ -56,7 +58,7 @@ public class AuthService {
 		return new LoginResponse(
 			new LoginResponse.StatusDto(
 				user.getIsRegistered(),
-				user.hasIntroduction(),
+				hasIntroduction(user.getId()),
 				user.hasCard()
 			)
 		);
@@ -77,10 +79,14 @@ public class AuthService {
 			Math.toIntExact(user.getCookieBalance()),
 			new AuthMeResponse.StatusDto(
 				user.getIsRegistered(),
-				user.hasIntroduction(),
+				hasIntroduction(user.getId()),
 				user.hasCard()
 			)
 		);
+	}
+
+	private boolean hasIntroduction(Long userId) {
+		return introductionRepository.existsByParticipantId(userId);
 	}
 
 	private User createUserWithPublicId(Long kakaoId) {

@@ -71,12 +71,14 @@ class IntroductionServiceTest {
 		User introducer = createUser(2L, 20L);
 		Introduction introduction = createIntroduction(100L, introducer);
 		introduction.assignParticipant(participant);
+		participant.setHasIntroduction(false);
 
 		when(userRepository.findById(1L)).thenReturn(Optional.of(participant));
 		when(introductionRepository.findById(100L)).thenReturn(Optional.of(introduction));
 
 		introductionService.acceptIntroduction(100L, participant);
 
+		assertThat(participant.hasIntroduction()).isTrue();
 		assertThat(participant.getCookieBalance()).isEqualTo(10L);
 		assertThat(introducer.getCookieBalance()).isEqualTo(20L);
 		verifyNoInteractions(notificationService);

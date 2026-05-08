@@ -411,8 +411,12 @@ public class DatingService {
 
 	private boolean canHaveNowShows(User user) {
 		return Boolean.TRUE.equals(user.getIsRegistered())
-			&& user.hasIntroduction()
+			&& hasIntroduction(user)
 			&& user.hasCard();
+	}
+
+	private boolean hasIntroduction(User user) {
+		return user.hasIntroduction() || introductionRepository.existsByParticipantId(user.getId());
 	}
 
 	private List<Long> findRandomOppositeGenderUserIds(User user) {
