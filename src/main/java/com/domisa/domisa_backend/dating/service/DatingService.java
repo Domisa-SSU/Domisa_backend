@@ -286,7 +286,6 @@ public class DatingService {
 		}
 
 		addMatch(requester, targetUser);
-		notificationService.createNotification(NotificationType.MATCH, requester.getId(), targetUser.getId());
 		notificationService.createNotification(NotificationType.MATCH, targetUser.getId(), requester.getId());
 		log.info("소개팅 매칭을 수락했습니다. requesterId={}, targetId={}", requester.getId(), targetUser.getId());
 	}
