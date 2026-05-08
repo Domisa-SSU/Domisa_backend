@@ -1,6 +1,6 @@
 package com.domisa.domisa_backend.payment.controller;
 
-import com.domisa.domisa_backend.payment.dto.PayActionMatchedWebhookRequest;
+import com.domisa.domisa_backend.payment.dto.PayActionMatchCompleteWebhookRequest;
 import com.domisa.domisa_backend.payment.dto.PayActionWebhookResponse;
 import com.domisa.domisa_backend.payment.service.PayActionWebhookService;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +18,14 @@ public class PayActionWebhookController {
 
 	private final PayActionWebhookService payActionWebhookService;
 
-	@PostMapping("/matched")
-	public ResponseEntity<PayActionWebhookResponse> receiveMatchedWebhook(
+	@PostMapping("/match-complete")
+	public ResponseEntity<PayActionWebhookResponse> receiveMatchCompleteWebhook(
 		@RequestHeader("x-webhook-key") String webhookKey,
 		@RequestHeader("x-mall-id") String mallId,
-		@RequestHeader("x-trace-id") String traceId,
-		@RequestBody PayActionMatchedWebhookRequest request
+		@RequestHeader(value = "x-trace-id", required = false) String traceId,
+		@RequestBody PayActionMatchCompleteWebhookRequest request
 	) {
-		payActionWebhookService.handleMatchedWebhook(webhookKey, mallId, traceId, request);
+		payActionWebhookService.handleMatchComplete(webhookKey, mallId, traceId, request);
 		return ResponseEntity.ok(PayActionWebhookResponse.success());
 	}
 }

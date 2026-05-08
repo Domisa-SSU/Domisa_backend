@@ -3,7 +3,7 @@ package com.domisa.domisa_backend.payment.service;
 import com.domisa.domisa_backend.notification.service.NotificationService;
 import com.domisa.domisa_backend.notification.type.NotificationType;
 import com.domisa.domisa_backend.payment.config.PayActionProperties;
-import com.domisa.domisa_backend.payment.dto.PayActionMatchedWebhookRequest;
+import com.domisa.domisa_backend.payment.dto.PayActionMatchCompleteWebhookRequest;
 import com.domisa.domisa_backend.payment.entity.CookieOrder;
 import com.domisa.domisa_backend.payment.entity.CookieTransaction;
 import com.domisa.domisa_backend.payment.entity.PayActionWebhookLog;
@@ -37,27 +37,26 @@ public class PayActionWebhookService {
 	private final UserRepository userRepository;
 
 	@Transactional
-	public void handleMatchedWebhook(
+	public void handleMatchComplete(
 		String webhookKey,
 		String mallId,
 		String traceId,
-		PayActionMatchedWebhookRequest request
+		PayActionMatchCompleteWebhookRequest request
 	) {
 		validateWebhookHeaders(webhookKey, mallId);
 		validateRequest(request);
 		log.info(
-			"페이액션 입금 매칭 웹훅을 수신했습니다. traceId={}, orderNumber={}, orderStatus={}",
+			"페이액션 매칭완료 웹훅을 수신했습니다. traceId={}, orderNumber={}, orderStatus={}",
 			traceId,
 			request.orderNumber(),
 			request.orderStatus()
 		);
-		validateTraceId(traceId);
-		if (payActionWebhookLogRepository.existsByTraceId(traceId)) {
+		if (hasText(traceId) && payActionWebhookLogRepository.existsByTraceId(traceId)) {
 			return;
 		}
 
 		if (!"매칭완료".equals(request.orderStatus())) {
-			throw new GlobalException(GlobalErrorCode.INVALID_PAYACTION_ORDER_STATUS);
+			return;
 		}
 
 		LocalDateTime processingDate = parseProcessingDate(request.processingDate());
@@ -68,7 +67,8 @@ public class PayActionWebhookService {
 			return;
 		}
 		if (!order.isPending()) {
-			throw new GlobalException(GlobalErrorCode.COOKIE_ORDER_INVALID_STATUS);
+			saveWebhookLog(traceId, request, processingDate);
+			return;
 		}
 
 		order.markPaid(processingDate);
@@ -90,7 +90,7 @@ public class PayActionWebhookService {
 		}
 	}
 
-	private void validateRequest(PayActionMatchedWebhookRequest request) {
+	private void validateRequest(PayActionMatchCompleteWebhookRequest request) {
 		if (request == null
 			|| request.orderNumber() == null
 			|| request.orderNumber().isBlank()
@@ -99,12 +99,6 @@ public class PayActionWebhookService {
 			|| request.processingDate() == null
 			|| request.processingDate().isBlank()) {
 			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
-		}
-	}
-
-	private void validateTraceId(String traceId) {
-		if (traceId == null || traceId.isBlank()) {
-			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD, "페이액션 traceId가 누락되었습니다.");
 		}
 	}
 
@@ -121,9 +115,12 @@ public class PayActionWebhookService {
 
 	private void saveWebhookLog(
 		String traceId,
-		PayActionMatchedWebhookRequest request,
+		PayActionMatchCompleteWebhookRequest request,
 		LocalDateTime processingDate
 	) {
+		if (!hasText(traceId)) {
+			return;
+		}
 		try {
 			payActionWebhookLogRepository.saveAndFlush(PayActionWebhookLog.create(
 				traceId,
@@ -135,5 +132,9 @@ public class PayActionWebhookService {
 		} catch (DataIntegrityViolationException exception) {
 			log.info("중복 페이액션 웹훅입니다. traceId={}", traceId);
 		}
+	}
+
+	private boolean hasText(String value) {
+		return value != null && !value.isBlank();
 	}
 }

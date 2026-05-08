@@ -13,14 +13,13 @@ public class OrderNumberGenerator {
 
 	private static final DateTimeFormatter ORDER_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyMMddHHmmss");
 	private static final char[] RANDOM_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
-	private static final int RANDOM_LENGTH = 9;
+	private static final String PREFIX = "ORD";
+	private static final int RANDOM_LENGTH = 6;
 
 	private final SecureRandom secureRandom = new SecureRandom();
 
 	public String generate(LocalDateTime orderDateTime) {
-		return orderDateTime.format(ORDER_DATE_TIME_FORMATTER)
-				+ "-"
-				+ randomString();
+		return PREFIX + orderDateTime.format(ORDER_DATE_TIME_FORMATTER) + randomString();
 	}
 
 	private String randomString() {
