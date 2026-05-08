@@ -46,8 +46,7 @@ public class CardService {
                 user,
                 request.mbti(),
                 request.datingStyle(),
-                request.idealType(),
-                request.imageKey()
+                request.idealType()
         );
         cardRepository.save(card);
 
@@ -84,7 +83,7 @@ public class CardService {
                 card.getMbti(),
                 card.getDatingStyle(),
                 card.getIdealType(),
-                toImageUrl(card.getImageKey()),
+                toImageUrl(card.getUser()),
                 card.getUser().getContactType(),
                 card.getUser().getContact(),
                 card.getUser().getNotificationPhone()
@@ -100,8 +99,7 @@ public class CardService {
         card.update(
                 request.mbti(),
                 request.datingStyle(),
-                request.idealType(),
-                request.imageKey()
+                request.idealType()
         );
 
         User user = userRepository.findById(userId)
@@ -116,7 +114,7 @@ public class CardService {
                 card.getMbti(),
                 card.getDatingStyle(),
                 card.getIdealType(),
-                toImageUrl(card.getImageKey()),
+                toImageUrl(user),
                 user.getContactType(),
                 user.getContact(),
                 user.getNotificationPhone()
@@ -130,11 +128,11 @@ public class CardService {
         return value.trim();
     }
 
-    private String toImageUrl(String imageKey) {
-        if (imageKey == null || imageKey.isBlank()) {
+    private String toImageUrl(User user) {
+        if (user == null || user.getProfileImage() == null) {
             return null;
         }
-        return s3ObjectUrlService.buildPresignedGetUrl(imageKey);
+        return s3ObjectUrlService.getThumbnailPresignedUrl(user.getProfileImage());
     }
 
 }
