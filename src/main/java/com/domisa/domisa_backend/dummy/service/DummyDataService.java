@@ -105,7 +105,7 @@ public class DummyDataService {
 	private User createDummyUser(long kakaoId) {
 		User user = User.create(kakaoId);
 		user.setName("Dummy User " + kakaoId);
-		user.setCookies(20L);
+		user.setCookies(100L);
 		user.setMyFans(new ArrayList<>());
 		user.setMyTypes(new ArrayList<>());
 		user.setMyBlurs(new ArrayList<>());

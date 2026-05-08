@@ -362,7 +362,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		user.setGender(seed.gender());
 		user.setBirthYear(seed.birthYear());
 		user.setAnimalProfile(seed.animalProfile());
-		user.setCookies(20L);
+		user.setCookies(100L);
 		user.setContactType(seed.contactType());
 		user.setContact(seed.contact());
 		user.setInviteCode("DUMMY" + displayNumber(seed.index()));
