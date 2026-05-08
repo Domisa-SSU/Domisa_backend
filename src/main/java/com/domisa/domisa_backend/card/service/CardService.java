@@ -104,12 +104,12 @@ public class CardService {
                 request.imageKey()
         );
 
-        // 연락처 수정
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
         user.setContactType(request.contactType());
         user.setContact(request.contact());
-        user.setNotificationPhone(request.notificationPhone());
+        user.setNotificationPhone(normalizeNullableText(request.notificationPhone()));
 
         return new CardResponse(
                 card.getId(),
@@ -121,6 +121,13 @@ public class CardService {
                 user.getContact(),
                 user.getNotificationPhone()
         );
+    }
+
+    private String normalizeNullableText(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
     private String toImageUrl(String imageKey) {

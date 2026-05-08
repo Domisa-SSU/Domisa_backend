@@ -59,6 +59,10 @@ public class Card {
 		this.mbti = mbti;
 		this.datingStyle = datingStyle;
 		this.idealType = idealType;
-		this.imageKey = imageKey;
+
+		if (imageKey != null) {
+			this.imageKey = imageKey;
+		}
 	}
+
 }
