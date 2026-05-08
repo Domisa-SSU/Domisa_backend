@@ -11,7 +11,7 @@ import static org.mockito.Mockito.when;
 import com.domisa.domisa_backend.notification.service.NotificationService;
 import com.domisa.domisa_backend.notification.type.NotificationType;
 import com.domisa.domisa_backend.payment.config.PayActionProperties;
-import com.domisa.domisa_backend.payment.dto.PayActionMatchedWebhookRequest;
+import com.domisa.domisa_backend.payment.dto.PayActionMatchCompleteWebhookRequest;
 import com.domisa.domisa_backend.payment.entity.CookieOrder;
 import com.domisa.domisa_backend.payment.entity.CookieTransaction;
 import com.domisa.domisa_backend.payment.entity.PayActionWebhookLog;
@@ -69,43 +69,43 @@ class PayActionWebhookServiceTest {
 	}
 
 	@Test
-	void handleMatchedWebhookRejectsWhenWebhookKeyDiffers() {
-		assertThatThrownBy(() -> payActionWebhookService.handleMatchedWebhook(
+	void handleMatchCompleteRejectsWhenWebhookKeyDiffers() {
+		assertThatThrownBy(() -> payActionWebhookService.handleMatchComplete(
 			"wrong",
 			"mall-id",
 			"trace",
-			new PayActionMatchedWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
+			new PayActionMatchCompleteWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
 		)).isInstanceOf(GlobalException.class);
 
 		verify(cookieOrderRepository, never()).findByOrderNumberWithLock(any());
 	}
 
 	@Test
-	void handleMatchedWebhookRejectsWhenMallIdDiffers() {
-		assertThatThrownBy(() -> payActionWebhookService.handleMatchedWebhook(
+	void handleMatchCompleteRejectsWhenMallIdDiffers() {
+		assertThatThrownBy(() -> payActionWebhookService.handleMatchComplete(
 			"webhook-key",
 			"wrong",
 			"trace",
-			new PayActionMatchedWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
+			new PayActionMatchCompleteWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
 		)).isInstanceOf(GlobalException.class);
 
 		verify(cookieOrderRepository, never()).findByOrderNumberWithLock(any());
 	}
 
 	@Test
-	void handleMatchedWebhookRejectsWhenOrderStatusIsNotMatched() {
-		assertThatThrownBy(() -> payActionWebhookService.handleMatchedWebhook(
+	void handleMatchCompleteReturnsWhenOrderStatusIsNotMatched() {
+		payActionWebhookService.handleMatchComplete(
 			"webhook-key",
 			"mall-id",
 			"trace",
-			new PayActionMatchedWebhookRequest("CK20260502000001", "대기중", "2026-05-02T15:32:00+09:00")
-		)).isInstanceOf(GlobalException.class);
+			new PayActionMatchCompleteWebhookRequest("CK20260502000001", "대기중", "2026-05-02T15:32:00+09:00")
+		);
 
 		verify(cookieOrderRepository, never()).findByOrderNumberWithLock(any());
 	}
 
 	@Test
-	void handleMatchedWebhookMarksOrderPaidAndChargesUserCookies() {
+	void handleMatchCompleteMarksOrderPaidAndChargesUserCookies() {
 		User user = createUser(1L, 5L);
 		CookieOrder order = CookieOrder.create(
 			user,
@@ -120,11 +120,11 @@ class PayActionWebhookServiceTest {
 		when(cookieOrderRepository.findByOrderNumberWithLock("CK20260502000001")).thenReturn(Optional.of(order));
 		when(userRepository.findByIdWithLock(1L)).thenReturn(Optional.of(user));
 
-		payActionWebhookService.handleMatchedWebhook(
+		payActionWebhookService.handleMatchComplete(
 			"webhook-key",
 			"mall-id",
 			"trace-1",
-			new PayActionMatchedWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
+			new PayActionMatchCompleteWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
 		);
 
 		assertThat(order.isPaid()).isTrue();
@@ -142,7 +142,7 @@ class PayActionWebhookServiceTest {
 	}
 
 	@Test
-	void handleMatchedWebhookIsIdempotentWhenAlreadyPaid() {
+	void handleMatchCompleteIsIdempotentWhenAlreadyPaid() {
 		User user = createUser(1L, 5L);
 		CookieOrder order = CookieOrder.create(
 			user,
@@ -157,11 +157,11 @@ class PayActionWebhookServiceTest {
 		when(payActionWebhookLogRepository.existsByTraceId("trace-1")).thenReturn(false);
 		when(cookieOrderRepository.findByOrderNumberWithLock("CK20260502000001")).thenReturn(Optional.of(order));
 
-		payActionWebhookService.handleMatchedWebhook(
+		payActionWebhookService.handleMatchComplete(
 			"webhook-key",
 			"mall-id",
 			"trace-1",
-			new PayActionMatchedWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
+			new PayActionMatchCompleteWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
 		);
 
 		verify(userRepository, never()).findByIdWithLock(any());
@@ -171,7 +171,7 @@ class PayActionWebhookServiceTest {
 	}
 
 	@Test
-	void handleMatchedWebhookIgnoresDuplicatedTraceIdWhenLogSaveConflicts() {
+	void handleMatchCompleteIgnoresDuplicatedTraceIdWhenLogSaveConflicts() {
 		User user = createUser(1L, 5L);
 		CookieOrder order = CookieOrder.create(
 			user,
@@ -188,11 +188,11 @@ class PayActionWebhookServiceTest {
 		when(payActionWebhookLogRepository.saveAndFlush(any(PayActionWebhookLog.class)))
 			.thenThrow(new DataIntegrityViolationException("duplicate trace"));
 
-		payActionWebhookService.handleMatchedWebhook(
+		payActionWebhookService.handleMatchComplete(
 			"webhook-key",
 			"mall-id",
 			"trace-1",
-			new PayActionMatchedWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
+			new PayActionMatchCompleteWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
 		);
 
 		verify(userRepository, never()).findByIdWithLock(any());
@@ -201,7 +201,7 @@ class PayActionWebhookServiceTest {
 	}
 
 	@Test
-	void handleMatchedWebhookOnlyChargesOnceWhenSameWebhookArrivesTwice() {
+	void handleMatchCompleteOnlyChargesOnceWhenSameWebhookArrivesTwice() {
 		User user = createUser(1L, 0L);
 		CookieOrder order = CookieOrder.create(
 			user,
@@ -217,10 +217,10 @@ class PayActionWebhookServiceTest {
 		when(cookieOrderRepository.findByOrderNumberWithLock("CK20260502000001")).thenReturn(Optional.of(order));
 		when(userRepository.findByIdWithLock(1L)).thenReturn(Optional.of(user));
 
-		PayActionMatchedWebhookRequest request =
-			new PayActionMatchedWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00");
-		payActionWebhookService.handleMatchedWebhook("webhook-key", "mall-id", "trace-1", request);
-		payActionWebhookService.handleMatchedWebhook("webhook-key", "mall-id", "trace-2", request);
+		PayActionMatchCompleteWebhookRequest request =
+			new PayActionMatchCompleteWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00");
+		payActionWebhookService.handleMatchComplete("webhook-key", "mall-id", "trace-1", request);
+		payActionWebhookService.handleMatchComplete("webhook-key", "mall-id", "trace-2", request);
 
 		assertThat(user.getCookieBalance()).isEqualTo(100L);
 		verify(cookieTransactionRepository, times(1)).save(any());
@@ -228,14 +228,42 @@ class PayActionWebhookServiceTest {
 	}
 
 	@Test
-	void handleMatchedWebhookReturnsWhenTraceIdAlreadyExists() {
+	void handleMatchCompleteWorksWithoutTraceId() {
+		User user = createUser(1L, 0L);
+		CookieOrder order = CookieOrder.create(
+			user,
+			"CK20260502000001",
+			"A7B9",
+			10000,
+			100,
+			"홍길동",
+			LocalDateTime.of(2026, 5, 2, 15, 30)
+		);
+		when(cookieOrderRepository.findByOrderNumberWithLock("CK20260502000001")).thenReturn(Optional.of(order));
+		when(userRepository.findByIdWithLock(1L)).thenReturn(Optional.of(user));
+
+		payActionWebhookService.handleMatchComplete(
+			"webhook-key",
+			"mall-id",
+			null,
+			new PayActionMatchCompleteWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
+		);
+
+		assertThat(order.isPaid()).isTrue();
+		assertThat(user.getCookieBalance()).isEqualTo(100L);
+		verify(payActionWebhookLogRepository, never()).existsByTraceId(any());
+		verify(payActionWebhookLogRepository, never()).saveAndFlush(any());
+	}
+
+	@Test
+	void handleMatchCompleteReturnsWhenTraceIdAlreadyExists() {
 		when(payActionWebhookLogRepository.existsByTraceId("trace-1")).thenReturn(true);
 
-		payActionWebhookService.handleMatchedWebhook(
+		payActionWebhookService.handleMatchComplete(
 			"webhook-key",
 			"mall-id",
 			"trace-1",
-			new PayActionMatchedWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
+			new PayActionMatchCompleteWebhookRequest("CK20260502000001", "매칭완료", "2026-05-02T15:32:00+09:00")
 		);
 
 		verify(cookieOrderRepository, never()).findByOrderNumberWithLock(any());
