@@ -46,8 +46,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@org.springframework.data.jpa.repository.Query(
 		value = """
-			SELECT COUNT(*) FROM user_my_matches m
+			SELECT COUNT(DISTINCT LEAST(m.user_id, m.target_user_id), GREATEST(m.user_id, m.target_user_id))
+			FROM user_my_matches m
 			WHERE m.user_id < m.target_user_id
+			AND EXISTS (
+				SELECT 1
+				FROM user_my_matches reverse_m
+				WHERE reverse_m.user_id = m.target_user_id
+				AND reverse_m.target_user_id = m.user_id
+			)
 			""",
 		nativeQuery = true
 	)
