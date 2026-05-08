@@ -46,8 +46,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@org.springframework.data.jpa.repository.Query(
 		value = """
-			SELECT COUNT(*) FROM user_my_matches m
+			SELECT COUNT(DISTINCT LEAST(m.user_id, m.target_user_id), GREATEST(m.user_id, m.target_user_id))
+			FROM user_my_matches m
 			WHERE m.user_id < m.target_user_id
+			AND EXISTS (
+				SELECT 1
+				FROM user_my_matches reverse_m
+				WHERE reverse_m.user_id = m.target_user_id
+				AND reverse_m.target_user_id = m.user_id
+			)
 			""",
 		nativeQuery = true
 	)
@@ -119,8 +126,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	@Modifying
 	@Query(value = "delete from user_now_shows where user_id = :userId or target_user_id = :userId", nativeQuery = true)
 	void deleteNowShowRelations(@Param("userId") Long userId);
-
-	@Modifying
-	@Query(value = "delete from user_before_shows where user_id = :userId or target_user_id = :userId", nativeQuery = true)
-	void deleteBeforeShowRelations(@Param("userId") Long userId);
 }

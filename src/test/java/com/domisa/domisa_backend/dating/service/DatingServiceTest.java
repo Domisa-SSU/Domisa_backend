@@ -1,7 +1,7 @@
 package com.domisa.domisa_backend.dating.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import com.domisa.domisa_backend.card.entity.Card;
 import com.domisa.domisa_backend.dating.dto.DatingProfileDetailRequest;
 import com.domisa.domisa_backend.dating.dto.DatingProfileResponse;
+import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
+import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
 import com.domisa.domisa_backend.introduction.entity.Introduction;
 import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
@@ -119,6 +121,22 @@ class DatingServiceTest {
 	}
 
 	@Test
+	void sendLikeThrowsInsufficientCookiesWhenFreeLikeCountIsEmptyAndCookieIsMissing() {
+		User requester = createUser(1L, "REQ001");
+		requester.setFreeLikeCount(0);
+		requester.setCookies(0L);
+		User target = createUser(2L, "TGT001");
+
+		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
+		when(userRepository.findByPublicId("TGT001")).thenReturn(Optional.of(target));
+
+		assertThatThrownBy(() -> datingService.sendLike(requester, "TGT001"))
+			.isInstanceOf(GlobalException.class)
+			.satisfies(exception -> assertThat(((GlobalException) exception).getErrorCode())
+				.isEqualTo(GlobalErrorCode.INSUFFICIENT_COOKIES));
+	}
+
+	@Test
 	void matchReceivedLikeRequiresUnblurAndMovesReceivedLikeToMatches() {
 		User requester = createUser(1L, "REQ001");
 		requester.setMyFans(new ArrayList<>(List.of(2L)));
@@ -167,6 +185,22 @@ class DatingServiceTest {
 	}
 
 	@Test
+	void unblurReceivedLikeThrowsInsufficientCookiesWhenCookieIsMissing() {
+		User requester = createUser(1L, "REQ001");
+		requester.setMyFans(new ArrayList<>(List.of(2L)));
+		requester.setCookies(1L);
+		User target = createUser(2L, "TGT001");
+
+		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
+		when(userRepository.findByPublicId("TGT001")).thenReturn(Optional.of(target));
+
+		assertThatThrownBy(() -> datingService.unblurReceivedLike(requester, "TGT001"))
+			.isInstanceOf(GlobalException.class)
+			.satisfies(exception -> assertThat(((GlobalException) exception).getErrorCode())
+				.isEqualTo(GlobalErrorCode.INSUFFICIENT_COOKIES));
+	}
+
+	@Test
 	void shuffleResetsFreeLikeCountToThree() {
 		User requester = createUser(1L, "REQ001");
 		requester.setGender(true);
@@ -176,15 +210,29 @@ class DatingServiceTest {
 		completeProfile(requester);
 
 		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
-		when(userRepository.findRandomOppositeGenderUserIdsExcluding(1L, true, anyCollection(), 8))
+		when(userRepository.findRandomOppositeGenderUserIds(1L, true, 8))
 			.thenReturn(List.of(2L, 3L));
 
 		datingService.shuffle(requester);
 
-		assertThat(requester.getBeforeShows()).containsExactly(9L);
 		assertThat(requester.getNowShows()).containsExactly(2L, 3L);
 		assertThat(requester.getFreeLikeCount()).isEqualTo(3);
 		assertThat(requester.getCookies()).isZero();
+	}
+
+	@Test
+	void shuffleThrowsInsufficientCookiesWhenCookieIsMissing() {
+		User requester = createUser(1L, "REQ001");
+		requester.setGender(true);
+		requester.setCookies(1L);
+		completeProfile(requester);
+
+		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
+
+		assertThatThrownBy(() -> datingService.shuffle(requester))
+			.isInstanceOf(GlobalException.class)
+			.satisfies(exception -> assertThat(((GlobalException) exception).getErrorCode())
+				.isEqualTo(GlobalErrorCode.INSUFFICIENT_COOKIES));
 	}
 
 	@Test

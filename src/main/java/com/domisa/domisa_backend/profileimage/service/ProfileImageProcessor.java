@@ -20,18 +20,19 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProfileImageProcessor {
 
-	private static final int BLUR_PASS_COUNT = 2;
+	private static final int BLUR_PASS_COUNT = 3;
 
 	private final ProfileImageProcessingProperties properties;
 
 	public ProcessedProfileImageSet generateVariants(BufferedImage originImage) {
-		// origin 한 장으로 썸네일, 썸네일 블러, 오리진 블러 3종을 만든다.
+		// origin 한 장으로 최종 원본 JPG, 썸네일, 썸네일 블러, 오리진 블러 4종을 만든다.
 		try {
 			BufferedImage thumbnailImage = createThumbnail(originImage);
 			BufferedImage originBlurImage = createOriginBlur(originImage);
 			BufferedImage thumbnailBlurImage = blur(thumbnailImage, properties.getThumbnailBlurKernelSize());
 
 			return new ProcessedProfileImageSet(
+				writeJpeg(originImage),
 				writeJpeg(thumbnailImage),
 				writeJpeg(thumbnailBlurImage),
 				writeJpeg(originBlurImage)

@@ -88,22 +88,22 @@ public class S3PresignedUrlService {
 	}
 
 	private GeneratePresignedUploadUrlResponse createPresignedUploadUrl(User user, GeneratePresignedUploadUrlRequest request) {
-		// origin은 temp 경로로 받고, 썸네일/블러 경로는 미리 저장해 둔다.
+		// 원본 업로드는 temp로 받고, 처리 완료 후 최종 4장만 users/profile-images/{publicId}/ 아래에 남긴다.
 		MediaType mediaType = normalizeContentType(request.contentType());
 		ProfileImage profileImage = getOrCreateProfileImage(user);
 		long uploadSequence = getNextUploadSequence(profileImage);
 		String contentType = mediaType.toString();
 		String extension = extractExtension(mediaType);
-		String originKey = s3ProfileImageKeyService.buildOriginKey(user, uploadSequence, extension);
-		String thumbnailKey = s3ProfileImageKeyService.buildThumbnailKey(user, uploadSequence);
-		String thumbnailBlurKey = s3ProfileImageKeyService.buildThumbnailBlurKey(user, uploadSequence);
-		String originBlurKey = s3ProfileImageKeyService.buildOriginBlurKey(user, uploadSequence);
+		String uploadKey = s3ProfileImageKeyService.buildUploadKey(user, extension);
+		String thumbnailKey = s3ProfileImageKeyService.buildThumbnailKey(user);
+		String thumbnailBlurKey = s3ProfileImageKeyService.buildThumbnailBlurKey(user);
+		String originBlurKey = s3ProfileImageKeyService.buildOriginBlurKey(user);
 
-		profileImage.prepareUpload(uploadSequence, originKey, originBlurKey, thumbnailKey, thumbnailBlurKey);
+		profileImage.prepareUpload(uploadSequence, uploadKey, originBlurKey, thumbnailKey, thumbnailBlurKey);
 
 		PutObjectRequest putObjectRequest = PutObjectRequest.builder()
 			.bucket(s3Properties.bucket())
-			.key(originKey)
+			.key(uploadKey)
 			.contentType(contentType)
 			.contentLength(request.fileSize())
 			.build();
@@ -116,7 +116,7 @@ public class S3PresignedUrlService {
 		try {
 			PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(putObjectPresignRequest);
 			return new GeneratePresignedUploadUrlResponse(
-				originKey,
+				uploadKey,
 				presignedRequest.url().toString(),
 				s3Properties.presignedUrlExpiration().toSeconds()
 			);

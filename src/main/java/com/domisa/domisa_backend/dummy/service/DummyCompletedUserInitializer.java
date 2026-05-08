@@ -2,6 +2,7 @@ package com.domisa.domisa_backend.dummy.service;
 
 import com.domisa.domisa_backend.card.entity.Card;
 import com.domisa.domisa_backend.card.repository.CardRepository;
+import com.domisa.domisa_backend.global.s3.service.S3ProfileImageKeyService;
 import com.domisa.domisa_backend.introduction.entity.Introduction;
 import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
@@ -334,6 +335,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 	private final CardRepository cardRepository;
 	private final IntroductionRepository introductionRepository;
 	private final ProfileImageRepository profileImageRepository;
+	private final S3ProfileImageKeyService s3ProfileImageKeyService;
 
 	@Override
 	@Transactional
@@ -362,7 +364,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		user.setGender(seed.gender());
 		user.setBirthYear(seed.birthYear());
 		user.setAnimalProfile(seed.animalProfile());
-		user.setCookies(20L);
+		user.setCookies(100L);
 		user.setContactType(seed.contactType());
 		user.setContact(seed.contact());
 		user.setInviteCode("DUMMY" + displayNumber(seed.index()));
@@ -380,19 +382,24 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 					seed.mbti(),
 					seed.datingStyle(),
 					seed.idealType(),
-					DummyImageKeys.of(seed.index()).origin()
+					DummyImageKeys.of(seed.index(), s3ProfileImageKeyService).origin()
 				);
 				user.setCard(created);
 				return cardRepository.save(created);
 			});
-		card.update(seed.mbti(), seed.datingStyle(), seed.idealType(), DummyImageKeys.of(seed.index()).origin());
+		card.update(
+			seed.mbti(),
+			seed.datingStyle(),
+			seed.idealType(),
+			DummyImageKeys.of(seed.index(), s3ProfileImageKeyService).origin()
+		);
 
 		ProfileImage profileImage = profileImageRepository.findByUserId(user.getId())
 			.orElseGet(() -> {
 				ProfileImage created = ProfileImage.create(user);
 				return profileImageRepository.save(created);
 			});
-		DummyImageKeys keys = DummyImageKeys.of(seed.index());
+		DummyImageKeys keys = DummyImageKeys.of(seed.index(), s3ProfileImageKeyService);
 		profileImage.prepareUpload(
 			1L,
 			keys.origin(),
@@ -436,7 +443,6 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		int size = users.size();
 		for (User user : users) {
 			user.setNowShows(new ArrayList<>());
-			user.setBeforeShows(new ArrayList<>());
 			user.setMyFans(new ArrayList<>());
 			user.setMyTypes(new ArrayList<>());
 			user.setMyMatches(new ArrayList<>());
@@ -536,13 +542,12 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		String originBlur
 	) {
 
-		private static DummyImageKeys of(int index) {
-			String basePath = "dummy/profile-images/dummy" + index;
+		private static DummyImageKeys of(int index, S3ProfileImageKeyService s3ProfileImageKeyService) {
 			return new DummyImageKeys(
-				basePath + "/origin.jpg",
-				basePath + "/thumbnail.jpg",
-				basePath + "/thumbnail-blur.jpg",
-				basePath + "/origin-blur.jpg"
+				s3ProfileImageKeyService.buildDummyOriginKey(index),
+				s3ProfileImageKeyService.buildDummyThumbnailKey(index),
+				s3ProfileImageKeyService.buildDummyThumbnailBlurKey(index),
+				s3ProfileImageKeyService.buildDummyOriginBlurKey(index)
 			);
 		}
 	}

@@ -105,12 +105,11 @@ public class DummyDataService {
 	private User createDummyUser(long kakaoId) {
 		User user = User.create(kakaoId);
 		user.setName("Dummy User " + kakaoId);
-		user.setCookies(20L);
+		user.setCookies(100L);
 		user.setMyFans(new ArrayList<>());
 		user.setMyTypes(new ArrayList<>());
 		user.setMyBlurs(new ArrayList<>());
 		user.setNowShows(new ArrayList<>());
-		user.setBeforeShows(new ArrayList<>());
 		return user;
 	}
 
@@ -182,7 +181,6 @@ public class DummyDataService {
 	private Set<Long> collectRelationUserIds(User user) {
 		Set<Long> userIds = new LinkedHashSet<>();
 		addAll(userIds, user.getNowShows());
-		addAll(userIds, user.getBeforeShows());
 		addAll(userIds, user.getMyFans());
 		addAll(userIds, user.getMyTypes());
 		addAll(userIds, user.getMyMatches());
