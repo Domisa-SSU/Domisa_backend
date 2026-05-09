@@ -83,7 +83,7 @@ public class CookieOrder {
 		this.cookieAmount = cookieAmount;
 		this.ordererName = ordererName;
 		this.orderDate = orderDate;
-		this.status = OrderStatus.PAYMENT_PENDING;
+		this.status = OrderStatus.PENDING;
 	}
 
 	public static CookieOrder create(
@@ -99,11 +99,19 @@ public class CookieOrder {
 	}
 
 	public boolean isPaid() {
+		return status == OrderStatus.PAID || status == OrderStatus.ALREADY_PROCESSED;
+	}
+
+	public boolean isPaymentCompleted() {
 		return status == OrderStatus.PAID;
 	}
 
+	public boolean isAlreadyProcessed() {
+		return status == OrderStatus.ALREADY_PROCESSED;
+	}
+
 	public boolean isPending() {
-		return status == OrderStatus.PAYMENT_PENDING || status == OrderStatus.PENDING;
+		return status == OrderStatus.PENDING;
 	}
 
 	public void markPaid(LocalDateTime processingDate) {
@@ -113,6 +121,13 @@ public class CookieOrder {
 		this.status = OrderStatus.PAID;
 		this.payactionProcessingDate = processingDate;
 		this.paidAt = processingDate == null ? LocalDateTime.now() : processingDate;
+	}
+
+	public void markAlreadyProcessed() {
+		if (!isPaymentCompleted()) {
+			return;
+		}
+		this.status = OrderStatus.ALREADY_PROCESSED;
 	}
 
 	public void markFailed() {

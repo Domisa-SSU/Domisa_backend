@@ -95,6 +95,21 @@ public class ProfileImage {
 		this.lastError = null;
 	}
 
+	public void markCompleted(
+		String profileOriginKey,
+		String profileOriginBlurKey,
+		String profileThumbnailKey,
+		String profileThumbnailBlurKey
+	) {
+		this.profileOriginKey = profileOriginKey;
+		this.profileOriginBlurKey = profileOriginBlurKey;
+		this.profileThumbnailKey = profileThumbnailKey;
+		this.profileThumbnailBlurKey = profileThumbnailBlurKey;
+		this.processingStatus = ProfileImageProcessingStatus.COMPLETED;
+		this.retryCount = 0;
+		this.lastError = null;
+	}
+
 	public void markReady() {
 		this.processingStatus = ProfileImageProcessingStatus.READY;
 		this.lastError = null;

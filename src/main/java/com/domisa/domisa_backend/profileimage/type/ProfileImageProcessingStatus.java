@@ -4,6 +4,7 @@ public enum ProfileImageProcessingStatus {
 	UPLOADING,
 	PENDING,
 	PROCESSING,
+	COMPLETED,
 	READY,
 	FAILED
 }

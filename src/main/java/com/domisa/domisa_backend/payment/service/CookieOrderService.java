@@ -116,7 +116,7 @@ public class CookieOrderService {
 	public void excludePendingOrdersForUser(User user) {
 		List<CookieOrder> pendingOrders = cookieOrderRepository.findByUserIdAndStatusIn(
 				user.getId(),
-				List.of(OrderStatus.PAYMENT_PENDING, OrderStatus.PENDING)
+				List.of(OrderStatus.PENDING)
 		);
 		log.info("사용자의 결제대기 주문 매칭 제외를 시작합니다. userId={}, pendingOrderCount={}",
 				user.getId(), pendingOrders.size());
@@ -134,23 +134,50 @@ public class CookieOrderService {
 		}
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public CookieOrderPaymentStatusResponse getCookieOrderPaymentStatus(
 			User user,
 			String billingName,
 			Integer orderAmount
 	) {
 		validatePaymentStatusRequest(billingName, orderAmount);
+		log.info("쿠키 주문 결제 상태 조회를 시작합니다. userId={}, billingName={}, orderAmount={}",
+				user.getId(), billingName, orderAmount);
 
-		return cookieOrderRepository.findFirstByUserIdAndBillingNameAndOrderAmountOrderByCreatedAtDesc(
+		return cookieOrderRepository.findAllByUserIdAndBillingNameAndOrderAmountWithLock(
 						user.getId(),
 						billingName,
 						orderAmount
 				)
-				.map(order -> order.isPaid()
-						? CookieOrderPaymentStatusResponse.paid(order.getCookieAmount())
-						: CookieOrderPaymentStatusResponse.unconfirmed(order.getStatus().name()))
-				.orElseGet(() -> CookieOrderPaymentStatusResponse.unconfirmed("UNCONFIRMED"));
+				.stream()
+				.findFirst()
+				.map(order -> {
+					log.info("쿠키 주문 결제 상태를 조회했습니다. userId={}, orderNumber={}, orderStatus={}, isPaid={}",
+							user.getId(), order.getOrderNumber(), order.getStatus(), order.isPaid());
+					if (order.isAlreadyProcessed()) {
+						log.info("이미 처리된 쿠키 지급 완료 주문입니다. userId={}, orderNumber={}",
+								user.getId(), order.getOrderNumber());
+						return CookieOrderPaymentStatusResponse.alreadyProcessed(order.getCookieAmount());
+					}
+					if (order.getStatus() == OrderStatus.FAILED) {
+						log.info("실패한 쿠키 주문은 미확인 상태로 응답합니다. userId={}, orderNumber={}",
+								user.getId(), order.getOrderNumber());
+						return CookieOrderPaymentStatusResponse.unconfirmed("UNCONFIRMED");
+					}
+					if (!order.isPaymentCompleted()) {
+						return CookieOrderPaymentStatusResponse.unconfirmed(order.getStatus().name());
+					}
+
+					order.markAlreadyProcessed();
+					log.info("쿠키 지급 완료를 응답하고 이미 처리 상태로 변경했습니다. userId={}, orderNumber={}, cookieAmount={}",
+							user.getId(), order.getOrderNumber(), order.getCookieAmount());
+					return CookieOrderPaymentStatusResponse.paid(order.getCookieAmount());
+				})
+				.orElseGet(() -> {
+					log.info("쿠키 주문 결제 상태 조회 결과가 없습니다. userId={}, billingName={}, orderAmount={}",
+							user.getId(), billingName, orderAmount);
+					return CookieOrderPaymentStatusResponse.unconfirmed("UNCONFIRMED");
+				});
 	}
 
 	LocalDateTime currentKoreaDateTime() {

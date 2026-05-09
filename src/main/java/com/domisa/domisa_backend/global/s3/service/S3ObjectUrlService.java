@@ -157,6 +157,7 @@ public class S3ObjectUrlService {
 	}
 
 	private boolean isReady(ProfileImage profileImage) {
-		return profileImage.getProcessingStatus() == ProfileImageProcessingStatus.READY;
+		return profileImage.getProcessingStatus() == ProfileImageProcessingStatus.READY
+			|| profileImage.getProcessingStatus() == ProfileImageProcessingStatus.COMPLETED;
 	}
 }
