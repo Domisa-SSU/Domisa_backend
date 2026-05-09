@@ -27,6 +27,10 @@ public class S3ProfileImageKeyService {
 		return String.join("/", segments);
 	}
 
+	public boolean isUploadKey(String objectKey) {
+		return objectKey != null && objectKey.contains("/" + TEMP_DIRECTORY + "/");
+	}
+
 	public String buildOriginKey(User user) {
 		return buildVariantKey(USER_DIRECTORY, user.getPublicId(), ProfileImageVariant.ORIGIN);
 	}

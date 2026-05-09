@@ -41,10 +41,6 @@ public class Card {
 	@Enumerated(EnumType.STRING)
 	private Mbti mbti;
 
-	// Deprecated: card image is resolved from User.profileImage.
-	@Column(name = "image_key", length = 1024)
-	private String imageKey;
-
 	public static Card create(User user, Mbti mbti, String datingStyle, String idealType) {
 		Card card = new Card();
 		card.user = user;
