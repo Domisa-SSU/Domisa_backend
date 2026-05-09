@@ -29,20 +29,20 @@ public class CardService {
     // 소개팅 카드 생성
     @Transactional
     public CardCreateResponse createCard(User user, CardCreateRequest request) {
-        User managedUser = getRequiredUser(user);
+        validateAuthUser(user);
 
         // 회원가입 완료 여부 체크
-        if (!managedUser.getIsRegistered()) {
+        if (!user.getIsRegistered()) {
             throw new GlobalException(GlobalErrorCode.USER_NOT_REGISTERED);
         }
 
         // 이미 카드가 있을 경우에는 불가능
-        if(cardRepository.findByUserId(managedUser.getId()).isPresent()) {
+        if(cardRepository.findByUserId(user.getId()).isPresent()) {
             throw new GlobalException(GlobalErrorCode.CARD_ALREADY_EXISTS);
         }
 
         Card card = Card.create(
-                managedUser,
+                user,
                 request.mbti(),
                 request.datingStyle(),
                 request.idealType()
@@ -50,18 +50,18 @@ public class CardService {
         cardRepository.save(card);
 
         // 연락처 저장
-        managedUser.setContactType(request.contactType());
-        managedUser.setContact(request.contact());
-        managedUser.setNotificationPhone(request.notificationPhone());
+        user.setContactType(request.contactType());
+        user.setContact(request.contact());
+        user.setNotificationPhone(normalizeNullableText(request.notificationPhone()));
 
         // 카드 생성 완료
-        managedUser.setIsProfileCompleted(true);
+        user.setIsProfileCompleted(true);
 
         return new CardCreateResponse(
-                managedUser.getPublicId(),
-                new StatusDto(managedUser.getIsRegistered(),
-                        hasIntroduction(managedUser.getId()),
-                        managedUser.hasCard()
+                user.getPublicId(),
+                new StatusDto(user.getIsRegistered(),
+                        hasIntroduction(user.getId()),
+                        user.hasCard()
                 ),
                 userRepository.count()
         );
@@ -74,8 +74,8 @@ public class CardService {
     // 소개팅 카드 조회
     @Transactional(readOnly = true)
     public CardResponse getCard(User user) {
-        User managedUser = getRequiredUser(user);
-        Card card = cardRepository.findByUserId(managedUser.getId())
+        validateAuthUser(user);
+        Card card = cardRepository.findByUserIdWithUserAndProfileImage(user.getId())
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.CARD_NOT_FOUND));
 
         return new CardResponse(
@@ -93,8 +93,8 @@ public class CardService {
     // 소개팅 카드 수정
     @Transactional
     public CardResponse updateCard(User user, CardUpdateRequest request) {
-        User managedUser = getRequiredUser(user);
-        Card card = cardRepository.findByUserId(managedUser.getId())
+        validateAuthUser(user);
+        Card card = cardRepository.findByUserIdWithUserAndProfileImage(user.getId())
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.CARD_NOT_FOUND));
 
         card.update(
@@ -103,28 +103,27 @@ public class CardService {
                 request.idealType()
         );
 
-        managedUser.setContactType(request.contactType());
-        managedUser.setContact(request.contact());
-        managedUser.setNotificationPhone(normalizeNullableText(request.notificationPhone()));
+        User cardUser = card.getUser();
+        cardUser.setContactType(request.contactType());
+        cardUser.setContact(request.contact());
+        cardUser.setNotificationPhone(normalizeNullableText(request.notificationPhone()));
 
         return new CardResponse(
                 card.getId(),
                 card.getMbti(),
                 card.getDatingStyle(),
                 card.getIdealType(),
-                toImageUrl(managedUser),
-                managedUser.getContactType(),
-                managedUser.getContact(),
-                managedUser.getNotificationPhone()
+                toImageUrl(cardUser),
+                cardUser.getContactType(),
+                cardUser.getContact(),
+                cardUser.getNotificationPhone()
         );
     }
 
-    private User getRequiredUser(User user) {
+    private void validateAuthUser(User user) {
         if (user == null || user.getId() == null) {
             throw new GlobalException(GlobalErrorCode.USER_NOT_FOUND);
         }
-        return userRepository.findById(user.getId())
-                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
     }
 
     private String normalizeNullableText(String value) {
