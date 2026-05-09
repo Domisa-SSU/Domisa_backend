@@ -58,17 +58,12 @@ public class CookieOrderTxService {
         for (int attempt = 0; attempt < MAX_BILLING_NAME_ATTEMPTS; attempt++) {
             String billingName = billingNameGenerator.generate();
 
-            boolean existsPaymentPending = cookieOrderRepository.existsByBillingNameAndStatus(
-                    billingName,
-                    OrderStatus.PAYMENT_PENDING
-            );
-
             boolean existsPending = cookieOrderRepository.existsByBillingNameAndStatus(
                     billingName,
                     OrderStatus.PENDING
             );
 
-            if (!existsPaymentPending && !existsPending) {
+            if (!existsPending) {
                 return billingName;
             }
         }

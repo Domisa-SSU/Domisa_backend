@@ -149,14 +149,10 @@ public class S3PresignedUrlService {
 	private ProfileImage getOrCreateProfileImage(User user) {
 		ProfileImage profileImage = user.getProfileImage();
 		if (profileImage != null) {
-			// 새 업로드는 새 시퀀스 아래에 다시 저장하므로 이전 origin/파생본은 먼저 정리한다.
-			if (profileImage.hasAnyKey()) {
-				s3ObjectStorageService.deleteAll(List.of(
-					profileImage.getProfileOriginKey(),
-					profileImage.getProfileThumbnailKey(),
-					profileImage.getProfileThumbnailBlurKey(),
-					profileImage.getProfileOriginBlurKey()
-				));
+			// 최종 이미지는 새 파생본 업로드가 성공하면 같은 key에 덮어쓴다.
+			// 사용자가 업로드를 다시 시도한 경우 이전 temp 원본만 정리한다.
+			if (s3ProfileImageKeyService.isUploadKey(profileImage.getProfileOriginKey())) {
+				s3ObjectStorageService.deleteAll(List.of(profileImage.getProfileOriginKey()));
 			}
 			return profileImage;
 		}

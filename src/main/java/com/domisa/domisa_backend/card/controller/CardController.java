@@ -6,6 +6,7 @@ import com.domisa.domisa_backend.card.dto.CardCreateResponse;
 import com.domisa.domisa_backend.card.dto.CardResponse;
 import com.domisa.domisa_backend.card.dto.CardUpdateRequest;
 import com.domisa.domisa_backend.card.service.CardService;
+import com.domisa.domisa_backend.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,24 +26,24 @@ public class CardController {
     // 소개팅 카드 생성
     @PostMapping
     public ResponseEntity<CardCreateResponse> createCard(
-            @AuthUser Long userId,
+            @AuthUser User user,
             @RequestBody CardCreateRequest request
             ) {
-        return ResponseEntity.ok(cardService.createCard(userId, request));
+        return ResponseEntity.ok(cardService.createCard(user, request));
     }
 
     // 소개팅 카드 조회
     @GetMapping
-    public ResponseEntity<CardResponse> getCard(@AuthUser Long userId) {
-        return ResponseEntity.ok(cardService.getCard(userId));
+    public ResponseEntity<CardResponse> getCard(@AuthUser User user) {
+        return ResponseEntity.ok(cardService.getCard(user));
     }
 
     // 소개팅 카드 수정
     @PutMapping
     public ResponseEntity<CardResponse> updateCard(
-            @AuthUser Long userId,
+            @AuthUser User user,
             @RequestBody CardUpdateRequest request
             ) {
-        return ResponseEntity.ok(cardService.updateCard(userId, request));
+        return ResponseEntity.ok(cardService.updateCard(user, request));
     }
 }

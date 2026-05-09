@@ -121,6 +121,13 @@ public class S3ObjectUrlService {
 		return null;
 	}
 
+	public String getProfileImagePresignedUrl(ProfileImage profileImage) {
+		if (profileImage == null || !isReady(profileImage) || !profileImage.hasOriginKey()) {
+			return null;
+		}
+		return buildPresignedGetUrl(profileImage.getProfileOriginKey());
+	}
+
 	public String getThumbnailBlurPresignedUrl(ProfileImage profileImage) {
 		if (profileImage == null || !isReady(profileImage)) return null;
 		if (hasText(profileImage.getProfileThumbnailBlurKey())) {
@@ -157,6 +164,7 @@ public class S3ObjectUrlService {
 	}
 
 	private boolean isReady(ProfileImage profileImage) {
-		return profileImage.getProcessingStatus() == ProfileImageProcessingStatus.READY;
+		return profileImage.getProcessingStatus() == ProfileImageProcessingStatus.READY
+			|| profileImage.getProcessingStatus() == ProfileImageProcessingStatus.COMPLETED;
 	}
 }

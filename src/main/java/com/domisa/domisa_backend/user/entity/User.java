@@ -56,9 +56,6 @@ public class User {
 	@Enumerated(EnumType.STRING)
 	private AnimalProfile animalProfile;
 
-	@Column(name = "profile_key", length = 200)
-	private String profile_key;
-
 	@Column(name = "cookies", nullable = false)
 	private Long cookies = 0L;
 
@@ -117,9 +114,6 @@ public class User {
 
 	@Column(name = "profile_image_sequence", nullable = false)
 	private Long profileImageSequence = 0L;
-
-	@Column(name = "profile_image_object_key", length = 1024)
-	private String profileImageObjectKey;
 
 	@Column(name = "has_introduction", nullable = false)
 	private Boolean hasIntroduction = false;
