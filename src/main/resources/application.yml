@@ -103,5 +103,5 @@ payaction:
 
 bizgo:
   base-url: ${BIZGO_BASE_URL:https://mars.ibapi.kr}
-  api-key: ${BIZGO_API_KEY}
-  sender-number: ${BIZGO_SENDER_NUMBER}
+  api-key: ${BIZGO_API_KEY:}
+  sender-number: ${BIZGO_SENDER_NUMBER:}
