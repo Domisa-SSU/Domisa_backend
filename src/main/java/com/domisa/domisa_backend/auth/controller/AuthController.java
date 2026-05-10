@@ -3,6 +3,7 @@ package com.domisa.domisa_backend.auth.controller;
 import com.domisa.domisa_backend.auth.dto.AuthMeResponse;
 import com.domisa.domisa_backend.auth.dto.LoginRequest;
 import com.domisa.domisa_backend.auth.dto.LoginResponse;
+import com.domisa.domisa_backend.auth.service.AuthCookieManager;
 import com.domisa.domisa_backend.auth.service.AuthService;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
 	private final AuthService authService;
+	private final AuthCookieManager authCookieManager;
 
 	@PostMapping("/login")
 	public ResponseEntity<LoginResponse> login(
@@ -43,8 +45,13 @@ public class AuthController {
 	}
 
 	@GetMapping("/me")
-	public ResponseEntity<AuthMeResponse> getMe(@AuthenticationPrincipal Long userId) {
+	public ResponseEntity<AuthMeResponse> getMe(
+		@AuthenticationPrincipal Long userId,
+		HttpServletResponse response
+	) {
 		if (userId == null) {
+			authCookieManager.expireCookie(response, "accessToken");
+			authCookieManager.expireCookie(response, "refreshToken");
 			throw new GlobalException(GlobalErrorCode.LOGIN_REQUIRED);
 		}
 		return ResponseEntity.ok(authService.getMe(userId));
