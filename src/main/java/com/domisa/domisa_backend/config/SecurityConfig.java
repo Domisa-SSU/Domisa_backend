@@ -33,7 +33,8 @@ public class SecurityConfig {
         "https://domisa.vercel.app",
         "https://domisalove.me",
         "https://www.domisalove.me",
-        "https://server.domisalove.me"
+        "https://server.domisalove.me",
+        "http://server.domisalove.me"
     );
 
     private final JwtProvider jwtProvider;
@@ -131,6 +132,16 @@ public class SecurityConfig {
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration dmsConfig = new CorsConfiguration();
+        dmsConfig.setAllowedOrigins(List.of(
+            "https://server.domisalove.me",
+            "http://server.domisalove.me"
+        ));
+        dmsConfig.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        dmsConfig.setAllowedHeaders(List.of("*"));
+        dmsConfig.setAllowCredentials(true);
+        source.registerCorsConfiguration("/dms-room/**", dmsConfig);
+        source.registerCorsConfiguration("/dms/**", dmsConfig);
         source.registerCorsConfiguration("/**", config);
         return source;
     }
