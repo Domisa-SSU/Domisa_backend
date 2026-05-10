@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>DMS Orders</title>
+	<link rel="stylesheet" href="/dms/dms.css">
+</head>
+<body>
+<header class="dms-header">
+	<a href="/dms-room/users">유저 목록</a>
+	<a href="/dms-room/orders">주문 목록</a>
+	<a href="/dms-room/introductions">Introduction 목록</a>
+	<form method="post" action="/dms-room/logout"><button type="submit">로그아웃</button></form>
+</header>
+
+<main class="dms-page">
+	<h1>주문 목록</h1>
+	<section class="dms-stats">
+		<div><span>총 주문 수</span><strong th:text="${page.stats.totalOrders}">0</strong></div>
+		<div><span>총 쿠키 수</span><strong th:text="${page.stats.totalCookieAmount}">0</strong></div>
+		<div><span>전체 주문 금액</span><strong th:text="${page.stats.totalOrderAmount}">0</strong></div>
+		<div><span>결제 완료 금액</span><strong th:text="${page.stats.paidOrderAmount}">0</strong></div>
+		<div><span>결제 완료</span><strong th:text="${page.stats.paidOrders}">0</strong></div>
+		<div><span>결제 대기</span><strong th:text="${page.stats.pendingOrders}">0</strong></div>
+		<div><span>실패/취소</span><strong th:text="${page.stats.failedOrCanceledOrders}">0</strong></div>
+	</section>
+
+	<section class="dms-panel">
+		<h2>CookieCode 통계</h2>
+		<table class="dms-table">
+			<thead><tr><th>상품</th><th>주문 수</th><th>쿠키 수</th><th>전체 금액</th><th>결제 완료 금액</th></tr></thead>
+			<tbody>
+			<tr th:each="stat : ${page.cookieCodeStats}">
+				<td th:text="${stat.cookieCode}"></td>
+				<td th:text="${stat.orderCount}"></td>
+				<td th:text="${stat.cookieAmount}"></td>
+				<td th:text="${stat.orderAmount}"></td>
+				<td th:text="${stat.paidOrderAmount}"></td>
+			</tr>
+			</tbody>
+		</table>
+	</section>
+
+	<div class="dms-table-wrap">
+		<table class="dms-table">
+			<thead>
+			<tr>
+				<th>ID</th>
+				<th>주문번호</th>
+				<th>유저</th>
+				<th>입금자명</th>
+				<th>금액</th>
+				<th>상품</th>
+				<th>쿠키 수</th>
+				<th>상태</th>
+				<th>주문일</th>
+				<th>결제일</th>
+				<th>생성일</th>
+				<th>수정일</th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr th:each="order : ${page.orders}">
+				<td th:text="${order.id}"></td>
+				<td th:text="${order.orderNumber}"></td>
+				<td><a th:href="@{/dms-room/users/{id}(id=${order.userId})}" th:text="${order.userPublicId}"></a></td>
+				<td th:text="${order.billingName}"></td>
+				<td th:text="${order.orderAmount}"></td>
+				<td th:text="${order.cookieCode}"></td>
+				<td th:text="${order.cookieAmount}"></td>
+				<td th:text="${order.orderStatus}"></td>
+				<td th:text="${order.orderDate}"></td>
+				<td th:text="${order.paidAt}"></td>
+				<td th:text="${order.createdAt}"></td>
+				<td th:text="${order.updatedAt}"></td>
+			</tr>
+			<tr th:if="${#lists.isEmpty(page.orders)}"><td colspan="12">주문이 없습니다.</td></tr>
+			</tbody>
+		</table>
+	</div>
+</main>
+</body>
+</html>

@@ -19,6 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.*;
 
@@ -127,6 +128,18 @@ public class User {
 	@Column(name = "free_like_count", nullable = false)
 	private Integer freeLikeCount = 3;
 
+	@Column(name = "student_card_key", nullable = false)
+	private String studentCardKey;
+
+	@Column(name = "is_checked")
+	private Boolean isChecked = false;
+
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
+
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
+
 	private User(Long kakaoId) {
 		this.kakaoId = kakaoId;
 	}
@@ -140,6 +153,16 @@ public class User {
 		if (publicId == null || publicId.isBlank()) {
 			publicId = UserPublicIdGenerator.generate();
 		}
+		LocalDateTime now = LocalDateTime.now();
+		if (createdAt == null) {
+			createdAt = now;
+		}
+		updatedAt = now;
+	}
+
+	@PreUpdate
+	void onUpdate() {
+		updatedAt = LocalDateTime.now();
 	}
 
 	public boolean hasProfileImage() {
@@ -178,5 +201,9 @@ public class User {
 
 	public void subtractCookies(long amount) {
 		this.cookies = getCookieBalance() - amount;
+	}
+
+	public void markChecked() {
+		this.isChecked = true;
 	}
 }

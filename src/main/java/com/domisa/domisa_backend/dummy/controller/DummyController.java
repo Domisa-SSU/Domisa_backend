@@ -8,6 +8,7 @@ import com.domisa.domisa_backend.dummy.dto.DummyUserListResponse;
 import com.domisa.domisa_backend.dummy.service.DummyDataService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@ConditionalOnProperty(name = "app.dummy.enabled", havingValue = "true")
 @RequestMapping("/api/dummy")
 @RequiredArgsConstructor
 public class DummyController {

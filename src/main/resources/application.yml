@@ -9,6 +9,12 @@ spring:
     url: jdbc:mysql://${DB_URL}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:2s}
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
@@ -21,6 +27,15 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  error:
+    include-stacktrace: never
+    include-binding-errors: never
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:false}
 
 logging:
   level:
@@ -52,7 +67,13 @@ jwt:
 
 app:
   frontend-url: ${FRONTEND_URL}
+  security:
+    swagger-enabled: ${APP_SECURITY_SWAGGER_ENABLED:false}
+  blacklist:
+    redis-key-prefix: ${APP_BLACKLIST_REDIS_KEY_PREFIX:blacklist:user:}
+    not-blacklisted-cache-ttl: ${APP_BLACKLIST_NOT_BLACKLISTED_CACHE_TTL:PT5M}
   dummy:
+    enabled: ${APP_DUMMY_ENABLED:false}
     admin-key: ${DUMMY_ADMIN_KEY:}
   auth:
     cookie:
@@ -79,3 +100,8 @@ payaction:
     bank-code: ${PAYMENT_BANK_CODE:${PAYACTION_DEPOSIT_BANK_CODE:004}}
     account-number: ${PAYMENT_ACCOUNT_NUMBER:${PAYACTION_DEPOSIT_ACCOUNT_NUMBER:}}
     account-holder: ${PAYMENT_ACCOUNT_HOLDER:${PAYACTION_DEPOSIT_ACCOUNT_HOLDER:}}
+
+bizgo:
+  base-url: ${BIZGO_BASE_URL:https://mars.ibapi.kr}
+  api-key: ${BIZGO_API_KEY}
+  sender-number: ${BIZGO_SENDER_NUMBER}

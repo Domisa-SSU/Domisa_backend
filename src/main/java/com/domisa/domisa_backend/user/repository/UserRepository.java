@@ -21,6 +21,39 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	List<User> findByKakaoIdBetweenOrderByKakaoIdAsc(Long startKakaoId, Long endKakaoId);
 
+	@Query("""
+		select u
+		from User u
+		order by
+			case when u.isChecked is null or u.isChecked = false then 0 else 1 end asc,
+			u.id desc
+		""")
+	List<User> findAllForDms();
+
+	@Query("""
+		select u
+		from User u
+		left join fetch u.profileImage
+		left join fetch u.card
+		left join fetch u.introduction
+		where u.id = :id
+		""")
+	Optional<User> findDmsDetailById(@Param("id") Long id);
+
+	@Query("select count(u) from User u where u.isChecked = true")
+	long countDmsCheckedUsers();
+
+	@Query("select count(u) from User u where u.isChecked is null or u.isChecked = false")
+	long countDmsUncheckedUsers();
+
+	long countByGender(Boolean gender);
+
+	long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+	@Modifying
+	@Query("update User u set u.cookies = u.cookies + :amount")
+	int addCookiesToAll(@Param("amount") long amount);
+
 	@EntityGraph(attributePaths = "profileImage")
 	Optional<User> findWithProfileImageById(Long id);
 

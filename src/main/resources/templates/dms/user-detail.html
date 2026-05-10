@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>DMS User Detail</title>
+	<link rel="stylesheet" href="/dms/dms.css">
+	<script defer src="/dms/dms.js"></script>
+</head>
+<body>
+<header class="dms-header">
+	<a href="/dms-room/users">유저 목록</a>
+	<a href="/dms-room/orders">주문 목록</a>
+	<a href="/dms-room/introductions">Introduction 목록</a>
+	<form method="post" action="/dms-room/logout"><button type="submit">로그아웃</button></form>
+</header>
+
+<main class="dms-page">
+	<div class="dms-title-row">
+		<h1>유저 상세</h1>
+		<a class="dms-button" href="/dms-room/users">목록으로</a>
+	</div>
+	<p class="dms-alert dms-alert-info" th:if="${message}" th:text="${message}"></p>
+	<p class="dms-alert dms-alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
+	<section class="dms-panel">
+		<h2>쿠키 관리</h2>
+		<div class="dms-two-columns">
+			<form method="post" th:action="@{/dms-room/users/{id}/cookies/add(id=${user.id})}" class="dms-form">
+				<input type="number" name="amount" min="1" placeholder="지급 수량" required>
+				<input type="text" name="reason" maxlength="60" placeholder="사유">
+				<button type="submit" class="dms-button dms-button-primary">쿠키 지급</button>
+			</form>
+			<form method="post" th:action="@{/dms-room/users/{id}/cookies/subtract(id=${user.id})}" class="dms-form" data-confirm="쿠키를 차감할까요?">
+				<input type="number" name="amount" min="1" placeholder="차감 수량" required>
+				<input type="text" name="reason" maxlength="60" placeholder="사유">
+				<button type="submit" class="dms-button dms-button-danger">쿠키 차감</button>
+			</form>
+		</div>
+	</section>
+
+	<section class="dms-panel">
+		<h2>기본 정보</h2>
+		<table class="dms-detail-table">
+			<tr><th>id</th><td th:text="${user.id}"></td></tr>
+			<tr><th>publicId</th><td th:text="${user.publicId}"></td></tr>
+			<tr><th>kakaoId</th><td th:text="${user.kakaoId}"></td></tr>
+			<tr><th>name</th><td th:text="${user.name}"></td></tr>
+			<tr><th>nickname</th><td th:text="${user.nickname}"></td></tr>
+			<tr><th>gender</th><td th:text="${user.gender}"></td></tr>
+			<tr><th>birthYear</th><td th:text="${user.birthYear}"></td></tr>
+			<tr><th>age</th><td th:text="${user.age}"></td></tr>
+			<tr><th>animalProfile</th><td th:text="${user.animalProfile}"></td></tr>
+			<tr><th>cookies</th><td th:text="${user.cookies}"></td></tr>
+			<tr><th>contactType</th><td th:text="${user.contactType}"></td></tr>
+			<tr><th>contact</th><td th:text="${user.contact}"></td></tr>
+			<tr><th>inviteCode</th><td th:text="${user.inviteCode}"></td></tr>
+			<tr><th>isRegistered</th><td th:text="${user.isRegistered}"></td></tr>
+			<tr><th>hasIntroduction</th><td th:text="${user.hasIntroduction}"></td></tr>
+			<tr><th>isProfileCompleted</th><td th:text="${user.isProfileCompleted}"></td></tr>
+			<tr><th>notificationPhone</th><td th:text="${user.notificationPhone}"></td></tr>
+			<tr><th>freeLikeCount</th><td th:text="${user.freeLikeCount}"></td></tr>
+			<tr><th>studentCardKey</th><td><span th:text="${user.studentCardKey}"></span> <a th:if="${user.hasStudentCard()}" th:href="@{/dms-room/users/{id}/student-card(id=${user.id})}" target="_blank">보기</a></td></tr>
+			<tr><th>isChecked</th><td th:text="${user.isChecked}"></td></tr>
+			<tr><th>blacklisted</th><td th:text="${user.blacklisted}"></td></tr>
+			<tr><th>refreshAvailableAt</th><td th:text="${user.refreshAvailableAt}"></td></tr>
+			<tr><th>createdAt</th><td th:text="${user.createdAt}"></td></tr>
+			<tr><th>updatedAt</th><td th:text="${user.updatedAt}"></td></tr>
+			<tr><th>myBlurs</th><td th:text="${user.myBlurs}"></td></tr>
+			<tr><th>myFans</th><td th:text="${user.myFans}"></td></tr>
+			<tr><th>myTypes</th><td th:text="${user.myTypes}"></td></tr>
+			<tr><th>myMatches</th><td th:text="${user.myMatches}"></td></tr>
+			<tr><th>nowShows</th><td th:text="${user.nowShows}"></td></tr>
+		</table>
+	</section>
+
+	<section class="dms-panel" th:if="${user.profileImage != null}">
+		<h2>프로필 이미지</h2>
+		<table class="dms-detail-table">
+			<tr><th>originKey</th><td th:text="${user.profileImage.originKey}"></td></tr>
+			<tr><th>originBlurKey</th><td th:text="${user.profileImage.originBlurKey}"></td></tr>
+			<tr><th>thumbnailKey</th><td th:text="${user.profileImage.thumbnailKey}"></td></tr>
+			<tr><th>thumbnailBlurKey</th><td th:text="${user.profileImage.thumbnailBlurKey}"></td></tr>
+			<tr><th>processingStatus</th><td th:text="${user.profileImage.processingStatus}"></td></tr>
+			<tr><th>retryCount</th><td th:text="${user.profileImage.retryCount}"></td></tr>
+			<tr><th>lastError</th><td th:text="${user.profileImage.lastError}"></td></tr>
+		</table>
+	</section>
+</main>
+</body>
+</html>

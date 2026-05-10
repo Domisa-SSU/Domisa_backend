@@ -1,0 +1,120 @@
+package com.domisa.domisa_backend.admin.controller;
+
+import com.domisa.domisa_backend.admin.service.DmsUserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+@RequestMapping("/dms-room/users")
+@RequiredArgsConstructor
+public class DmsUserController {
+
+	private final DmsUserService dmsUserService;
+
+	@GetMapping
+	public String users(
+		@RequestParam(value = "checked", required = false) String checked,
+		@RequestParam(value = "status", required = false) String status,
+		Model model
+	) {
+		model.addAttribute("page", dmsUserService.getUsers(checked, status));
+		return "dms/users";
+	}
+
+	@GetMapping("/{userId}")
+	public String userDetail(@PathVariable Long userId, Model model) {
+		model.addAttribute("user", dmsUserService.getUserDetail(userId));
+		return "dms/user-detail";
+	}
+
+	@PostMapping("/{userId}/heaven")
+	public String heaven(
+		@PathVariable Long userId,
+		@RequestParam(value = "checked", required = false) String checked,
+		@RequestParam(value = "status", required = false) String status
+	) {
+		dmsUserService.markHeaven(userId);
+		return redirectUsers(checked, status);
+	}
+
+	@PostMapping("/{userId}/hell")
+	public String hell(
+		@PathVariable Long userId,
+		@RequestParam(value = "checked", required = false) String checked,
+		@RequestParam(value = "status", required = false) String status
+	) {
+		dmsUserService.markHell(userId);
+		return redirectUsers(checked, status);
+	}
+
+	@GetMapping("/{userId}/student-card")
+	public String studentCard(@PathVariable Long userId) {
+		return "redirect:" + dmsUserService.getStudentCardPresignedUrl(userId);
+	}
+
+	@PostMapping("/{userId}/cookies/add")
+	public String addCookies(
+		@PathVariable Long userId,
+		@RequestParam("amount") long amount,
+		@RequestParam(value = "reason", required = false) String reason,
+		RedirectAttributes redirectAttributes
+	) {
+		try {
+			dmsUserService.addCookies(userId, amount, reason);
+			redirectAttributes.addFlashAttribute("message", "쿠키를 지급했습니다.");
+		} catch (RuntimeException exception) {
+			redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+		}
+		return "redirect:/dms-room/users/" + userId;
+	}
+
+	@PostMapping("/{userId}/cookies/subtract")
+	public String subtractCookies(
+		@PathVariable Long userId,
+		@RequestParam("amount") long amount,
+		@RequestParam(value = "reason", required = false) String reason,
+		RedirectAttributes redirectAttributes
+	) {
+		try {
+			dmsUserService.subtractCookies(userId, amount, reason);
+			redirectAttributes.addFlashAttribute("message", "쿠키를 차감했습니다.");
+		} catch (RuntimeException exception) {
+			redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+		}
+		return "redirect:/dms-room/users/" + userId;
+	}
+
+	@PostMapping("/cookies/add-all")
+	public String addCookiesToAll(
+		@RequestParam("amount") long amount,
+		RedirectAttributes redirectAttributes
+	) {
+		try {
+			int updatedCount = dmsUserService.addCookiesToAll(amount);
+			redirectAttributes.addFlashAttribute("message", "전체 유저 " + updatedCount + "명에게 쿠키를 지급했습니다.");
+		} catch (RuntimeException exception) {
+			redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+		}
+		return "redirect:/dms-room/users";
+	}
+
+	private String redirectUsers(String checked, String status) {
+		StringBuilder redirect = new StringBuilder("redirect:/dms-room/users");
+		String separator = "?";
+		if (checked != null && !checked.isBlank()) {
+			redirect.append(separator).append("checked=").append(checked);
+			separator = "&";
+		}
+		if (status != null && !status.isBlank()) {
+			redirect.append(separator).append("status=").append(status);
+		}
+		return redirect.toString();
+	}
+}

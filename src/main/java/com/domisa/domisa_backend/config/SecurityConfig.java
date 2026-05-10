@@ -1,20 +1,24 @@
 package com.domisa.domisa_backend.config;
 
 import com.domisa.domisa_backend.auth.filter.JwtAuthenticationFilter;
+import com.domisa.domisa_backend.auth.filter.UserBlacklistFilter;
 import com.domisa.domisa_backend.auth.jwt.JwtProvider;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.config.Customizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.CorsProcessor;
@@ -28,28 +32,41 @@ public class SecurityConfig {
     private static final List<String> ALLOWED_ORIGINS = List.of(
         "https://domisa.vercel.app",
         "https://domisalove.me",
-        "https://www.domisalove.me",
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:8080"
+        "https://www.domisalove.me"
     );
 
     private final JwtProvider jwtProvider;
+    private final UserBlacklistFilter userBlacklistFilter;
     private final CorsProcessor corsProcessor = new DefaultCorsProcessor();
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
-    public SecurityConfig(JwtProvider jwtProvider) {
+    @Value("${app.security.swagger-enabled:false}")
+    private boolean swaggerEnabled;
+
+    public SecurityConfig(JwtProvider jwtProvider, UserBlacklistFilter userBlacklistFilter) {
         this.jwtProvider = jwtProvider;
+        this.userBlacklistFilter = userBlacklistFilter;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
+            .csrf(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
+            .logout(AbstractHttpConfigurer::disable)
+            .headers(headers -> headers
+                .contentTypeOptions(Customizer.withDefaults())
+                .frameOptions(frame -> frame.deny())
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31_536_000)
+                )
+                .referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.NO_REFERRER))
+            )
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exception -> exception
@@ -58,31 +75,42 @@ public class SecurityConfig {
                 .accessDeniedHandler((request, response, accessDeniedException) ->
                     writeSecurityError(request, response, HttpServletResponse.SC_FORBIDDEN, "FORBIDDEN"))
             )
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/error").permitAll()
-                .requestMatchers("/health").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/introduction/*").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/datings/introduction-links").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/datings/count").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/users/check-nickname").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/auth/me").permitAll()
-                .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
-                .requestMatchers("/api/dummy/**").permitAll()
-                .requestMatchers("/api/webhooks/payaction/**").permitAll()
-                .requestMatchers(
-                    "/v3/api-docs",
-                    "/v3/api-docs/**",
-                    "/swagger-ui",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/webjars/**"
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
+            .authorizeHttpRequests(auth -> {
+                auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .requestMatchers("/error").permitAll()
+                    .requestMatchers("/health").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/introduction/*").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/datings/introduction-links").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/sms").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/datings/count").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/users/check-nickname").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/auth/me").permitAll()
+                    .requestMatchers("/api/auth/login", "/api/auth/logout").permitAll()
+                    .requestMatchers("/api/dummy/**").permitAll()
+                    .requestMatchers("/dms/**", "/dms-room/**").permitAll()
+                    .requestMatchers("/api/webhooks/payaction/**").permitAll();
+
+                if (swaggerEnabled) {
+                    auth.requestMatchers(
+                        "/v3/api-docs",
+                        "/v3/api-docs/**",
+                        "/swagger-ui",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/webjars/**"
+                    ).permitAll();
+                }
+
+                auth.anyRequest().authenticated();
+            })
             .addFilterBefore(
                 new JwtAuthenticationFilter(jwtProvider),
                 UsernamePasswordAuthenticationFilter.class
+            )
+            .addFilterAfter(
+                userBlacklistFilter,
+                JwtAuthenticationFilter.class
             );
 
         return http.build();

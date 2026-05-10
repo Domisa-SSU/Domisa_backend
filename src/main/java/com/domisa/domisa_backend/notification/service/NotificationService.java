@@ -89,7 +89,6 @@ public class NotificationService {
 				}
 				case LIKE -> like = true;
 				case MATCH -> match = true;
-				case COOKIE_PAYMENT -> shouldCancel = false;
 			}
 			if (shouldCancel) {
 				notification.cancel();
