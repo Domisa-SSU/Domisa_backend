@@ -30,6 +30,11 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 public class S3PresignedUrlService {
 
 	private static final int MAX_EXTENSION_LENGTH = 20;
+	private static final List<MediaType> ALLOWED_PROFILE_IMAGE_TYPES = List.of(
+		MediaType.IMAGE_JPEG,
+		MediaType.IMAGE_PNG,
+		MediaType.parseMediaType("image/webp")
+	);
 
 	private final UserRepository userRepository;
 	private final ProfileImageRepository profileImageRepository;
@@ -173,7 +178,7 @@ public class S3PresignedUrlService {
 
 		try {
 			MediaType mediaType = MediaType.parseMediaType(contentType.strip());
-			if (!"image".equalsIgnoreCase(mediaType.getType())) {
+			if (!ALLOWED_PROFILE_IMAGE_TYPES.contains(mediaType)) {
 				throw new S3Exception(S3ErrorCode.INVALID_CONTENT_TYPE);
 			}
 			return mediaType;

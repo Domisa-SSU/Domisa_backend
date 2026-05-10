@@ -12,8 +12,10 @@ import com.domisa.domisa_backend.dating.dto.DatingRefreshTimeResponse;
 import com.domisa.domisa_backend.dating.dto.UnblurProfileResponse;
 import com.domisa.domisa_backend.dating.service.DatingService;
 import com.domisa.domisa_backend.user.entity.User;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,9 +24,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Validated
 @RequestMapping("/api/datings")
 @RequiredArgsConstructor
 public class DatingController {
+
+	private static final String PUBLIC_ID_PATTERN = "^[A-Za-z0-9]{1,32}$";
 
 	private final DatingService datingService;
 
@@ -36,7 +41,7 @@ public class DatingController {
 	@PostMapping("/profiles/{publicId}")
 	public ResponseEntity<DatingProfileResponse> getDatingProfile(
 		@AuthUser User authUser,
-		@PathVariable String publicId,
+		@PathVariable @Pattern(regexp = PUBLIC_ID_PATTERN, message = "publicId 형식이 올바르지 않습니다.") String publicId,
 		@RequestBody(required = false) DatingProfileDetailRequest request
 	) {
 		return ResponseEntity.ok(datingService.getDatingProfile(authUser, publicId, request));
@@ -74,7 +79,7 @@ public class DatingController {
 	@PostMapping("/likes/received/{publicId}/unblur")
 	public ResponseEntity<UnblurProfileResponse> unblurReceivedLike(
 		@AuthUser User authUser,
-		@PathVariable String publicId
+		@PathVariable @Pattern(regexp = PUBLIC_ID_PATTERN, message = "publicId 형식이 올바르지 않습니다.") String publicId
 	) {
 		return ResponseEntity.ok(datingService.unblurReceivedLike(authUser, publicId));
 	}
@@ -82,7 +87,7 @@ public class DatingController {
 	@PostMapping("/likes/received/{publicId}/match")
 	public ResponseEntity<Void> matchReceivedLike(
 		@AuthUser User authUser,
-		@PathVariable String publicId
+		@PathVariable @Pattern(regexp = PUBLIC_ID_PATTERN, message = "publicId 형식이 올바르지 않습니다.") String publicId
 	) {
 		datingService.matchReceivedLike(authUser, publicId);
 		return ResponseEntity.ok().build();
@@ -91,7 +96,7 @@ public class DatingController {
 	@PostMapping("/likes/{publicId}")
 	public ResponseEntity<Void> sendLike(
 		@AuthUser User authUser,
-		@PathVariable String publicId
+		@PathVariable @Pattern(regexp = PUBLIC_ID_PATTERN, message = "publicId 형식이 올바르지 않습니다.") String publicId
 	) {
 		datingService.sendLike(authUser, publicId);
 		return ResponseEntity.ok().build();

@@ -11,9 +11,7 @@ public enum CookieCode {
     COOKIE_5(5, 2_000),
     COOKIE_10(10, 4_000),
     COOKIE_30(30, 5_000),
-    COOKIE_60(60, 9_000),
-    // 테스트용. 운영 배포 전 제거하거나 dev/test에서만 허용해야 함.
-    COOKIE_1000_TEST(1000, 1);
+    COOKIE_60(60, 9_000);
 
     private final int cookieAmount;
     private final int orderAmount;

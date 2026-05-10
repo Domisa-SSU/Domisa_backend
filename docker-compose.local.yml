@@ -1,4 +1,19 @@
 services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: ${LOCAL_REDIS_CONTAINER_NAME:-domisa-local-redis}
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${LOCAL_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-local-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   mysql:
     image: mysql:8.4
     container_name: ${LOCAL_MYSQL_CONTAINER_NAME}
@@ -32,13 +47,18 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
+      LOCAL_REDIS_HOST: redis
+      LOCAL_REDIS_PORT: 6379
       TZ: Asia/Seoul
     ports:
       - "${LOCAL_SERVER_PORT}:${LOCAL_SERVER_PORT}"
 
 volumes:
   mysql-local-data:
+  redis-local-data:

@@ -17,6 +17,14 @@ public interface CookieOrderRepository extends JpaRepository<CookieOrder, Long> 
 
 	void deleteByUserId(Long userId);
 
+	@Query("""
+		select o
+		from CookieOrder o
+		join fetch o.user
+		order by o.createdAt desc, o.id desc
+		""")
+	List<CookieOrder> findAllForDms();
+
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	List<CookieOrder> findByUserIdAndStatusIn(Long userId, Collection<OrderStatus> statuses);
 

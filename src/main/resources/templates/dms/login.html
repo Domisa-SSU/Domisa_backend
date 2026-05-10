@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>DMS Login</title>
+	<link rel="stylesheet" href="/dms/dms.css">
+</head>
+<body class="dms-login-body">
+<main class="dms-login">
+	<h1>DMS</h1>
+	<p class="dms-muted">내부 운영 페이지</p>
+	<p class="dms-alert dms-alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+	<form method="post" action="/dms-room/login" class="dms-form">
+		<label>
+			ID
+			<input type="text" name="loginId" autocomplete="username" required>
+		</label>
+		<label>
+			PW
+			<input type="password" name="password" autocomplete="current-password" required>
+		</label>
+		<button type="submit" class="dms-button dms-button-primary">로그인</button>
+	</form>
+</main>
+</body>
+</html>

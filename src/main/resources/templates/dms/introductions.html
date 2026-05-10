@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>DMS Introductions</title>
+	<link rel="stylesheet" href="/dms/dms.css">
+	<script defer src="/dms/dms.js"></script>
+</head>
+<body>
+<header class="dms-header">
+	<a href="/dms-room/users">유저 목록</a>
+	<a href="/dms-room/orders">주문 목록</a>
+	<a href="/dms-room/introductions">Introduction 목록</a>
+	<form method="post" action="/dms-room/logout"><button type="submit">로그아웃</button></form>
+</header>
+
+<main class="dms-page">
+	<h1>Introduction 목록</h1>
+	<p class="dms-alert dms-alert-info" th:if="${message}" th:text="${message}"></p>
+
+	<div class="dms-table-wrap">
+		<table class="dms-table">
+			<thead>
+			<tr>
+				<th>ID</th>
+				<th>소개 작성자</th>
+				<th>가입 참여자</th>
+				<th>linkCode</th>
+				<th>q1</th>
+				<th>q2</th>
+				<th>q3</th>
+				<th>삭제</th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr th:each="intro : ${page.introductions}">
+				<td th:text="${intro.id}"></td>
+				<td>
+					<a th:if="${intro.introducerId != null}" th:href="@{/dms-room/users/{id}(id=${intro.introducerId})}" th:text="${intro.introducerPublicId}"></a>
+					<span th:unless="${intro.introducerId != null}">없음</span>
+				</td>
+				<td>
+					<a th:if="${intro.participantId != null}" th:href="@{/dms-room/users/{id}(id=${intro.participantId})}" th:text="${intro.participantPublicId}"></a>
+					<span th:unless="${intro.participantId != null}">없음</span>
+				</td>
+				<td th:text="${intro.linkCode}"></td>
+				<td class="dms-text-cell" th:text="${intro.q1}"></td>
+				<td class="dms-text-cell" th:text="${intro.q2}"></td>
+				<td class="dms-text-cell" th:text="${intro.q3}"></td>
+				<td>
+					<form method="post" th:action="@{/dms-room/introductions/{id}/delete(id=${intro.id})}" data-confirm="Introduction을 삭제할까요?">
+						<button type="submit" class="dms-button dms-button-danger dms-button-small">삭제</button>
+					</form>
+				</td>
+			</tr>
+			<tr th:if="${#lists.isEmpty(page.introductions)}"><td colspan="8">Introduction이 없습니다.</td></tr>
+			</tbody>
+		</table>
+	</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,28 @@
+package com.domisa.domisa_backend.admin.dto;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public record DmsOrderListResponse(
+	DmsOrderStatsResponse stats,
+	List<DmsOrderCookieCodeStatsResponse> cookieCodeStats,
+	List<OrderRow> orders
+) {
+
+	public record OrderRow(
+		Long id,
+		String orderNumber,
+		Long userId,
+		String userPublicId,
+		String billingName,
+		Integer orderAmount,
+		String cookieCode,
+		Integer cookieAmount,
+		String orderStatus,
+		LocalDateTime orderDate,
+		LocalDateTime paidAt,
+		LocalDateTime createdAt,
+		LocalDateTime updatedAt
+	) {
+	}
+}

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>DMS Users</title>
+	<link rel="stylesheet" href="/dms/dms.css">
+	<script defer src="/dms/dms.js"></script>
+</head>
+<body>
+<header class="dms-header">
+	<a href="/dms-room/users">유저 목록</a>
+	<a href="/dms-room/orders">주문 목록</a>
+	<a href="/dms-room/introductions">Introduction 목록</a>
+	<form method="post" action="/dms-room/logout"><button type="submit">로그아웃</button></form>
+</header>
+
+<main class="dms-page">
+	<h1>유저 목록</h1>
+	<p class="dms-alert dms-alert-info" th:if="${message}" th:text="${message}"></p>
+	<p class="dms-alert dms-alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
+	<section class="dms-stats">
+		<div><span>총 유저 수</span><strong th:text="${page.stats.totalUsers}">0</strong></div>
+		<div><span>체크 완료</span><strong th:text="${page.stats.checkedUsers}">0</strong></div>
+		<div><span>체크 미완료</span><strong th:text="${page.stats.uncheckedUsers}">0</strong></div>
+		<div><span>남자</span><strong th:text="${page.stats.maleUsers}">0</strong></div>
+		<div><span>여자</span><strong th:text="${page.stats.femaleUsers}">0</strong></div>
+		<div><span>오늘 가입</span><strong th:text="${page.stats.todayJoinedUsers}">0</strong></div>
+	</section>
+
+	<section class="dms-toolbar">
+		<form method="get" action="/dms-room/users" class="dms-inline-form">
+			<select name="checked">
+				<option value="" th:selected="${page.checked == null or page.checked == ''}">전체 체크</option>
+				<option value="true" th:selected="${page.checked == 'true'}">체크 완료</option>
+				<option value="false" th:selected="${page.checked == 'false'}">체크 미완료</option>
+			</select>
+			<select name="status">
+				<option value="" th:selected="${page.status == null or page.status == ''}">전체 상태</option>
+				<option value="heaven" th:selected="${page.status == 'heaven'}">천국</option>
+				<option value="hell" th:selected="${page.status == 'hell'}">지옥</option>
+			</select>
+			<button type="submit" class="dms-button">필터</button>
+			<a class="dms-button" href="/dms-room/users">초기화</a>
+		</form>
+
+		<form method="post" action="/dms-room/users/cookies/add-all" class="dms-inline-form dms-danger-zone" data-confirm="전체 유저에게 쿠키를 지급할까요?">
+			<input type="number" name="amount" min="1" placeholder="전체 지급 수량" required>
+			<button type="submit" class="dms-button dms-button-danger">전체 쿠키 지급</button>
+		</form>
+	</section>
+
+	<div class="dms-table-wrap">
+		<table class="dms-table">
+			<thead>
+			<tr>
+				<th>ID</th>
+				<th>publicId</th>
+				<th>이름</th>
+				<th>닉네임</th>
+				<th>성별</th>
+				<th>출생연도</th>
+				<th>쿠키</th>
+				<th>체크</th>
+				<th>상태</th>
+				<th>학생증</th>
+				<th>처리</th>
+				<th>상세</th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr th:each="user : ${page.users}">
+				<td th:text="${user.id}"></td>
+				<td th:text="${user.publicId}"></td>
+				<td th:text="${user.name}"></td>
+				<td th:text="${user.nickname}"></td>
+				<td th:text="${user.gender}"></td>
+				<td th:text="${user.birthYear}"></td>
+				<td th:text="${user.cookies}"></td>
+				<td th:text="${user.isChecked}"></td>
+				<td><span class="dms-badge" th:classappend="${user.blacklisted} ? ' dms-badge-danger' : ' dms-badge-ok'" th:text="${user.blacklisted} ? '지옥' : '천국'"></span></td>
+				<td>
+					<a th:if="${user.hasStudentCard()}" class="dms-button dms-button-small" th:href="@{/dms-room/users/{id}/student-card(id=${user.id})}" target="_blank">학생증 보기</a>
+					<span th:unless="${user.hasStudentCard()}">사진 없음</span>
+				</td>
+				<td class="dms-actions">
+					<form method="post" th:action="@{/dms-room/users/{id}/heaven(id=${user.id})}">
+						<input type="hidden" name="checked" th:value="${page.checked}">
+						<input type="hidden" name="status" th:value="${page.status}">
+						<button type="submit" class="dms-button dms-button-small">천국</button>
+					</form>
+					<form method="post" th:action="@{/dms-room/users/{id}/hell(id=${user.id})}" data-confirm="이 유저를 지옥 처리할까요?">
+						<input type="hidden" name="checked" th:value="${page.checked}">
+						<input type="hidden" name="status" th:value="${page.status}">
+						<button type="submit" class="dms-button dms-button-small dms-button-danger">지옥</button>
+					</form>
+				</td>
+				<td><a class="dms-button dms-button-small" th:href="@{/dms-room/users/{id}(id=${user.id})}">상세보기</a></td>
+			</tr>
+			<tr th:if="${#lists.isEmpty(page.users)}"><td colspan="12">조회된 유저가 없습니다.</td></tr>
+			</tbody>
+		</table>
+	</div>
+</main>
+</body>
+</html>
