@@ -32,7 +32,8 @@ public class SecurityConfig {
     private static final List<String> ALLOWED_ORIGINS = List.of(
         "https://domisa.vercel.app",
         "https://domisalove.me",
-        "https://www.domisalove.me"
+        "https://www.domisalove.me",
+        "https://server.domisalove.me"
     );
 
     private final JwtProvider jwtProvider;
