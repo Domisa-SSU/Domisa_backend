@@ -374,6 +374,7 @@ public class DummyCompletedUserInitializer implements ApplicationRunner {
 		user.setHasIntroduction(true);
 		user.setRefreshAvailableAt(LocalDateTime.now().withNano(0).plusHours(2));
 		user.setFreeLikeCount(3);
+		user.setStudentCardKey("dummy/student-cards/student-card-" + displayNumber(seed.index()) + ".jpg");
 
 		Card card = cardRepository.findByUserId(user.getId())
 			.orElseGet(() -> {

@@ -128,7 +128,7 @@ public class User {
 	@Column(name = "free_like_count", nullable = false)
 	private Integer freeLikeCount = 3;
 
-	@Column(name = "student_card_key", nullable = false)
+	@Column(name = "student_card_key")
 	private String studentCardKey;
 
 	@Column(name = "is_checked")
@@ -152,6 +152,9 @@ public class User {
 	void assignPublicIdIfAbsent() {
 		if (publicId == null || publicId.isBlank()) {
 			publicId = UserPublicIdGenerator.generate();
+		}
+		if (studentCardKey == null) {
+			studentCardKey = "";
 		}
 		LocalDateTime now = LocalDateTime.now();
 		if (createdAt == null) {
