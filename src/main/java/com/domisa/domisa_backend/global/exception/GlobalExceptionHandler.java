@@ -55,4 +55,18 @@ public class GlobalExceptionHandler {
 				message
 			));
 	}
+
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException exception) {
+		String message = exception.getMessage() == null || exception.getMessage().isBlank()
+			? "요청 값이 올바르지 않습니다."
+			: exception.getMessage();
+
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+			.body(new ErrorResponse(
+				HttpStatus.BAD_REQUEST.value(),
+				"INVALID_REQUEST",
+				message
+			));
+	}
 }

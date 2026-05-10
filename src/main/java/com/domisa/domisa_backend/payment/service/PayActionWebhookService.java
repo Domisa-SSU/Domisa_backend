@@ -1,7 +1,5 @@
 package com.domisa.domisa_backend.payment.service;
 
-import com.domisa.domisa_backend.notification.service.NotificationService;
-import com.domisa.domisa_backend.notification.type.NotificationType;
 import com.domisa.domisa_backend.payment.config.PayActionProperties;
 import com.domisa.domisa_backend.payment.dto.PayActionMatchCompleteWebhookRequest;
 import com.domisa.domisa_backend.payment.entity.CookieOrder;
@@ -33,7 +31,6 @@ public class PayActionWebhookService {
 	private final CookieOrderRepository cookieOrderRepository;
 	private final CookieTransactionRepository cookieTransactionRepository;
 	private final PayActionWebhookLogRepository payActionWebhookLogRepository;
-	private final NotificationService notificationService;
 	private final UserRepository userRepository;
 
 	@Transactional
@@ -88,7 +85,6 @@ public class PayActionWebhookService {
 		user.addCookies(order.getCookieAmount());
 
 		cookieTransactionRepository.save(CookieTransaction.charge(user, order, order.getCookieAmount()));
-		notificationService.createNotification(NotificationType.COOKIE_PAYMENT, user.getId(), null);
 		saveWebhookLog(traceId, request, processingDate);
 		log.info("페이액션 매칭완료 웹훅 처리가 완료되었습니다. orderNumber={}, userId={}, cookieAmount={}",
 			order.getOrderNumber(), user.getId(), order.getCookieAmount());

@@ -100,3 +100,8 @@ payaction:
     bank-code: ${PAYMENT_BANK_CODE:${PAYACTION_DEPOSIT_BANK_CODE:004}}
     account-number: ${PAYMENT_ACCOUNT_NUMBER:${PAYACTION_DEPOSIT_ACCOUNT_NUMBER:}}
     account-holder: ${PAYMENT_ACCOUNT_HOLDER:${PAYACTION_DEPOSIT_ACCOUNT_HOLDER:}}
+
+bizgo:
+  base-url: ${BIZGO_BASE_URL:https://mars.ibapi.kr}
+  api-key: ${BIZGO_API_KEY}
+  sender-number: ${BIZGO_SENDER_NUMBER}

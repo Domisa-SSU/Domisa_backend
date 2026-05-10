@@ -82,6 +82,7 @@ public class SecurityConfig {
                     .requestMatchers("/health").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/introduction/*").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/datings/introduction-links").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/sms").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/datings/count").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/users/check-nickname").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/auth/me").permitAll()
