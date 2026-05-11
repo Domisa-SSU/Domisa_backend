@@ -3,12 +3,14 @@ package com.domisa.domisa_backend.sms.client;
 import com.domisa.domisa_backend.sms.config.BizgoProperties;
 import com.domisa.domisa_backend.sms.dto.SmsRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class BizgoClient {
@@ -20,6 +22,8 @@ public class BizgoClient {
 	private final BizgoProperties bizgoProperties;
 
 	public String send(SmsRequest request) {
+		log.info("Bizgo SMS API 요청을 시작합니다. path={}, apiKeyPresent={}, destinationCount={}",
+			SEND_OMNI_PATH, StringUtils.hasText(bizgoProperties.apiKey()), request.getDestinations().size());
 		String response = bizgoWebClient.post()
 			.uri(SEND_OMNI_PATH)
 			.header(HttpHeaders.AUTHORIZATION, requiredApiKey())

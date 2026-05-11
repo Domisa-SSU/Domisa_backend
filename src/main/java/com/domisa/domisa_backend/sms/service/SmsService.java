@@ -9,9 +9,11 @@ import com.domisa.domisa_backend.sms.dto.SmsRequest;
 import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SmsService {
@@ -36,14 +38,17 @@ public class SmsService {
 			.toList();
 		String normalizedMessage = normalizeMessage(message);
 		String senderNumber = normalizeSenderNumber(bizgoProperties.senderNumber());
+		log.info("SMS 발송 요청을 준비했습니다. totalCount={}, sender={}, messageLength={}, phones={}",
+			normalizedPhones.size(), maskPhone(senderNumber), normalizedMessage.length(), maskPhones(normalizedPhones));
 
 		for (int start = 0; start < normalizedPhones.size(); start += MAX_DESTINATION_COUNT) {
 			int end = Math.min(start + MAX_DESTINATION_COUNT, normalizedPhones.size());
-			sendBatch(normalizedPhones.subList(start, end), senderNumber, normalizedMessage);
+			int batchNumber = (start / MAX_DESTINATION_COUNT) + 1;
+			sendBatch(normalizedPhones.subList(start, end), senderNumber, normalizedMessage, batchNumber);
 		}
 	}
 
-	private void sendBatch(List<String> phones, String senderNumber, String message) {
+	private void sendBatch(List<String> phones, String senderNumber, String message, int batchNumber) {
 		SmsRequest request = new SmsRequest(
 			phones.stream()
 				.map(Destination::new)
@@ -51,7 +56,9 @@ public class SmsService {
 			List.of(new MessageFlow(new Sms(senderNumber, message)))
 		);
 
-		bizgoClient.send(request);
+		log.info("SMS 배치 발송을 요청합니다. batch={}, count={}, phones={}", batchNumber, phones.size(), maskPhones(phones));
+		String response = bizgoClient.send(request);
+		log.info("SMS 배치 발송 응답을 받았습니다. batch={}, count={}, response={}", batchNumber, phones.size(), response);
 	}
 
 	private String normalizePhone(String phone) {
@@ -81,5 +88,22 @@ public class SmsService {
 			throw new IllegalArgumentException("message는 필수입니다.");
 		}
 		return message.strip();
+	}
+
+	private List<String> maskPhones(List<String> phones) {
+		return phones.stream()
+			.map(this::maskPhone)
+			.toList();
+	}
+
+	private String maskPhone(String phone) {
+		if (phone == null || phone.isBlank()) {
+			return "";
+		}
+		String normalizedPhone = phone.replaceAll("[^0-9]", "");
+		if (normalizedPhone.length() <= 4) {
+			return "****";
+		}
+		return "***-****-" + normalizedPhone.substring(normalizedPhone.length() - 4);
 	}
 }

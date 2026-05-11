@@ -37,6 +37,7 @@ public class NotificationSmsService {
 			NotificationType.LIKE,
 			NotificationType.MATCH
 		));
+		log.info("읽지 않은 알림 SMS 대상 알림을 조회했습니다. notificationCount={}", notifications.size());
 		if (notifications.isEmpty()) {
 			log.info("문자로 보낼 읽지 않은 알림이 없습니다.");
 			return;
@@ -47,21 +48,23 @@ public class NotificationSmsService {
 				Notification::getUserId,
 				Collectors.mapping(Notification::getType, Collectors.toCollection(() -> EnumSet.noneOf(NotificationType.class)))
 			));
+		log.info("읽지 않은 알림 SMS 대상 유저를 집계했습니다. userCount={}, userIds={}", typesByUserId.size(), typesByUserId.keySet());
 
 		Map<Long, User> usersById = userRepository.findAllByIdIn(typesByUserId.keySet()).stream()
 			.collect(Collectors.toMap(User::getId, user -> user));
+		log.info("읽지 않은 알림 SMS 대상 유저 정보를 조회했습니다. foundUserCount={}", usersById.size());
 
 		List<String> phones = typesByUserId.entrySet().stream()
-			.filter(entry -> buildMessage(entry.getValue()) != null)
-			.map(entry -> usersById.get(entry.getKey()))
-			.filter(user -> user != null && user.getNotificationPhone() != null && !user.getNotificationPhone().isBlank())
-			.map(User::getNotificationPhone)
+			.filter(entry -> isSmsTarget(entry.getKey(), entry.getValue(), usersById.get(entry.getKey())))
+			.map(entry -> usersById.get(entry.getKey()).getNotificationPhone())
 			.toList();
 		if (phones.isEmpty()) {
+			log.info("읽지 않은 알림 SMS 최종 발송 대상 전화번호가 없습니다.");
 			return;
 		}
 
 		try {
+			log.info("읽지 않은 알림 SMS 동보 발송을 요청합니다. count={}, phones={}", phones.size(), maskPhones(phones));
 			smsService.sendAll(phones, UNREAD_NOTIFICATION_MESSAGE);
 			log.info("읽지 않은 알림 SMS를 동보 발송했습니다. count={}", phones.size());
 		} catch (RuntimeException exception) {
@@ -74,5 +77,43 @@ public class NotificationSmsService {
 			return UNREAD_NOTIFICATION_MESSAGE;
 		}
 		return null;
+	}
+
+	private boolean isSmsTarget(Long userId, Set<NotificationType> types, User user) {
+		String message = buildMessage(types);
+		if (message == null) {
+			log.info("읽지 않은 알림 SMS 대상에서 제외했습니다. userId={}, types={}, reason=no_message", userId, types);
+			return false;
+		}
+		if (user == null) {
+			log.info("읽지 않은 알림 SMS 대상에서 제외했습니다. userId={}, types={}, reason=user_not_found", userId, types);
+			return false;
+		}
+		String phone = user.getNotificationPhone();
+		if (phone == null || phone.isBlank()) {
+			log.info("읽지 않은 알림 SMS 대상에서 제외했습니다. userId={}, publicId={}, types={}, reason=no_phone",
+				user.getId(), user.getPublicId(), types);
+			return false;
+		}
+		log.info("읽지 않은 알림 SMS 발송 대상입니다. userId={}, publicId={}, types={}, phone={}",
+			user.getId(), user.getPublicId(), types, maskPhone(phone));
+		return true;
+	}
+
+	private List<String> maskPhones(List<String> phones) {
+		return phones.stream()
+			.map(this::maskPhone)
+			.toList();
+	}
+
+	private String maskPhone(String phone) {
+		if (phone == null || phone.isBlank()) {
+			return "";
+		}
+		String normalizedPhone = phone.replaceAll("[^0-9]", "");
+		if (normalizedPhone.length() <= 4) {
+			return "****";
+		}
+		return "***-****-" + normalizedPhone.substring(normalizedPhone.length() - 4);
 	}
 }
