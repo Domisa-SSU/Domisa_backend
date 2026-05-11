@@ -13,7 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @RequiredArgsConstructor
 public class BizgoClient {
 
-	private static final String SEND_OMNI_PATH = "/api/omni";
+	private static final String SEND_OMNI_PATH = "/api/comm/v1/send/omni";
 
 	@Qualifier("bizgoWebClient")
 	private final WebClient bizgoWebClient;

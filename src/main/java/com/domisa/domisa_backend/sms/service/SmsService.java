@@ -6,7 +6,7 @@ import com.domisa.domisa_backend.sms.dto.Destination;
 import com.domisa.domisa_backend.sms.dto.MessageFlow;
 import com.domisa.domisa_backend.sms.dto.Sms;
 import com.domisa.domisa_backend.sms.dto.SmsRequest;
-import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,20 +16,39 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class SmsService {
 
-	private static final int SMS_MAX_BYTES = 90;
+	private static final int MAX_DESTINATION_COUNT = 200;
 	private static final String PHONE_NUMBER_PATTERN = "^01[016789]\\d{7,8}$";
 
 	private final BizgoClient bizgoClient;
 	private final BizgoProperties bizgoProperties;
 
 	public void send(String phone, String message) {
-		String normalizedPhone = normalizePhone(phone);
+		sendAll(List.of(phone), message);
+	}
+
+	public void sendAll(Collection<String> phones, String message) {
+		if (phones == null || phones.isEmpty()) {
+			throw new IllegalArgumentException("phones는 필수입니다.");
+		}
+
+		List<String> normalizedPhones = phones.stream()
+			.map(this::normalizePhone)
+			.toList();
 		String normalizedMessage = normalizeMessage(message);
 		String senderNumber = normalizeSenderNumber(bizgoProperties.senderNumber());
 
+		for (int start = 0; start < normalizedPhones.size(); start += MAX_DESTINATION_COUNT) {
+			int end = Math.min(start + MAX_DESTINATION_COUNT, normalizedPhones.size());
+			sendBatch(normalizedPhones.subList(start, end), senderNumber, normalizedMessage);
+		}
+	}
+
+	private void sendBatch(List<String> phones, String senderNumber, String message) {
 		SmsRequest request = new SmsRequest(
-			List.of(new Destination(normalizedPhone)),
-			List.of(new MessageFlow(new Sms(senderNumber, normalizedMessage)))
+			phones.stream()
+				.map(Destination::new)
+				.toList(),
+			List.of(new MessageFlow(new Sms(senderNumber, message)))
 		);
 
 		bizgoClient.send(request);
@@ -61,11 +80,6 @@ public class SmsService {
 		if (!StringUtils.hasText(message)) {
 			throw new IllegalArgumentException("message는 필수입니다.");
 		}
-		String normalizedMessage = message.strip();
-		int byteLength = normalizedMessage.getBytes(StandardCharsets.UTF_8).length;
-		if (byteLength > SMS_MAX_BYTES) {
-			throw new IllegalArgumentException("SMS 메시지는 UTF-8 기준 90byte를 초과할 수 없습니다.");
-		}
-		return normalizedMessage;
+		return message.strip();
 	}
 }
