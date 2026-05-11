@@ -34,7 +34,8 @@ public class SecurityConfig {
         "https://domisalove.me",
         "https://www.domisalove.me",
         "https://server.domisalove.me",
-        "http://server.domisalove.me"
+        "http://server.domisalove.me",
+        "http://localhost:5173"
     );
 
     private final JwtProvider jwtProvider;
@@ -136,6 +137,7 @@ public class SecurityConfig {
         dmsConfig.setAllowedOrigins(List.of(
             "https://server.domisalove.me",
             "http://server.domisalove.me",
+            "http://localhost:5173",
             "null"
         ));
         dmsConfig.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
