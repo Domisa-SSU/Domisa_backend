@@ -35,6 +35,6 @@ public class BizgoClient {
 		if (!StringUtils.hasText(bizgoProperties.apiKey())) {
 			throw new IllegalStateException("BIZGO_API_KEY 환경변수가 설정되어 있지 않습니다.");
 		}
-		return bizgoProperties.apiKey();
+		return bizgoProperties.apiKey().strip();
 	}
 }
