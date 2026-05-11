@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -21,14 +23,40 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	List<User> findByKakaoIdBetweenOrderByKakaoIdAsc(Long startKakaoId, Long endKakaoId);
 
-	@Query("""
-		select u
-		from User u
-		order by
-			case when u.isChecked is null or u.isChecked = false then 0 else 1 end asc,
-			u.id desc
-		""")
-	List<User> findAllForDms();
+	@Query(
+		value = """
+			select u
+			from User u
+			where (:checked is null or :checked = ''
+				or (:checked = 'true' and u.isChecked = true)
+				or (:checked = 'false' and (u.isChecked is null or u.isChecked = false)))
+			and (:status is null or :status = ''
+				or (:status = 'heaven' and not exists (
+					select 1 from UserBlacklist b where b.user = u
+				))
+				or (:status = 'hell' and exists (
+					select 1 from UserBlacklist b where b.user = u
+				)))
+			order by
+				case when u.isChecked is null or u.isChecked = false then 0 else 1 end asc,
+				u.id desc
+			""",
+		countQuery = """
+			select count(u)
+			from User u
+			where (:checked is null or :checked = ''
+				or (:checked = 'true' and u.isChecked = true)
+				or (:checked = 'false' and (u.isChecked is null or u.isChecked = false)))
+			and (:status is null or :status = ''
+				or (:status = 'heaven' and not exists (
+					select 1 from UserBlacklist b where b.user = u
+				))
+				or (:status = 'hell' and exists (
+					select 1 from UserBlacklist b where b.user = u
+				)))
+			"""
+	)
+	Page<User> findAllForDms(@Param("checked") String checked, @Param("status") String status, Pageable pageable);
 
 	@Query("""
 		select u

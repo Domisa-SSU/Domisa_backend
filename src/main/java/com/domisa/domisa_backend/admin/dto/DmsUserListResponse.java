@@ -7,7 +7,14 @@ public record DmsUserListResponse(
 	DmsUserStatsResponse stats,
 	List<UserRow> users,
 	String checked,
-	String status
+	String status,
+	int page,
+	int size,
+	int totalPages,
+	long totalElements,
+	boolean hasPrevious,
+	boolean hasNext,
+	List<Integer> pageNumbers
 ) {
 
 	public record UserRow(

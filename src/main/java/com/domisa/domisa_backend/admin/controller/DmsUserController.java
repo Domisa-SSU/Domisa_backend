@@ -22,9 +22,10 @@ public class DmsUserController {
 	public String users(
 		@RequestParam(value = "checked", required = false) String checked,
 		@RequestParam(value = "status", required = false) String status,
+		@RequestParam(value = "page", required = false) Integer page,
 		Model model
 	) {
-		model.addAttribute("page", dmsUserService.getUsers(checked, status));
+		model.addAttribute("page", dmsUserService.getUsers(checked, status, page));
 		return "dms/users";
 	}
 
@@ -38,20 +39,22 @@ public class DmsUserController {
 	public String heaven(
 		@PathVariable Long userId,
 		@RequestParam(value = "checked", required = false) String checked,
-		@RequestParam(value = "status", required = false) String status
+		@RequestParam(value = "status", required = false) String status,
+		@RequestParam(value = "page", required = false) Integer page
 	) {
 		dmsUserService.markHeaven(userId);
-		return redirectUsers(checked, status);
+		return redirectUsers(checked, status, page);
 	}
 
 	@PostMapping("/{userId}/hell")
 	public String hell(
 		@PathVariable Long userId,
 		@RequestParam(value = "checked", required = false) String checked,
-		@RequestParam(value = "status", required = false) String status
+		@RequestParam(value = "status", required = false) String status,
+		@RequestParam(value = "page", required = false) Integer page
 	) {
 		dmsUserService.markHell(userId);
-		return redirectUsers(checked, status);
+		return redirectUsers(checked, status, page);
 	}
 
 	@GetMapping("/{userId}/student-card")
@@ -105,7 +108,7 @@ public class DmsUserController {
 		return "redirect:/dms-room/users";
 	}
 
-	private String redirectUsers(String checked, String status) {
+	private String redirectUsers(String checked, String status, Integer page) {
 		StringBuilder redirect = new StringBuilder("redirect:/dms-room/users");
 		String separator = "?";
 		if (checked != null && !checked.isBlank()) {
@@ -114,6 +117,10 @@ public class DmsUserController {
 		}
 		if (status != null && !status.isBlank()) {
 			redirect.append(separator).append("status=").append(status);
+			separator = "&";
+		}
+		if (page != null && page > 1) {
+			redirect.append(separator).append("page=").append(page);
 		}
 		return redirect.toString();
 	}

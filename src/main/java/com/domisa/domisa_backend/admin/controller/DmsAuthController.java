@@ -1,6 +1,8 @@
 package com.domisa.domisa_backend.admin.controller;
 
 import com.domisa.domisa_backend.admin.service.DmsAuthService;
+import com.domisa.domisa_backend.admin.config.DmsSessionKeys;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -18,7 +20,11 @@ public class DmsAuthController {
 	private final DmsAuthService dmsAuthService;
 
 	@GetMapping("/login")
-	public String loginPage() {
+	public String loginPage(HttpSession session, HttpServletResponse response) {
+		addNoStoreHeaders(response);
+		if (Boolean.TRUE.equals(session.getAttribute(DmsSessionKeys.DMS_ADMIN_LOGIN))) {
+			return "redirect:/dms-room/users";
+		}
 		return "dms/login";
 	}
 
@@ -27,8 +33,10 @@ public class DmsAuthController {
 		@RequestParam("loginId") String loginId,
 		@RequestParam("password") String password,
 		HttpSession session,
+		HttpServletResponse response,
 		Model model
 	) {
+		addNoStoreHeaders(response);
 		if (!dmsAuthService.login(loginId, password, session)) {
 			model.addAttribute("errorMessage", "관리자 ID 또는 비밀번호가 올바르지 않습니다.");
 			return "dms/login";
@@ -40,5 +48,11 @@ public class DmsAuthController {
 	public String logout(HttpSession session) {
 		dmsAuthService.logout(session);
 		return "redirect:/dms-room/login";
+	}
+
+	private void addNoStoreHeaders(HttpServletResponse response) {
+		response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+		response.setHeader("Pragma", "no-cache");
+		response.setDateHeader("Expires", 0);
 	}
 }
