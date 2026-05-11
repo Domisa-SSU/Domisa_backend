@@ -29,6 +29,11 @@ public class NotificationSmsScheduler {
 		sendUnreadNotificationSms();
 	}
 
+	@Scheduled(cron = "0 45 23 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSmsT4() {
+		sendUnreadNotificationSms();
+	}
+
 	public void sendUnreadNotificationSms() {
 		try {
 			notificationSmsService.sendUnreadNotificationSms();
