@@ -21,8 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NotificationSmsService {
 
-	private static final String LIKE_MESSAGE = "호감을 보냈습니다";
-	private static final String MATCH_MESSAGE = "쌍방 매칭이 이뤄졌어요";
+	private static final String UNREAD_NOTIFICATION_MESSAGE = "누군가 나에게 호감을 보냈어요 ❤︎\n"
+		+ "도미사럽에서 바로 확인해보세요\n"
+		+ "https://domisalove.me/";
 
 	private final NotificationRepository notificationRepository;
 	private final UserRepository userRepository;
@@ -70,16 +71,8 @@ public class NotificationSmsService {
 	}
 
 	private String buildMessage(Set<NotificationType> types) {
-		boolean hasLike = types.contains(NotificationType.LIKE);
-		boolean hasMatch = types.contains(NotificationType.MATCH);
-		if (hasLike && hasMatch) {
-			return LIKE_MESSAGE + "\n" + MATCH_MESSAGE;
-		}
-		if (hasLike) {
-			return LIKE_MESSAGE;
-		}
-		if (hasMatch) {
-			return MATCH_MESSAGE;
+		if (types.contains(NotificationType.LIKE) || types.contains(NotificationType.MATCH)) {
+			return UNREAD_NOTIFICATION_MESSAGE;
 		}
 		return null;
 	}
