@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
@@ -28,8 +29,18 @@ public class BizgoClient {
 			.uri(SEND_OMNI_PATH)
 			.header(HttpHeaders.AUTHORIZATION, requiredApiKey())
 			.bodyValue(request)
-			.retrieve()
-			.bodyToMono(String.class)
+			.exchangeToMono(clientResponse -> clientResponse.bodyToMono(String.class)
+				.defaultIfEmpty("")
+				.flatMap(body -> {
+					if (clientResponse.statusCode().isError()) {
+						log.warn("Bizgo SMS API 요청에 실패했습니다. status={}, body={}", clientResponse.statusCode(), body);
+						return Mono.error(new IllegalStateException(
+							"Bizgo SMS API 요청 실패. status=" + clientResponse.statusCode() + ", body=" + body
+						));
+					}
+					log.info("Bizgo SMS API 요청에 성공했습니다. status={}, body={}", clientResponse.statusCode(), body);
+					return Mono.just(body);
+				}))
 			.block();
 
 		return response == null ? "" : response;
