@@ -135,7 +135,8 @@ public class SecurityConfig {
         CorsConfiguration dmsConfig = new CorsConfiguration();
         dmsConfig.setAllowedOrigins(List.of(
             "https://server.domisalove.me",
-            "http://server.domisalove.me"
+            "http://server.domisalove.me",
+            "null"
         ));
         dmsConfig.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         dmsConfig.setAllowedHeaders(List.of("*"));
