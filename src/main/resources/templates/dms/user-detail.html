@@ -9,10 +9,11 @@
 </head>
 <body>
 <header class="dms-header">
-	<a href="/dms-room/users">유저 목록</a>
-	<a href="/dms-room/orders">주문 목록</a>
-	<a href="/dms-room/introductions">Introduction 목록</a>
-	<form method="post" action="/dms-room/logout"><button type="submit">로그아웃</button></form>
+		<a href="/dms-room/users">유저 목록</a>
+		<a href="/dms-room/orders">주문 목록</a>
+		<a href="/dms-room/introductions">Introduction 목록</a>
+		<a href="/dms-room/logs">서버 로그</a>
+		<form method="post" action="/dms-room/logout"><button type="submit">로그아웃</button></form>
 </header>
 
 <main class="dms-page">
@@ -23,9 +24,9 @@
 	<p class="dms-alert dms-alert-info" th:if="${message}" th:text="${message}"></p>
 	<p class="dms-alert dms-alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></p>
 
-	<section class="dms-panel">
+	<section class="dms-panel dms-panel-compact">
 		<h2>쿠키 관리</h2>
-		<div class="dms-two-columns">
+		<div class="dms-cookie-forms">
 			<form method="post" th:action="@{/dms-room/users/{id}/cookies/add(id=${user.id})}" class="dms-form">
 				<input type="number" name="amount" min="1" placeholder="지급 수량" required>
 				<input type="text" name="reason" maxlength="60" placeholder="사유">
@@ -61,7 +62,7 @@
 			<tr><th>보유 쿠키</th><td th:text="${user.cookies}"></td></tr>
 			<tr><th>연락처 유형</th><td th:text="${user.contactType}"></td></tr>
 			<tr><th>연락처</th><td th:text="${user.contact}"></td></tr>
-			<tr><th>초대 코드</th><td th:text="${user.inviteCode}"></td></tr>
+			<tr><th>초대 코드</th><td th:text="${user.inviteCode == null or user.inviteCode == '' ? '-' : user.inviteCode}"></td></tr>
 			<tr><th>가입 완료 여부</th><td th:text="${user.isRegistered}"></td></tr>
 			<tr><th>소개서 등록 여부</th><td th:text="${user.hasIntroduction}"></td></tr>
 			<tr><th>프로필 완성 여부</th><td th:text="${user.isProfileCompleted}"></td></tr>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>DMS Logs</title>
+	<link rel="stylesheet" href="/dms/dms.css">
+</head>
+<body>
+<header class="dms-header">
+	<a href="/dms-room/users">유저 목록</a>
+	<a href="/dms-room/orders">주문 목록</a>
+	<a href="/dms-room/introductions">Introduction 목록</a>
+	<a href="/dms-room/logs">서버 로그</a>
+	<form method="post" action="/dms-room/logout"><button type="submit">로그아웃</button></form>
+</header>
+
+<main class="dms-page">
+	<div class="dms-title-row">
+		<h1>서버 로그</h1>
+	</div>
+
+	<section class="dms-toolbar">
+		<form method="get" action="/dms-room/logs" class="dms-inline-form">
+			<input type="hidden" name="load" value="true">
+			<select name="lines">
+				<option value="100" th:selected="${page.lines == 100}">최근 100줄</option>
+				<option value="300" th:selected="${page.lines == 300}">최근 300줄</option>
+				<option value="500" th:selected="${page.lines == 500}">최근 500줄</option>
+			</select>
+			<button type="submit" class="dms-button dms-button-primary">새로고침</button>
+		</form>
+	</section>
+
+	<p class="dms-muted">파일: <span th:text="${page.filePath}"></span></p>
+	<p class="dms-alert dms-alert-info" th:unless="${page.loaded}">새로고침 버튼을 누르면 최근 로그를 불러옵니다.</p>
+	<p class="dms-alert dms-alert-danger" th:if="${page.loaded and page.hasError()}" th:text="${page.errorMessage}"></p>
+	<pre class="dms-log-output" th:if="${page.loaded and !page.hasError()}" th:text="${page.content}"></pre>
+</main>
+</body>
+</html>

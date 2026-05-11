@@ -39,6 +39,8 @@ springdoc:
     enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:false}
 
 logging:
+  file:
+    name: ${LOGGING_FILE_NAME:logs/domisa-backend.log}
   level:
     root: ${LOGGING_LEVEL_ROOT:WARN}
     com.domisa.domisa_backend: ${LOGGING_LEVEL_APP:INFO}

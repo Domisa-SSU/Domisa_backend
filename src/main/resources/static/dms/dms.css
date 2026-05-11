@@ -17,7 +17,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
 	font: inherit;
 }
 
@@ -100,7 +101,8 @@ select {
 
 .dms-form input,
 .dms-inline-form input,
-.dms-inline-form select {
+.dms-inline-form select,
+.dms-form textarea {
 	min-height: 38px;
 	border: 1px solid #cbd5e1;
 	border-radius: 6px;
@@ -132,6 +134,13 @@ select {
 	border-color: #dc2626;
 	background: #dc2626;
 	color: #fff;
+}
+
+.dms-button-cookie {
+	border-color: #d97706;
+	background: #fef3c7;
+	color: #92400e;
+	font-weight: 800;
 }
 
 .dms-button-small {
@@ -198,6 +207,20 @@ select {
 	margin-bottom: 16px;
 }
 
+.dms-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin-top: 16px;
+	flex-wrap: wrap;
+}
+
+.dms-pagination-summary {
+	margin: 10px 0 0;
+	text-align: center;
+}
+
 .dms-danger-zone {
 	margin-left: auto;
 }
@@ -254,14 +277,46 @@ select {
 	color: #991b1b;
 }
 
+.dms-check-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	min-height: 28px;
+	border-radius: 999px;
+	font-size: 13px;
+	font-weight: 900;
+}
+
+.dms-check-ok {
+	background: #dbeafe;
+	color: #1d4ed8;
+}
+
+.dms-check-no {
+	background: #fee2e2;
+	color: #b91c1c;
+}
+
 .dms-panel {
 	margin: 16px 0;
+}
+
+.dms-panel-compact {
+	max-width: 760px;
 }
 
 .dms-two-columns {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 	gap: 14px;
+}
+
+.dms-cookie-forms {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(180px, 240px));
+	gap: 12px;
+	align-items: start;
 }
 
 .dms-text-cell {
@@ -282,4 +337,91 @@ select {
 	border-radius: 6px;
 	background: #fff;
 	object-fit: cover;
+}
+
+.dms-log-output {
+	overflow: auto;
+	max-height: 70vh;
+	margin: 0;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 14px;
+	background: #111827;
+	color: #e5e7eb;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+	font-size: 12px;
+	line-height: 1.55;
+	white-space: pre-wrap;
+}
+
+@media (max-width: 720px) {
+	body {
+		font-size: 13px;
+	}
+
+	.dms-header {
+		position: static;
+		align-items: stretch;
+		gap: 8px;
+		padding: 12px;
+		flex-wrap: wrap;
+	}
+
+	.dms-header a,
+	.dms-header button {
+		min-height: 34px;
+	}
+
+	.dms-header form {
+		margin-left: 0;
+		width: 100%;
+	}
+
+	.dms-header button {
+		width: 100%;
+	}
+
+	.dms-page {
+		padding: 18px 12px 32px;
+	}
+
+	.dms-page h1 {
+		font-size: 22px;
+	}
+
+	.dms-stats {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.dms-toolbar,
+	.dms-inline-form,
+	.dms-actions {
+		align-items: stretch;
+		width: 100%;
+	}
+
+	.dms-inline-form select,
+	.dms-inline-form input,
+	.dms-inline-form .dms-button {
+		flex: 1 1 140px;
+	}
+
+	.dms-danger-zone {
+		margin-left: 0;
+	}
+
+	.dms-table th,
+	.dms-table td,
+	.dms-detail-table th,
+	.dms-detail-table td {
+		padding: 8px;
+	}
+
+	.dms-detail-table th {
+		width: 120px;
+	}
+
+	.dms-cookie-forms {
+		grid-template-columns: 1fr;
+	}
 }

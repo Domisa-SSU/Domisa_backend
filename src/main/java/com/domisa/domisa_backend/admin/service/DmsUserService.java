@@ -22,12 +22,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class DmsUserService {
+
+	private static final int DMS_USER_PAGE_SIZE = 20;
 
 	private final UserRepository userRepository;
 	private final UserBlacklistRepository userBlacklistRepository;
@@ -36,16 +40,41 @@ public class DmsUserService {
 	private final S3ObjectUrlService s3ObjectUrlService;
 
 	@Transactional(readOnly = true)
-	public DmsUserListResponse getUsers(String checked, String status) {
-		List<User> users = userRepository.findAllForDms();
-		Set<Long> blacklistedUserIds = findBlacklistedUserIds(users.stream().map(User::getId).toList());
-		List<DmsUserListResponse.UserRow> rows = users.stream()
-			.filter(user -> matchesChecked(user, checked))
-			.filter(user -> matchesStatus(user, status, blacklistedUserIds))
+	public DmsUserListResponse getUsers(String checked, String status, Integer page) {
+		int requestedPage = normalizeRequestedPage(page);
+		Page<User> userPage = userRepository.findAllForDms(
+			checked,
+			status,
+			PageRequest.of(requestedPage - 1, DMS_USER_PAGE_SIZE)
+		);
+		if (requestedPage > 1 && userPage.getTotalPages() > 0 && requestedPage > userPage.getTotalPages()) {
+			userPage = userRepository.findAllForDms(
+				checked,
+				status,
+				PageRequest.of(userPage.getTotalPages() - 1, DMS_USER_PAGE_SIZE)
+			);
+		}
+
+		Set<Long> blacklistedUserIds = findBlacklistedUserIds(userPage.getContent().stream().map(User::getId).toList());
+		List<DmsUserListResponse.UserRow> rows = userPage.getContent().stream()
 			.map(user -> toUserRow(user, blacklistedUserIds.contains(user.getId())))
 			.toList();
+		int currentPage = userPage.getNumber() + 1;
+		int totalPages = Math.max(1, userPage.getTotalPages());
 
-		return new DmsUserListResponse(getStats(), rows, checked, status);
+		return new DmsUserListResponse(
+			getStats(),
+			rows,
+			checked,
+			status,
+			currentPage,
+			DMS_USER_PAGE_SIZE,
+			totalPages,
+			userPage.getTotalElements(),
+			currentPage > 1,
+			currentPage < totalPages,
+			buildPageNumbers(currentPage, totalPages)
+		);
 	}
 
 	@Transactional(readOnly = true)
@@ -128,22 +157,21 @@ public class DmsUserService {
 			.collect(java.util.stream.Collectors.toCollection(HashSet::new));
 	}
 
-	private boolean matchesChecked(User user, String checked) {
-		if (!"true".equals(checked) && !"false".equals(checked)) {
-			return true;
+	private int normalizeRequestedPage(Integer page) {
+		if (page == null || page < 1) {
+			return 1;
 		}
-		boolean checkedValue = Boolean.TRUE.equals(user.getIsChecked());
-		return Boolean.parseBoolean(checked) == checkedValue;
+		return page;
 	}
 
-	private boolean matchesStatus(User user, String status, Set<Long> blacklistedUserIds) {
-		if ("heaven".equals(status)) {
-			return !blacklistedUserIds.contains(user.getId());
+	private List<Integer> buildPageNumbers(int currentPage, int totalPages) {
+		int start = Math.max(1, currentPage - 2);
+		int end = Math.min(totalPages, currentPage + 2);
+		List<Integer> pageNumbers = new ArrayList<>();
+		for (int page = start; page <= end; page++) {
+			pageNumbers.add(page);
 		}
-		if ("hell".equals(status)) {
-			return blacklistedUserIds.contains(user.getId());
-		}
-		return true;
+		return pageNumbers;
 	}
 
 	private DmsUserListResponse.UserRow toUserRow(User user, boolean blacklisted) {

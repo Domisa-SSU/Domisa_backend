@@ -9,10 +9,11 @@
 </head>
 <body>
 <header class="dms-header">
-	<a href="/dms-room/users">유저 목록</a>
-	<a href="/dms-room/orders">주문 목록</a>
-	<a href="/dms-room/introductions">Introduction 목록</a>
-	<form method="post" action="/dms-room/logout"><button type="submit">로그아웃</button></form>
+		<a href="/dms-room/users">유저 목록</a>
+		<a href="/dms-room/orders">주문 목록</a>
+		<a href="/dms-room/introductions">Introduction 목록</a>
+		<a href="/dms-room/logs">서버 로그</a>
+		<form method="post" action="/dms-room/logout"><button type="submit">로그아웃</button></form>
 </header>
 
 <main class="dms-page">
@@ -30,7 +31,7 @@
 	</section>
 
 	<section class="dms-toolbar">
-		<form method="get" action="/dms-room/users" class="dms-inline-form">
+		<form method="get" action="/dms-room/users" class="dms-inline-form" data-auto-submit="true">
 			<select name="checked">
 				<option value="" th:selected="${page.checked == null or page.checked == ''}">전체 체크</option>
 				<option value="true" th:selected="${page.checked == 'true'}">체크 완료</option>
@@ -41,13 +42,12 @@
 				<option value="heaven" th:selected="${page.status == 'heaven'}">천국</option>
 				<option value="hell" th:selected="${page.status == 'hell'}">지옥</option>
 			</select>
-			<button type="submit" class="dms-button">필터</button>
 			<a class="dms-button" href="/dms-room/users">초기화</a>
 		</form>
 
 		<form method="post" action="/dms-room/users/cookies/add-all" class="dms-inline-form dms-danger-zone" data-confirm="전체 유저에게 쿠키를 지급할까요?">
 			<input type="number" name="amount" min="1" placeholder="전체 지급 수량" required>
-			<button type="submit" class="dms-button dms-button-danger">전체 쿠키 지급</button>
+			<button type="submit" class="dms-button dms-button-cookie">전체 쿠키 지급</button>
 		</form>
 	</section>
 
@@ -62,11 +62,11 @@
 				<th>성별</th>
 				<th>출생연도</th>
 				<th>쿠키</th>
-				<th>체크</th>
 				<th>상태</th>
 				<th>학생증</th>
 				<th>처리</th>
 				<th>상세</th>
+				<th>체크</th>
 			</tr>
 			</thead>
 			<tbody>
@@ -78,7 +78,6 @@
 				<td th:text="${user.gender}"></td>
 				<td th:text="${user.birthYear}"></td>
 				<td th:text="${user.cookies}"></td>
-				<td th:text="${user.isChecked}"></td>
 				<td><span class="dms-badge" th:classappend="${user.blacklisted} ? ' dms-badge-danger' : ' dms-badge-ok'" th:text="${user.blacklisted} ? '지옥' : '천국'"></span></td>
 				<td>
 					<a th:if="${user.hasStudentCard()}" class="dms-button dms-button-small" th:href="@{/dms-room/users/{id}/student-card(id=${user.id})}" target="_blank">학생증 보기</a>
@@ -88,20 +87,44 @@
 					<form method="post" th:action="@{/dms-room/users/{id}/heaven(id=${user.id})}">
 						<input type="hidden" name="checked" th:value="${page.checked}">
 						<input type="hidden" name="status" th:value="${page.status}">
+						<input type="hidden" name="page" th:value="${page.page}">
 						<button type="submit" class="dms-button dms-button-small">천국</button>
 					</form>
 					<form method="post" th:action="@{/dms-room/users/{id}/hell(id=${user.id})}" data-confirm="이 유저를 지옥 처리할까요?">
 						<input type="hidden" name="checked" th:value="${page.checked}">
 						<input type="hidden" name="status" th:value="${page.status}">
+						<input type="hidden" name="page" th:value="${page.page}">
 						<button type="submit" class="dms-button dms-button-small dms-button-danger">지옥</button>
 					</form>
 				</td>
 				<td><a class="dms-button dms-button-small" th:href="@{/dms-room/users/{id}(id=${user.id})}">상세보기</a></td>
+				<td>
+					<span class="dms-check-badge" th:classappend="${user.isChecked} ? ' dms-check-ok' : ' dms-check-no'" th:text="${user.isChecked} ? 'O' : 'X'"></span>
+				</td>
 			</tr>
 			<tr th:if="${#lists.isEmpty(page.users)}"><td colspan="12">조회된 유저가 없습니다.</td></tr>
 			</tbody>
 		</table>
 	</div>
+
+	<nav class="dms-pagination" th:if="${page.totalPages > 1}">
+		<a class="dms-button dms-button-small"
+		   th:if="${page.hasPrevious}"
+		   th:href="@{/dms-room/users(checked=${page.checked}, status=${page.status}, page=${page.page - 1})}">이전</a>
+		<span th:each="pageNumber : ${page.pageNumbers}">
+			<a class="dms-button dms-button-small"
+			   th:classappend="${pageNumber == page.page} ? ' dms-button-primary'"
+			   th:href="@{/dms-room/users(checked=${page.checked}, status=${page.status}, page=${pageNumber})}"
+			   th:text="${pageNumber}"></a>
+		</span>
+		<a class="dms-button dms-button-small"
+		   th:if="${page.hasNext}"
+		   th:href="@{/dms-room/users(checked=${page.checked}, status=${page.status}, page=${page.page + 1})}">다음</a>
+	</nav>
+	<p class="dms-muted dms-pagination-summary">
+		<span th:text="${page.totalElements}">0</span>명 중
+		<span th:text="${page.users.size()}">0</span>명 표시
+	</p>
 </main>
 </body>
 </html>
