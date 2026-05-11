@@ -163,18 +163,6 @@ public class DmsUserService {
 	}
 
 	private DmsUserDetailResponse toUserDetail(User user, boolean blacklisted) {
-		ProfileImage profileImage = user.getProfileImage();
-		DmsUserDetailResponse.ProfileImageKeys profileImageKeys = profileImage == null ? null
-			: new DmsUserDetailResponse.ProfileImageKeys(
-			profileImage.getProfileOriginKey(),
-			profileImage.getProfileOriginBlurKey(),
-			profileImage.getProfileThumbnailKey(),
-			profileImage.getProfileThumbnailBlurKey(),
-			profileImage.getProcessingStatus() == null ? null : profileImage.getProcessingStatus().name(),
-			profileImage.getRetryCount(),
-			profileImage.getLastError()
-		);
-
 		return new DmsUserDetailResponse(
 			user.getId(),
 			user.getPublicId(),
@@ -205,7 +193,7 @@ public class DmsUserService {
 			copyList(user.getMyTypes()),
 			copyList(user.getMyMatches()),
 			copyList(user.getNowShows()),
-			profileImageKeys
+			buildProfileImageUrl(user.getProfileImage())
 		);
 	}
 
@@ -227,6 +215,21 @@ public class DmsUserService {
 		}
 		String description = defaultReason + ": " + reason.strip();
 		return description.length() > 100 ? description.substring(0, 100) : description;
+	}
+
+	private String buildProfileImageUrl(ProfileImage profileImage) {
+		if (profileImage == null) {
+			return null;
+		}
+		String objectKey = profileImage.getProfileOriginKey();
+		if (objectKey == null || objectKey.isBlank()) {
+			objectKey = profileImage.getProfileThumbnailKey();
+		}
+		return buildPresignedUrl(objectKey);
+	}
+
+	private String buildPresignedUrl(String objectKey) {
+		return objectKey == null || objectKey.isBlank() ? null : s3ObjectUrlService.buildPresignedGetUrl(objectKey);
 	}
 
 	private List<Long> copyList(List<Long> values) {
