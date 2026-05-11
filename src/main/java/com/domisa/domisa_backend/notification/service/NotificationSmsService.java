@@ -21,9 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NotificationSmsService {
 
-	private static final String UNREAD_NOTIFICATION_MESSAGE = "누군가 나에게 호감을 보냈어요 ❤︎\n"
-		+ "도미사럽에서 바로 확인해보세요\n"
-		+ "https://domisalove.me/";
+	private static final String UNREAD_NOTIFICATION_MESSAGE = """
+		누군가 나에게 호감을 보냈어요 ♥
+		도미사럽에서 바로 확인해보세요
+		https://domisalove.me/
+		""".strip();
 
 	private final NotificationRepository notificationRepository;
 	private final UserRepository userRepository;
@@ -49,24 +51,21 @@ public class NotificationSmsService {
 		Map<Long, User> usersById = userRepository.findAllByIdIn(typesByUserId.keySet()).stream()
 			.collect(Collectors.toMap(User::getId, user -> user));
 
-		typesByUserId.forEach((userId, types) -> sendToUser(usersById.get(userId), types));
-	}
-
-	private void sendToUser(User user, Set<NotificationType> types) {
-		if (user == null || user.getNotificationPhone() == null || user.getNotificationPhone().isBlank()) {
-			return;
-		}
-
-		String message = buildMessage(types);
-		if (message == null) {
+		List<String> phones = typesByUserId.entrySet().stream()
+			.filter(entry -> buildMessage(entry.getValue()) != null)
+			.map(entry -> usersById.get(entry.getKey()))
+			.filter(user -> user != null && user.getNotificationPhone() != null && !user.getNotificationPhone().isBlank())
+			.map(User::getNotificationPhone)
+			.toList();
+		if (phones.isEmpty()) {
 			return;
 		}
 
 		try {
-			smsService.send(user.getNotificationPhone(), message);
-			log.info("읽지 않은 알림 SMS를 발송했습니다. userId={}, types={}", user.getId(), types);
+			smsService.sendAll(phones, UNREAD_NOTIFICATION_MESSAGE);
+			log.info("읽지 않은 알림 SMS를 동보 발송했습니다. count={}", phones.size());
 		} catch (RuntimeException exception) {
-			log.warn("읽지 않은 알림 SMS 발송에 실패했습니다. userId={}, reason={}", user.getId(), exception.getMessage());
+			log.warn("읽지 않은 알림 SMS 동보 발송에 실패했습니다. count={}, reason={}", phones.size(), exception.getMessage());
 		}
 	}
 
