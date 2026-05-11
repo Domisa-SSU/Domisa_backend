@@ -33,21 +33,10 @@ public record DmsUserDetailResponse(
 	List<Long> myTypes,
 	List<Long> myMatches,
 	List<Long> nowShows,
-	ProfileImageKeys profileImage
+	String profileImageUrl
 ) {
 
 	public boolean hasStudentCard() {
 		return studentCardKey != null && !studentCardKey.isBlank();
-	}
-
-	public record ProfileImageKeys(
-		String originKey,
-		String originBlurKey,
-		String thumbnailKey,
-		String thumbnailBlurKey,
-		String processingStatus,
-		Integer retryCount,
-		String lastError
-	) {
 	}
 }

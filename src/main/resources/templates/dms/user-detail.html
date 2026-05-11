@@ -39,51 +39,45 @@
 		</div>
 	</section>
 
+	<section class="dms-panel" th:if="${user.profileImageUrl != null}">
+		<h2>프로필 사진</h2>
+		<a class="dms-profile-photo" th:href="${user.profileImageUrl}" target="_blank">
+			<img th:src="${user.profileImageUrl}" alt="프로필 사진">
+		</a>
+	</section>
+
 	<section class="dms-panel">
 		<h2>기본 정보</h2>
 		<table class="dms-detail-table">
 			<tr><th>id</th><td th:text="${user.id}"></td></tr>
 			<tr><th>publicId</th><td th:text="${user.publicId}"></td></tr>
-			<tr><th>kakaoId</th><td th:text="${user.kakaoId}"></td></tr>
-			<tr><th>name</th><td th:text="${user.name}"></td></tr>
-			<tr><th>nickname</th><td th:text="${user.nickname}"></td></tr>
-			<tr><th>gender</th><td th:text="${user.gender}"></td></tr>
-			<tr><th>birthYear</th><td th:text="${user.birthYear}"></td></tr>
-			<tr><th>age</th><td th:text="${user.age}"></td></tr>
-			<tr><th>animalProfile</th><td th:text="${user.animalProfile}"></td></tr>
-			<tr><th>cookies</th><td th:text="${user.cookies}"></td></tr>
-			<tr><th>contactType</th><td th:text="${user.contactType}"></td></tr>
-			<tr><th>contact</th><td th:text="${user.contact}"></td></tr>
-			<tr><th>inviteCode</th><td th:text="${user.inviteCode}"></td></tr>
-			<tr><th>isRegistered</th><td th:text="${user.isRegistered}"></td></tr>
-			<tr><th>hasIntroduction</th><td th:text="${user.hasIntroduction}"></td></tr>
-			<tr><th>isProfileCompleted</th><td th:text="${user.isProfileCompleted}"></td></tr>
-			<tr><th>notificationPhone</th><td th:text="${user.notificationPhone}"></td></tr>
-			<tr><th>freeLikeCount</th><td th:text="${user.freeLikeCount}"></td></tr>
-			<tr><th>studentCardKey</th><td><span th:text="${user.studentCardKey}"></span> <a th:if="${user.hasStudentCard()}" th:href="@{/dms-room/users/{id}/student-card(id=${user.id})}" target="_blank">보기</a></td></tr>
-			<tr><th>isChecked</th><td th:text="${user.isChecked}"></td></tr>
-			<tr><th>blacklisted</th><td th:text="${user.blacklisted}"></td></tr>
-			<tr><th>refreshAvailableAt</th><td th:text="${user.refreshAvailableAt}"></td></tr>
-			<tr><th>createdAt</th><td th:text="${user.createdAt}"></td></tr>
-			<tr><th>updatedAt</th><td th:text="${user.updatedAt}"></td></tr>
-			<tr><th>myBlurs</th><td th:text="${user.myBlurs}"></td></tr>
-			<tr><th>myFans</th><td th:text="${user.myFans}"></td></tr>
-			<tr><th>myTypes</th><td th:text="${user.myTypes}"></td></tr>
-			<tr><th>myMatches</th><td th:text="${user.myMatches}"></td></tr>
-			<tr><th>nowShows</th><td th:text="${user.nowShows}"></td></tr>
-		</table>
-	</section>
-
-	<section class="dms-panel" th:if="${user.profileImage != null}">
-		<h2>프로필 이미지</h2>
-		<table class="dms-detail-table">
-			<tr><th>originKey</th><td th:text="${user.profileImage.originKey}"></td></tr>
-			<tr><th>originBlurKey</th><td th:text="${user.profileImage.originBlurKey}"></td></tr>
-			<tr><th>thumbnailKey</th><td th:text="${user.profileImage.thumbnailKey}"></td></tr>
-			<tr><th>thumbnailBlurKey</th><td th:text="${user.profileImage.thumbnailBlurKey}"></td></tr>
-			<tr><th>processingStatus</th><td th:text="${user.profileImage.processingStatus}"></td></tr>
-			<tr><th>retryCount</th><td th:text="${user.profileImage.retryCount}"></td></tr>
-			<tr><th>lastError</th><td th:text="${user.profileImage.lastError}"></td></tr>
+			<tr><th>카카오ID</th><td th:text="${user.kakaoId}"></td></tr>
+			<tr><th>이름</th><td th:text="${user.name}"></td></tr>
+			<tr><th>닉네임</th><td th:text="${user.nickname}"></td></tr>
+			<tr><th>성별</th><td th:text="${user.gender}"></td></tr>
+			<tr><th>출생년도</th><td th:text="${user.birthYear}"></td></tr>
+			<tr><th>나이</th><td th:text="${user.age}"></td></tr>
+			<tr><th>동물프로필</th><td th:text="${user.animalProfile}"></td></tr>
+			<tr><th>보유 쿠키</th><td th:text="${user.cookies}"></td></tr>
+			<tr><th>연락처 유형</th><td th:text="${user.contactType}"></td></tr>
+			<tr><th>연락처</th><td th:text="${user.contact}"></td></tr>
+			<tr><th>초대 코드</th><td th:text="${user.inviteCode}"></td></tr>
+			<tr><th>가입 완료 여부</th><td th:text="${user.isRegistered}"></td></tr>
+			<tr><th>소개서 등록 여부</th><td th:text="${user.hasIntroduction}"></td></tr>
+			<tr><th>프로필 완성 여부</th><td th:text="${user.isProfileCompleted}"></td></tr>
+			<tr><th>알림 전화번호</th><td th:text="${user.notificationPhone}"></td></tr>
+			<tr><th>무료 호감권 수</th><td th:text="${user.freeLikeCount}"></td></tr>
+			<tr><th>학생증</th><td><span th:text="${user.studentCardKey}"></span> <a th:if="${user.hasStudentCard()}" th:href="@{/dms-room/users/{id}/student-card(id=${user.id})}" target="_blank">보기</a></td></tr>
+			<tr><th>검수 여부</th><td th:text="${user.isChecked}"></td></tr>
+			<tr><th>차단 여부</th><td th:text="${user.blacklisted}"></td></tr>
+			<tr><th>다음 새로고침 가능 시간</th><td th:text="${user.refreshAvailableAt}"></td></tr>
+			<tr><th>가입일</th><td th:text="${user.createdAt}"></td></tr>
+			<tr><th>수정일</th><td th:text="${user.updatedAt}"></td></tr>
+			<tr><th>블러 해제한 유저</th><td th:text="${user.myBlurs}"></td></tr>
+			<tr><th>받은 호감</th><td th:text="${user.myFans}"></td></tr>
+			<tr><th>보낸 호감</th><td th:text="${user.myTypes}"></td></tr>
+			<tr><th>매칭된 유저</th><td th:text="${user.myMatches}"></td></tr>
+			<tr><th>현재 노출 중인 유저</th><td th:text="${user.nowShows}"></td></tr>
 		</table>
 	</section>
 </main>
