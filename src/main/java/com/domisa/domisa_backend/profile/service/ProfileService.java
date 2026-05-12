@@ -47,7 +47,6 @@ public class ProfileService {
 		user.setBirthYear(request.birthYear());
 		user.setAnimalProfile(request.animalProfile());
 		user.setIsRegistered(true);
-		user.setCookies(1000L);
 		long totalUserCount = Math.max(0, userRepository.count() - 1);
 
 		return new ProfileRegisterResponse(

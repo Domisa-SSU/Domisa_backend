@@ -51,6 +51,7 @@ services:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      APP_DUMMY_ENABLED: ${APP_DUMMY_ENABLED:-false}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       TZ: Asia/Seoul
