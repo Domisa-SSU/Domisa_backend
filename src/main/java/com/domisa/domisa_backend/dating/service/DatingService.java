@@ -103,14 +103,15 @@ public class DatingService {
 
 		// default: 쌍방매칭 or 블러 해제 → 프로필 정보 공개
 		// a (NORMAL): 일반 조회 → 사진만 블러
-		// b (FAN): 받은 호감 조회 → 사진 + q3 + idealType 블러
+		// b (FAN or received like): 받은 호감 상태 → 사진 + q3 + idealType 블러
 		boolean isDefault = isMatched || isUnblurred;
 		DatingProfileDetailRequest.ViewType viewType = request != null && request.viewType() != null
 			? request.viewType()
 			: DatingProfileDetailRequest.ViewType.NORMAL;
 
 		boolean photoBlurred = !isDefault;
-		boolean textBlurred = !isDefault && viewType == DatingProfileDetailRequest.ViewType.FAN;
+		boolean textBlurred = !isDefault
+			&& (viewType == DatingProfileDetailRequest.ViewType.FAN || hasReceivedLike);
 
 		String q3 = targetUser.getIntroduction() == null ? null : targetUser.getIntroduction().getQ3();
 		String idealType = targetUser.getCard() == null ? null : targetUser.getCard().getIdealType();

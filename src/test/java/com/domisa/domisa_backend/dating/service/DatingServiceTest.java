@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.domisa.domisa_backend.auth.blacklist.repository.UserBlacklistRepository;
 import com.domisa.domisa_backend.card.entity.Card;
 import com.domisa.domisa_backend.dating.dto.DatingProfileDetailRequest;
 import com.domisa.domisa_backend.dating.dto.DatingProfileListResponse;
@@ -51,6 +52,9 @@ class DatingServiceTest {
 
 	@Mock
 	private NotificationService notificationService;
+
+	@Mock
+	private UserBlacklistRepository userBlacklistRepository;
 
 	@InjectMocks
 	private DatingService datingService;
@@ -98,6 +102,63 @@ class DatingServiceTest {
 	}
 
 	@Test
+	void getDatingProfileNormalViewBlursTextWhenTargetIsReceivedLike() {
+		User requester = createUser(1L, "REQ001");
+		requester.setMyFans(List.of(2L));
+
+		User target = createCompletedTargetUser();
+		String q3 = target.getIntroduction().getQ3();
+		String idealType = target.getCard().getIdealType();
+
+		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
+		when(userRepository.findDatingProfileByPublicId("TGT001")).thenReturn(Optional.of(target));
+		when(s3ObjectUrlService.getThumbnailBlurPresignedUrl(isNull())).thenReturn("https://example.com/blur.jpg");
+
+		DatingProfileResponse response = datingService.getDatingProfile(
+			requester,
+			"TGT001",
+			new DatingProfileDetailRequest(DatingProfileDetailRequest.ViewType.NORMAL)
+		);
+
+		assertThat(response.profile()).isEqualTo("https://example.com/blur.jpg");
+		assertThat(response.q3()).isNull();
+		assertThat(response.q3Length()).isEqualTo(q3.length());
+		assertThat(response.idealType()).isNull();
+		assertThat(response.idealTypeLength()).isEqualTo(idealType.length());
+		assertThat(response.isBlurred()).isTrue();
+		assertThat(response.hasReceivedLike()).isTrue();
+	}
+
+	@Test
+	void getDatingProfileNormalViewReturnsOpenTextWhenReceivedLikeIsUnblurred() {
+		User requester = createUser(1L, "REQ001");
+		requester.setMyFans(List.of(2L));
+		requester.setMyBlurs(List.of(2L));
+
+		User target = createCompletedTargetUser();
+
+		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
+		when(userRepository.findDatingProfileByPublicId("TGT001")).thenReturn(Optional.of(target));
+		when(s3ObjectUrlService.getThumbnailPresignedUrl(isNull())).thenReturn("https://example.com/profile.jpg");
+
+		DatingProfileResponse response = datingService.getDatingProfile(
+			requester,
+			"TGT001",
+			new DatingProfileDetailRequest(DatingProfileDetailRequest.ViewType.NORMAL)
+		);
+
+		assertThat(response.profile()).isEqualTo("https://example.com/profile.jpg");
+		assertThat(response.q3()).isEqualTo("곰같은 남자랑 맞을 것 같아요");
+		assertThat(response.q3Length()).isNull();
+		assertThat(response.idealType()).isEqualTo("곰같은 남자");
+		assertThat(response.idealTypeLength()).isNull();
+		assertThat(response.isBlurred()).isFalse();
+		assertThat(response.isPaidUnblur()).isTrue();
+		assertThat(response.hasReceivedLike()).isTrue();
+		assertThat(response.isMatched()).isFalse();
+	}
+
+	@Test
 	void getDatingProfilesReturnsOpenThumbnailWhenTargetIsInMyBlurs() {
 		User requester = createUser(1L, "REQ001");
 		requester.setNowShows(List.of(2L, 3L));
@@ -108,7 +169,7 @@ class DatingServiceTest {
 		User blurredTarget = createUser(3L, "TGT002");
 
 		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
-		when(userRepository.findAllByIdIn(List.of(2L, 3L))).thenReturn(List.of(unblurredTarget, blurredTarget));
+		when(userRepository.findActiveAllByIdIn(List.of(2L, 3L))).thenReturn(List.of(unblurredTarget, blurredTarget));
 		when(s3ObjectUrlService.getThumbnailPresignedUrl(isNull())).thenReturn("https://example.com/open.jpg");
 		when(s3ObjectUrlService.getThumbnailBlurPresignedUrl(isNull())).thenReturn("https://example.com/blur.jpg");
 
@@ -132,7 +193,7 @@ class DatingServiceTest {
 		User blurredTarget = createUser(3L, "TGT002");
 
 		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
-		when(userRepository.findAllByIdIn(List.of(2L, 3L))).thenReturn(List.of(matchedTarget, blurredTarget));
+		when(userRepository.findActiveAllByIdIn(List.of(2L, 3L))).thenReturn(List.of(matchedTarget, blurredTarget));
 		when(s3ObjectUrlService.getThumbnailPresignedUrl(isNull())).thenReturn("https://example.com/open.jpg");
 		when(s3ObjectUrlService.getThumbnailBlurPresignedUrl(isNull())).thenReturn("https://example.com/blur.jpg");
 
@@ -154,7 +215,7 @@ class DatingServiceTest {
 		target.setMyTypes(new ArrayList<>(List.of(1L)));
 
 		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
-		when(userRepository.findByPublicId("TGT001")).thenReturn(Optional.of(target));
+		when(userRepository.findDatingProfileByPublicId("TGT001")).thenReturn(Optional.of(target));
 
 		datingService.sendLike(requester, "TGT001");
 
@@ -177,7 +238,7 @@ class DatingServiceTest {
 		User target = createUser(2L, "TGT001");
 
 		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
-		when(userRepository.findByPublicId("TGT001")).thenReturn(Optional.of(target));
+		when(userRepository.findDatingProfileByPublicId("TGT001")).thenReturn(Optional.of(target));
 
 		assertThatThrownBy(() -> datingService.sendLike(requester, "TGT001"))
 			.isInstanceOf(GlobalException.class)
@@ -194,7 +255,7 @@ class DatingServiceTest {
 		target.setMyTypes(new ArrayList<>(List.of(1L)));
 
 		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
-		when(userRepository.findByPublicId("TGT001")).thenReturn(Optional.of(target));
+		when(userRepository.findDatingProfileByPublicId("TGT001")).thenReturn(Optional.of(target));
 
 		datingService.matchReceivedLike(requester, "TGT001");
 
@@ -241,7 +302,7 @@ class DatingServiceTest {
 		User target = createUser(2L, "TGT001");
 
 		when(userRepository.findWithProfileImageById(1L)).thenReturn(Optional.of(requester));
-		when(userRepository.findByPublicId("TGT001")).thenReturn(Optional.of(target));
+		when(userRepository.findDatingProfileByPublicId("TGT001")).thenReturn(Optional.of(target));
 
 		assertThatThrownBy(() -> datingService.unblurReceivedLike(requester, "TGT001"))
 			.isInstanceOf(GlobalException.class)
