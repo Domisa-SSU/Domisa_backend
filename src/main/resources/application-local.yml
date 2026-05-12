@@ -39,7 +39,7 @@ app:
     redis-key-prefix: ${LOCAL_APP_BLACKLIST_REDIS_KEY_PREFIX:blacklist:user:}
     not-blacklisted-cache-ttl: ${LOCAL_APP_BLACKLIST_NOT_BLACKLISTED_CACHE_TTL:PT5M}
   dummy:
-    enabled: ${LOCAL_APP_DUMMY_ENABLED:true}
+    enabled: ${LOCAL_APP_DUMMY_ENABLED:false}
     admin-key: ${LOCAL_DUMMY_ADMIN_KEY:${DUMMY_ADMIN_KEY:}}
   auth:
     cookie:
