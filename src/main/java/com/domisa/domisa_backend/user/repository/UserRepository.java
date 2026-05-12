@@ -227,14 +227,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@Query(
 		value = """
-			SELECT COUNT(*)
+			SELECT DISTINCT REPLACE(REPLACE(REPLACE(u.notification_phone, '-', ''), ' ', ''), '.', '')
 			FROM users u
 			JOIN user_blacklists b ON b.user_id = u.id
-			WHERE REPLACE(REPLACE(REPLACE(u.notification_phone, '-', ''), ' ', ''), '.', '') = :phone
+			WHERE REPLACE(REPLACE(REPLACE(u.notification_phone, '-', ''), ' ', ''), '.', '') IN (:phones)
 			""",
 		nativeQuery = true
 	)
-	long countBlacklistedUsersByNormalizedNotificationPhone(@Param("phone") String phone);
+	List<String> findBlacklistedNormalizedNotificationPhones(@Param("phones") Collection<String> phones);
 
 	@Modifying
 	@Query(value = "delete from user_my_blurs where user_id = :userId or target_user_id = :userId", nativeQuery = true)
