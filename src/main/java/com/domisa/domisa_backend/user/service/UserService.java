@@ -190,7 +190,7 @@ public class UserService {
 		if (userIds.isEmpty()) {
 			return usersById;
 		}
-		userRepository.findAllByIdIn(userIds)
+		userRepository.findActiveAllByIdIn(userIds)
 			.forEach(user -> usersById.put(user.getId(), user));
 		return usersById;
 	}

@@ -53,6 +53,8 @@ public class NotificationService {
 		Map<Long, User> usersById = getUsersById(storedNotifications);
 		List<NotificationListResponse.NotificationItem> notifications = storedNotifications
 			.stream()
+			.filter(notification -> !requiresTargetUser(notification.getType())
+				|| usersById.containsKey(notification.getTargetUserId()))
 			.map(notification -> new NotificationListResponse.NotificationItem(
 				notification.getId(),
 				getPublicId(usersById.get(notification.getUserId())),
@@ -71,6 +73,7 @@ public class NotificationService {
 	@Transactional
 	public NotificationActiveResponse getActiveNotifications(Long userId) {
 		List<Notification> notifications = notificationRepository.findAllByUserIdAndIsCanceledFalseOrderByCreatedAtAsc(userId);
+		Set<Long> activeTargetUserIds = getActiveTargetUserIds(notifications);
 		boolean signup = false;
 		long referralCount = 0;
 		boolean like = false;
@@ -84,11 +87,21 @@ public class NotificationService {
 					notification.markAsRead();
 				}
 				case REFERRAL -> {
-					referralCount++;
-					notification.markAsRead();
+					if (activeTargetUserIds.contains(notification.getTargetUserId())) {
+						referralCount++;
+						notification.markAsRead();
+					}
 				}
-				case LIKE -> like = true;
-				case MATCH -> match = true;
+				case LIKE -> {
+					if (activeTargetUserIds.contains(notification.getTargetUserId())) {
+						like = true;
+					}
+				}
+				case MATCH -> {
+					if (activeTargetUserIds.contains(notification.getTargetUserId())) {
+						match = true;
+					}
+				}
 			}
 			if (shouldCancel) {
 				notification.cancel();
@@ -138,8 +151,24 @@ public class NotificationService {
 			return Collections.emptyMap();
 		}
 
-		return userRepository.findAllByIdIn(userIds).stream()
+		return userRepository.findActiveAllByIdIn(userIds).stream()
 			.collect(Collectors.toMap(User::getId, user -> user));
+	}
+
+	private Set<Long> getActiveTargetUserIds(List<Notification> notifications) {
+		Set<Long> targetUserIds = notifications.stream()
+			.filter(notification -> requiresTargetUser(notification.getType()))
+			.map(Notification::getTargetUserId)
+			.filter(targetUserId -> targetUserId != null)
+			.collect(Collectors.toSet());
+
+		if (targetUserIds.isEmpty()) {
+			return Collections.emptySet();
+		}
+
+		return userRepository.findActiveAllByIdIn(targetUserIds).stream()
+			.map(User::getId)
+			.collect(Collectors.toSet());
 	}
 
 	private AnimalProfile getAnimalProfile(User user) {

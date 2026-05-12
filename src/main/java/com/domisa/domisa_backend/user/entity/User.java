@@ -58,7 +58,7 @@ public class User {
 	private AnimalProfile animalProfile;
 
 	@Column(name = "cookies", nullable = false)
-	private Long cookies = 0L;
+	private Long cookies = 2L;
 
 	@Column(name = "contact", length = 30)
 	private String contact;

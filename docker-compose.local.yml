@@ -53,6 +53,7 @@ services:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: local
+      LOCAL_APP_DUMMY_ENABLED: ${LOCAL_APP_DUMMY_ENABLED:-false}
       LOCAL_REDIS_HOST: redis
       LOCAL_REDIS_PORT: 6379
       TZ: Asia/Seoul

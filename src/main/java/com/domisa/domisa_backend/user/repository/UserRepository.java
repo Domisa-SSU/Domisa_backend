@@ -101,6 +101,28 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	@EntityGraph(attributePaths = "profileImage")
 	List<User> findAllByIdIn(Collection<Long> ids);
 
+	@EntityGraph(attributePaths = {"profileImage", "card", "introduction"})
+	@Query("""
+		select u
+		from User u
+		where u.publicId = :publicId
+		and not exists (
+			select 1 from UserBlacklist b where b.user = u
+		)
+		""")
+	Optional<User> findActiveDatingProfileByPublicId(@Param("publicId") String publicId);
+
+	@EntityGraph(attributePaths = "profileImage")
+	@Query("""
+		select u
+		from User u
+		where u.id in :ids
+		and not exists (
+			select 1 from UserBlacklist b where b.user = u
+		)
+		""")
+	List<User> findActiveAllByIdIn(@Param("ids") Collection<Long> ids);
+
 	boolean existsByNickname(String nickname);
 
 	boolean existsByPublicId(String publicId);
@@ -110,6 +132,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			SELECT COUNT(DISTINCT LEAST(m.user_id, m.target_user_id), GREATEST(m.user_id, m.target_user_id))
 			FROM user_my_matches m
 			WHERE m.user_id < m.target_user_id
+			AND NOT EXISTS (
+				SELECT 1
+				FROM user_blacklists bu
+				WHERE bu.user_id = m.user_id
+			)
+			AND NOT EXISTS (
+				SELECT 1
+				FROM user_blacklists bt
+				WHERE bt.user_id = m.target_user_id
+			)
 			AND EXISTS (
 				SELECT 1
 				FROM user_my_matches reverse_m
@@ -131,6 +163,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 				FROM introductions i
 				WHERE i.participant_id = u.id
 			)
+			AND NOT EXISTS (
+				SELECT 1
+				FROM user_blacklists b
+				WHERE b.user_id = u.id
+			)
 			AND u.is_profile_completed = true
 			AND u.gender <> :gender
 			ORDER BY RAND()
@@ -151,6 +188,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 				SELECT 1
 				FROM introductions i
 				WHERE i.participant_id = u.id
+			)
+			AND NOT EXISTS (
+				SELECT 1
+				FROM user_blacklists b
+				WHERE b.user_id = u.id
 			)
 			AND u.is_profile_completed = true
 			AND u.gender <> :gender
@@ -175,10 +217,24 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			from Introduction i
 			where i.participant = u
 		)
+		and not exists (
+			select 1 from UserBlacklist b where b.user = u
+		)
 		and u.isProfileCompleted = true
 		and (u.refreshAvailableAt is null or u.refreshAvailableAt <= :now)
 		""")
 	List<User> findUsersReadyForNowShowRefresh(@Param("now") LocalDateTime now);
+
+	@Query(
+		value = """
+			SELECT COUNT(*)
+			FROM users u
+			JOIN user_blacklists b ON b.user_id = u.id
+			WHERE REPLACE(REPLACE(REPLACE(u.notification_phone, '-', ''), ' ', ''), '.', '') = :phone
+			""",
+		nativeQuery = true
+	)
+	long countBlacklistedUsersByNormalizedNotificationPhone(@Param("phone") String phone);
 
 	@Modifying
 	@Query(value = "delete from user_my_blurs where user_id = :userId or target_user_id = :userId", nativeQuery = true)

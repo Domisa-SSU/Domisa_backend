@@ -89,7 +89,7 @@ public class DatingService {
 	@Transactional
 	public DatingProfileResponse getDatingProfile(User authUser, String publicId, DatingProfileDetailRequest request) {
 		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findDatingProfileByPublicId(publicId)
+		User targetUser = userRepository.findActiveDatingProfileByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
 		boolean isUnblurred = requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId());
@@ -189,7 +189,7 @@ public class DatingService {
 		if (userIds.isEmpty()) {
 			return usersById;
 		}
-		userRepository.findAllByIdIn(userIds)
+		userRepository.findActiveAllByIdIn(userIds)
 			.forEach(user -> usersById.put(user.getId(), user));
 		return usersById;
 	}
@@ -213,7 +213,7 @@ public class DatingService {
 
 		List<Long> matchedIds = requester.getMyMatches();
 
-		List<DatingMatchListResponse.MatchSummary> matches = userRepository.findAllByIdIn(matchedIds).stream()
+		List<DatingMatchListResponse.MatchSummary> matches = userRepository.findActiveAllByIdIn(matchedIds).stream()
 			.map(user -> new DatingMatchListResponse.MatchSummary(
 				user.getPublicId(),
 				user.getNickname(),
@@ -237,7 +237,7 @@ public class DatingService {
 	@Transactional
 	public UnblurProfileResponse unblurReceivedLike(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findByPublicId(publicId)
+		User targetUser = userRepository.findActiveDatingProfileByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
 		// 실제로 받은 호감인지 확인
@@ -270,7 +270,7 @@ public class DatingService {
 	@Transactional
 	public void matchReceivedLike(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findByPublicId(publicId)
+		User targetUser = userRepository.findActiveDatingProfileByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
 		if (requester.getId().equals(targetUser.getId())) {
@@ -293,7 +293,7 @@ public class DatingService {
 	@Transactional
 	public void sendLike(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findByPublicId(publicId)
+		User targetUser = userRepository.findActiveDatingProfileByPublicId(publicId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
 		if (requester.getId().equals(targetUser.getId())) {
