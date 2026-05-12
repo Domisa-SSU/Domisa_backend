@@ -6,6 +6,7 @@ import com.domisa.domisa_backend.sms.dto.Destination;
 import com.domisa.domisa_backend.sms.dto.MessageFlow;
 import com.domisa.domisa_backend.sms.dto.Sms;
 import com.domisa.domisa_backend.sms.dto.SmsRequest;
+import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class SmsService {
 
 	private final BizgoClient bizgoClient;
 	private final BizgoProperties bizgoProperties;
+	private final UserRepository userRepository;
 
 	public void send(String phone, String message) {
 		sendAll(List.of(phone), message);
@@ -35,17 +37,30 @@ public class SmsService {
 
 		List<String> normalizedPhones = phones.stream()
 			.map(this::normalizePhone)
+			.filter(this::isNotBlacklistedPhone)
 			.toList();
 		String normalizedMessage = normalizeMessage(message);
 		String senderNumber = normalizeSenderNumber(bizgoProperties.senderNumber());
 		log.info("SMS 발송 요청을 준비했습니다. totalCount={}, sender={}, messageLength={}, phones={}",
 			normalizedPhones.size(), maskPhone(senderNumber), normalizedMessage.length(), maskPhones(normalizedPhones));
+		if (normalizedPhones.isEmpty()) {
+			log.info("SMS 발송 대상 전화번호가 없습니다.");
+			return;
+		}
 
 		for (int start = 0; start < normalizedPhones.size(); start += MAX_DESTINATION_COUNT) {
 			int end = Math.min(start + MAX_DESTINATION_COUNT, normalizedPhones.size());
 			int batchNumber = (start / MAX_DESTINATION_COUNT) + 1;
 			sendBatch(normalizedPhones.subList(start, end), senderNumber, normalizedMessage, batchNumber);
 		}
+	}
+
+	private boolean isNotBlacklistedPhone(String phone) {
+		if (userRepository.countBlacklistedUsersByNormalizedNotificationPhone(phone) <= 0) {
+			return true;
+		}
+		log.info("SMS 발송 대상에서 블랙리스트 유저 전화번호를 제외했습니다. phone={}", maskPhone(phone));
+		return false;
 	}
 
 	private void sendBatch(List<String> phones, String senderNumber, String message, int batchNumber) {
