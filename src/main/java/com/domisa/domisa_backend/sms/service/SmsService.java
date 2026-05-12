@@ -8,7 +8,9 @@ import com.domisa.domisa_backend.sms.dto.Sms;
 import com.domisa.domisa_backend.sms.dto.SmsRequest;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,7 +39,10 @@ public class SmsService {
 
 		List<String> normalizedPhones = phones.stream()
 			.map(this::normalizePhone)
-			.filter(this::isNotBlacklistedPhone)
+			.toList();
+		Set<String> blacklistedPhones = findBlacklistedPhones(normalizedPhones);
+		normalizedPhones = normalizedPhones.stream()
+			.filter(phone -> isNotBlacklistedPhone(phone, blacklistedPhones))
 			.toList();
 		String normalizedMessage = normalizeMessage(message);
 		String senderNumber = normalizeSenderNumber(bizgoProperties.senderNumber());
@@ -55,8 +60,15 @@ public class SmsService {
 		}
 	}
 
-	private boolean isNotBlacklistedPhone(String phone) {
-		if (userRepository.countBlacklistedUsersByNormalizedNotificationPhone(phone) <= 0) {
+	private Set<String> findBlacklistedPhones(List<String> phones) {
+		if (phones.isEmpty()) {
+			return Set.of();
+		}
+		return new HashSet<>(userRepository.findBlacklistedNormalizedNotificationPhones(phones));
+	}
+
+	private boolean isNotBlacklistedPhone(String phone, Set<String> blacklistedPhones) {
+		if (!blacklistedPhones.contains(phone)) {
 			return true;
 		}
 		log.info("SMS 발송 대상에서 블랙리스트 유저 전화번호를 제외했습니다. phone={}", maskPhone(phone));

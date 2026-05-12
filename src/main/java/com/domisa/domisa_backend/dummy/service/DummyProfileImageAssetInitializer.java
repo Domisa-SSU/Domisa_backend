@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Order(1)
 @Component
+@Profile("!prod")
 @ConditionalOnProperty(name = "app.dummy.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class DummyProfileImageAssetInitializer implements ApplicationRunner {
