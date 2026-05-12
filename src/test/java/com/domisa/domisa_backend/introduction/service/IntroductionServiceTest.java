@@ -1,7 +1,6 @@
 package com.domisa.domisa_backend.introduction.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -42,7 +41,7 @@ class IntroductionServiceTest {
 	private IntroductionService introductionService;
 
 	@Test
-	void acceptIntroductionRewardsParticipantAndIntroducerOnFirstIntroductionSignup() {
+	void acceptIntroductionRewardsOnlyIntroducerOnFirstIntroductionSignup() {
 		User participant = createUser(1L, 10L);
 		User introducer = createUser(2L, 20L);
 		Introduction introduction = createIntroduction(100L, introducer);
@@ -54,15 +53,14 @@ class IntroductionServiceTest {
 
 		assertThat(participant.getIntroduction()).isSameAs(introduction);
 		assertThat(participant.hasIntroduction()).isTrue();
-		assertThat(participant.getCookieBalance()).isEqualTo(11L);
+		assertThat(participant.getCookieBalance()).isEqualTo(10L);
 		assertThat(introducer.getCookieBalance()).isEqualTo(22L);
-		verify(notificationService).createNotification(NotificationType.SIGNUP, 1L, null);
 		verify(notificationService).createNotification(NotificationType.REFERRAL, 2L, 1L);
 		ArgumentCaptor<CookieTransaction> transactionCaptor = ArgumentCaptor.forClass(CookieTransaction.class);
-		verify(cookieTransactionRepository, times(2)).save(transactionCaptor.capture());
+		verify(cookieTransactionRepository).save(transactionCaptor.capture());
 		assertThat(transactionCaptor.getAllValues())
 			.extracting(CookieTransaction::getAmount)
-			.containsExactly(2, 1);
+			.containsExactly(2);
 	}
 
 	@Test

@@ -3,6 +3,10 @@ package com.domisa.domisa_backend.profile.service;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.introduction.repository.IntroductionRepository;
+import com.domisa.domisa_backend.notification.service.NotificationService;
+import com.domisa.domisa_backend.notification.type.NotificationType;
+import com.domisa.domisa_backend.payment.entity.CookieTransaction;
+import com.domisa.domisa_backend.payment.repository.CookieTransactionRepository;
 import com.domisa.domisa_backend.profile.dto.ProfileRegisterRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateRequest;
 import com.domisa.domisa_backend.profile.dto.ProfileUpdateResponse;
@@ -18,8 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProfileService {
 
+	private static final long SIGNUP_REWARD_COOKIES = 3L;
+
 	private final UserRepository userRepository;
 	private final IntroductionRepository introductionRepository;
+	private final NotificationService notificationService;
+	private final CookieTransactionRepository cookieTransactionRepository;
 
 	// 닉네임 중복 조회
 	@Transactional(readOnly = true)
@@ -41,12 +49,16 @@ public class ProfileService {
 
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+		boolean shouldGrantSignupReward = !Boolean.TRUE.equals(user.getIsRegistered());
 
 		user.setNickname(request.nickname());
 		user.setGender(request.gender());
 		user.setBirthYear(request.birthYear());
 		user.setAnimalProfile(request.animalProfile());
 		user.setIsRegistered(true);
+		if (shouldGrantSignupReward) {
+			rewardSignup(user);
+		}
 		long totalUserCount = Math.max(0, userRepository.count() - 1);
 
 		return new ProfileRegisterResponse(
@@ -58,6 +70,16 @@ public class ProfileService {
 				),
 				totalUserCount
 		);
+	}
+
+	private void rewardSignup(User user) {
+		user.addCookies(SIGNUP_REWARD_COOKIES);
+		cookieTransactionRepository.save(CookieTransaction.reward(
+			user,
+			Math.toIntExact(SIGNUP_REWARD_COOKIES),
+			"회원가입 보상"
+		));
+		notificationService.createNotification(NotificationType.SIGNUP, user.getId(), null);
 	}
 
 	private boolean hasIntroduction(Long userId) {

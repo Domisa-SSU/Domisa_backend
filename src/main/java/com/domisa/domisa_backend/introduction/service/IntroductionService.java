@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class IntroductionService {
 
-	private static final long PARTICIPANT_SIGNUP_REWARD_COOKIES = 1L;
 	private static final long INTRODUCER_REFERRAL_REWARD_COOKIES = 2L;
 
 	private final IntroductionRepository introductionRepository;
@@ -58,14 +57,13 @@ public class IntroductionService {
 			currentIntroduction.clearParticipant();
 		}
 
-		// 유저에도 등록, 소개서에서도 유저 등록
 		introduction.assignParticipant(participant);
 		if (isFirstIntroductionSignup) {
-			rewardIntroductionSignup(introduction, participant);
+			rewardIntroducer(introduction, participant);
 		}
 	}
 
-	private void rewardIntroductionSignup(Introduction introduction, User participant) {
+	private void rewardIntroducer(Introduction introduction, User participant) {
 		User introducer = introduction.getIntroducer();
 		boolean isSelfIntroduction = introducer != null && introducer.getId().equals(participant.getId());
 		if (isSelfIntroduction) {
@@ -82,13 +80,5 @@ public class IntroductionService {
 			));
 			notificationService.createNotification(NotificationType.REFERRAL, introducer.getId(), participant.getId());
 		}
-
-		participant.addCookies(PARTICIPANT_SIGNUP_REWARD_COOKIES);
-		cookieTransactionRepository.save(CookieTransaction.reward(
-			participant,
-			Math.toIntExact(PARTICIPANT_SIGNUP_REWARD_COOKIES),
-			"소개서 가입 보상"
-		));
-		notificationService.createNotification(NotificationType.SIGNUP, participant.getId(), null);
 	}
 }
