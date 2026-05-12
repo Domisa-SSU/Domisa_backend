@@ -67,6 +67,10 @@ public class IntroductionService {
 
 	private void rewardIntroductionSignup(Introduction introduction, User participant) {
 		User introducer = introduction.getIntroducer();
+		boolean isSelfIntroduction = introducer != null && introducer.getId().equals(participant.getId());
+		if (isSelfIntroduction) {
+			return;
+		}
 		boolean hasValidIntroducer = introducer != null && !introducer.getId().equals(participant.getId());
 
 		if (hasValidIntroducer) {

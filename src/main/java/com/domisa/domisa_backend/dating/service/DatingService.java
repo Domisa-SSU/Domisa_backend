@@ -1,4 +1,6 @@
 package com.domisa.domisa_backend.dating.service;
+
+import com.domisa.domisa_backend.auth.blacklist.repository.UserBlacklistRepository;
 import com.domisa.domisa_backend.dating.dto.DatingMatchCountResponse;
 import com.domisa.domisa_backend.dating.dto.DatingMatchListResponse;
 import com.domisa.domisa_backend.dating.dto.DatingIntroductionLinkCreateRequest;
@@ -47,6 +49,7 @@ public class DatingService {
 	private final S3ObjectUrlService s3ObjectUrlService;
 	private final CookieTransactionRepository cookieTransactionRepository;
 	private final NotificationService notificationService;
+	private final UserBlacklistRepository userBlacklistRepository;
 
 	@Transactional
 	public DatingProfileListResponse getDatingProfiles(User authUser) {
@@ -89,8 +92,7 @@ public class DatingService {
 	@Transactional
 	public DatingProfileResponse getDatingProfile(User authUser, String publicId, DatingProfileDetailRequest request) {
 		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findActiveDatingProfileByPublicId(publicId)
-			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+		User targetUser = getDirectTargetUser(publicId);
 
 		boolean isUnblurred = requester.getMyBlurs() != null && requester.getMyBlurs().contains(targetUser.getId());
 		boolean isMatched = requester.getMyMatches() != null && requester.getMyMatches().contains(targetUser.getId());
@@ -203,6 +205,15 @@ public class DatingService {
 			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 	}
 
+	private User getDirectTargetUser(String publicId) {
+		User targetUser = userRepository.findDatingProfileByPublicId(publicId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+		if (userBlacklistRepository.existsByUserId(targetUser.getId())) {
+			throw new GlobalException(GlobalErrorCode.BLACKLISTED_TARGET_USER);
+		}
+		return targetUser;
+	}
+
 	@Transactional(readOnly = true)
 	public DatingMatchListResponse getMatchList(User authUser) {
 		User requester = getRequiredUser(authUser);
@@ -237,8 +248,7 @@ public class DatingService {
 	@Transactional
 	public UnblurProfileResponse unblurReceivedLike(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findActiveDatingProfileByPublicId(publicId)
-			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+		User targetUser = getDirectTargetUser(publicId);
 
 		// 실제로 받은 호감인지 확인
 		if (requester.getMyFans() == null || !requester.getMyFans().contains(targetUser.getId())) {
@@ -270,8 +280,7 @@ public class DatingService {
 	@Transactional
 	public void matchReceivedLike(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findActiveDatingProfileByPublicId(publicId)
-			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+		User targetUser = getDirectTargetUser(publicId);
 
 		if (requester.getId().equals(targetUser.getId())) {
 			throw new GlobalException(GlobalErrorCode.CANNOT_LIKE_SELF);
@@ -293,8 +302,7 @@ public class DatingService {
 	@Transactional
 	public void sendLike(User authUser, String publicId) {
 		User requester = getRequiredUser(authUser);
-		User targetUser = userRepository.findActiveDatingProfileByPublicId(publicId)
-			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+		User targetUser = getDirectTargetUser(publicId);
 
 		if (requester.getId().equals(targetUser.getId())) {
 			throw new GlobalException(GlobalErrorCode.CANNOT_LIKE_SELF);
