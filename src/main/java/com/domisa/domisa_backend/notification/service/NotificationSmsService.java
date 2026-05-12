@@ -1,7 +1,5 @@
 package com.domisa.domisa_backend.notification.service;
 
-import com.domisa.domisa_backend.auth.blacklist.entity.UserBlacklist;
-import com.domisa.domisa_backend.auth.blacklist.repository.UserBlacklistRepository;
 import com.domisa.domisa_backend.notification.entity.Notification;
 import com.domisa.domisa_backend.notification.repository.NotificationRepository;
 import com.domisa.domisa_backend.notification.type.NotificationType;
@@ -31,7 +29,6 @@ public class NotificationSmsService {
 
 	private final NotificationRepository notificationRepository;
 	private final UserRepository userRepository;
-	private final UserBlacklistRepository userBlacklistRepository;
 	private final SmsService smsService;
 
 	@Transactional(readOnly = true)
@@ -53,14 +50,6 @@ public class NotificationSmsService {
 		));
 		log.info("읽지 않은 알림 SMS 대상 유저를 집계했습니다. userCount={}, userIds={}", typesByUserId.size(), typesByUserId.keySet());
 
-		Set<Long> blacklistedUserIds = userBlacklistRepository.findByUserIdIn(typesByUserId.keySet()).stream()
-			.map(UserBlacklist::getUser)
-			.map(User::getId)
-			.collect(Collectors.toSet());
-		if (!blacklistedUserIds.isEmpty()) {
-			log.info("읽지 않은 알림 SMS 대상에서 블랙리스트 유저를 제외합니다. userIds={}", blacklistedUserIds);
-		}
-
 		Map<Long, User> usersById = userRepository.findActiveAllByIdIn(typesByUserId.keySet()).stream()
 			.collect(Collectors.toMap(User::getId, user -> user));
 		log.info("읽지 않은 알림 SMS 대상 유저 정보를 조회했습니다. foundUserCount={}", usersById.size());
@@ -69,8 +58,7 @@ public class NotificationSmsService {
 			.filter(entry -> isSmsTarget(
 				entry.getKey(),
 				entry.getValue(),
-				usersById.get(entry.getKey()),
-				blacklistedUserIds
+				usersById.get(entry.getKey())
 			))
 			.map(entry -> usersById.get(entry.getKey()).getNotificationPhone())
 			.toList();
@@ -95,14 +83,10 @@ public class NotificationSmsService {
 		return null;
 	}
 
-	private boolean isSmsTarget(Long userId, Set<NotificationType> types, User user, Set<Long> blacklistedUserIds) {
+	private boolean isSmsTarget(Long userId, Set<NotificationType> types, User user) {
 		String message = buildMessage(types);
 		if (message == null) {
 			log.info("읽지 않은 알림 SMS 대상에서 제외했습니다. userId={}, types={}, reason=no_message", userId, types);
-			return false;
-		}
-		if (blacklistedUserIds.contains(userId)) {
-			log.info("읽지 않은 알림 SMS 대상에서 제외했습니다. userId={}, types={}, reason=blacklisted", userId, types);
 			return false;
 		}
 		if (user == null) {

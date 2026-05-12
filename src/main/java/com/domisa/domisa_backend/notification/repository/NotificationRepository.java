@@ -25,7 +25,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 		from Notification n
 		join User u on u.id = n.userId
 		where n.isRead = false
-			and n.isCanceled = false
 			and n.type in :types
 			and u.notificationPhone is not null
 			and u.notificationPhone <> ''
