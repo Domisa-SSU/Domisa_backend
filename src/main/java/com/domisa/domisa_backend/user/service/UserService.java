@@ -1,5 +1,6 @@
 package com.domisa.domisa_backend.user.service;
 
+import com.domisa.domisa_backend.auth.blacklist.repository.UserBlacklistRepository;
 import com.domisa.domisa_backend.card.repository.CardRepository;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
@@ -44,6 +45,7 @@ public class UserService {
 	private final ProfileImageRepository profileImageRepository;
 	private final CardRepository cardRepository;
 	private final IntroductionRepository introductionRepository;
+	private final UserBlacklistRepository userBlacklistRepository;
 
 	// 내 정보 조회(마이페이지용)
 	@Transactional(readOnly = true)
@@ -132,10 +134,22 @@ public class UserService {
 	@Transactional
 	public void deleteMe(User authUser) {
 		User user = getRequiredUser(authUser);
+		deleteUser(user);
+	}
+
+	@Transactional
+	public void deleteUserById(Long userId) {
+		User user = userRepository.findWithProfileImageById(userId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+		deleteUser(user);
+	}
+
+	private void deleteUser(User user) {
 		Long userId = user.getId();
 
 		deleteProfileImage(user);
 		notificationRepository.deleteByUserIdOrTargetUserId(userId, userId);
+		userBlacklistRepository.deleteByUserId(userId);
 		userRepository.deleteBlurRelations(userId);
 		userRepository.deleteFanRelations(userId);
 		userRepository.deleteTypeRelations(userId);
