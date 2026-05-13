@@ -134,6 +134,18 @@ public class CookieOrderService {
 		}
 	}
 
+	public void excludePayActionOrderByOrderNumber(String orderNumber) {
+		if (orderNumber == null || orderNumber.isBlank()) {
+			throw new GlobalException(GlobalErrorCode.MISSING_REQUIRED_FIELD);
+		}
+		log.info("페이액션 주문 매칭 제외를 요청합니다. orderNumber={}", orderNumber);
+		PayActionCreateOrderResponse payActionResponse = excludePayActionOrder(
+			new PayActionOrderExcludeRequest(orderNumber)
+		);
+		validatePayActionExcludeResponse(payActionResponse);
+		log.info("페이액션 주문 매칭 제외가 완료되었습니다. orderNumber={}", orderNumber);
+	}
+
 	@Transactional
 	public CookieOrderPaymentStatusResponse getCookieOrderPaymentStatus(
 			User user,

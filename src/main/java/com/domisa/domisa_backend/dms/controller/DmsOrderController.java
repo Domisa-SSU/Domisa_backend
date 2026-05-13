@@ -20,9 +20,13 @@ public class DmsOrderController {
 	private final DmsOrderService dmsOrderService;
 
 	@GetMapping
-	public String orders(Model model) {
-		model.addAttribute("page", dmsOrderService.getOrders());
+	public String orders(
+		@RequestParam(value = "status", required = false) OrderStatus status,
+		Model model
+	) {
+		model.addAttribute("page", dmsOrderService.getOrders(status));
 		model.addAttribute("statuses", dmsOrderService.getEditableStatuses());
+		model.addAttribute("selectedStatus", status == null ? "" : status.name());
 		return "dms/orders";
 	}
 
@@ -30,6 +34,7 @@ public class DmsOrderController {
 	public String updateStatus(
 		@PathVariable Long orderId,
 		@RequestParam("status") OrderStatus status,
+		@RequestParam(value = "filterStatus", required = false) String filterStatus,
 		RedirectAttributes redirectAttributes
 	) {
 		try {
@@ -37,6 +42,9 @@ public class DmsOrderController {
 			redirectAttributes.addFlashAttribute("message", "주문 상태를 변경했습니다.");
 		} catch (RuntimeException exception) {
 			redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+		}
+		if (filterStatus != null && !filterStatus.isBlank()) {
+			return "redirect:/dms-room/orders?status=" + filterStatus;
 		}
 		return "redirect:/dms-room/orders";
 	}
