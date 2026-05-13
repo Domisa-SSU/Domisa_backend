@@ -332,6 +332,19 @@ textarea {
 	gap: 14px;
 }
 
+.dms-detail-layout {
+	display: grid;
+	grid-template-columns: minmax(300px, 0.9fr) minmax(420px, 1.1fr);
+	gap: 14px;
+	align-items: start;
+}
+
+.dms-detail-left,
+.dms-detail-right {
+	display: grid;
+	gap: 14px;
+}
+
 .dms-cookie-forms {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(180px, 240px));
@@ -442,6 +455,10 @@ textarea {
 	}
 
 	.dms-cookie-forms {
+		grid-template-columns: 1fr;
+	}
+
+	.dms-detail-layout {
 		grid-template-columns: 1fr;
 	}
 }

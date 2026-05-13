@@ -11,6 +11,7 @@ import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
 import com.domisa.domisa_backend.introduction.entity.Introduction;
+import com.domisa.domisa_backend.card.entity.Card;
 import com.domisa.domisa_backend.payment.entity.CookieTransaction;
 import com.domisa.domisa_backend.payment.repository.CookieTransactionRepository;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
@@ -287,12 +288,13 @@ public class DmsUserService {
 			user.getUpdatedAt(),
 			copyList(user.getMyBlurs()),
 			copyList(user.getMyFans()),
-			copyList(user.getMyTypes()),
-			copyList(user.getMyMatches()),
-			copyList(user.getNowShows()),
-			buildDmsProfileImageUrl(user),
-			toIntroductionDetail(user.getIntroduction())
-		);
+				copyList(user.getMyTypes()),
+				copyList(user.getMyMatches()),
+				copyList(user.getNowShows()),
+				buildDmsProfileImageUrl(user),
+				toIntroductionDetail(user.getIntroduction()),
+				toCardDetail(user.getCard())
+			);
 	}
 
 	private DmsUserDetailResponse.IntroductionDetail toIntroductionDetail(Introduction introduction) {
@@ -309,6 +311,18 @@ public class DmsUserService {
 			introduction.getQ1(),
 			introduction.getQ2(),
 			introduction.getQ3()
+		);
+	}
+
+	private DmsUserDetailResponse.CardDetail toCardDetail(Card card) {
+		if (card == null) {
+			return null;
+		}
+		return new DmsUserDetailResponse.CardDetail(
+			card.getId(),
+			card.getMbti() == null ? null : card.getMbti().name(),
+			card.getDatingStyle(),
+			card.getIdealType()
 		);
 	}
 

@@ -25,100 +25,123 @@
 	<p class="dms-alert dms-alert-info" th:if="${message}" th:text="${message}"></p>
 	<p class="dms-alert dms-alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></p>
 
-	<section class="dms-panel dms-panel-compact">
-		<h2>쿠키 관리</h2>
-		<div class="dms-cookie-forms">
-			<form method="post" th:action="@{/dms-room/users/{id}/cookies/add(id=${user.id})}" class="dms-form">
-				<input type="number" name="amount" min="1" placeholder="지급 수량" required>
-				<input type="text" name="reason" maxlength="60" placeholder="사유">
-				<button type="submit" class="dms-button dms-button-primary">쿠키 지급</button>
-			</form>
-			<form method="post" th:action="@{/dms-room/users/{id}/cookies/subtract(id=${user.id})}" class="dms-form" data-confirm="쿠키를 차감할까요?">
-				<input type="number" name="amount" min="1" placeholder="차감 수량" required>
-				<input type="text" name="reason" maxlength="60" placeholder="사유">
-				<button type="submit" class="dms-button dms-button-danger">쿠키 차감</button>
-			</form>
+	<section class="dms-detail-layout">
+		<div class="dms-detail-left">
+			<section class="dms-panel">
+				<h2>유저 프로필</h2>
+				<a class="dms-profile-photo" th:if="${user.profileImageUrl != null}" th:href="${user.profileImageUrl}" target="_blank">
+					<img th:src="${user.profileImageUrl}" alt="프로필 사진">
+				</a>
+				<p class="dms-muted" th:if="${user.profileImageUrl == null}">프로필 사진이 없습니다.</p>
+			</section>
+
+			<section class="dms-panel">
+				<h2>쿠키 관리</h2>
+				<div class="dms-cookie-forms">
+					<form method="post" th:action="@{/dms-room/users/{id}/cookies/add(id=${user.id})}" class="dms-form">
+						<input type="number" name="amount" min="1" placeholder="지급 수량" required>
+						<input type="text" name="reason" maxlength="60" placeholder="사유">
+						<button type="submit" class="dms-button dms-button-primary">쿠키 지급</button>
+					</form>
+					<form method="post" th:action="@{/dms-room/users/{id}/cookies/subtract(id=${user.id})}" class="dms-form" data-confirm="쿠키를 차감할까요?">
+						<input type="number" name="amount" min="1" placeholder="차감 수량" required>
+						<input type="text" name="reason" maxlength="60" placeholder="사유">
+						<button type="submit" class="dms-button dms-button-danger">쿠키 차감</button>
+					</form>
+				</div>
+			</section>
+
+			<section class="dms-panel">
+				<h2>회원 탈퇴</h2>
+				<form method="post"
+					  th:action="@{/dms-room/users/{id}/delete(id=${user.id})}"
+					  data-confirm="정말 이 유저를 회원탈퇴 처리할까요? 관련 정보가 모두 삭제됩니다."
+					  class="dms-form">
+					<button type="submit" class="dms-button dms-button-danger">회원탈퇴</button>
+				</form>
+			</section>
+
+			<section class="dms-panel">
+				<h2>소개팅 노출 목록</h2>
+				<form method="post"
+					  th:action="@{/dms-room/users/{id}/now-shows/refresh(id=${user.id})}"
+					  data-confirm="현재 노출 중인 유저 목록을 새로고침할까요?"
+					  class="dms-form">
+					<button type="submit" class="dms-button dms-button-primary">노출 목록 새로고침</button>
+				</form>
+			</section>
+		</div>
+
+		<div class="dms-detail-right">
+			<section class="dms-panel">
+				<h2>유저의 기본 정보</h2>
+				<table class="dms-detail-table">
+					<tr><th>id</th><td th:text="${user.id}"></td></tr>
+					<tr><th>publicId</th><td th:text="${user.publicId}"></td></tr>
+					<tr><th>카카오ID</th><td th:text="${user.kakaoId}"></td></tr>
+					<tr><th>이름</th><td th:text="${user.name}"></td></tr>
+					<tr><th>닉네임</th><td th:text="${user.nickname}"></td></tr>
+					<tr><th>성별</th><td th:text="${user.gender}"></td></tr>
+					<tr><th>출생년도</th><td th:text="${user.birthYear}"></td></tr>
+					<tr><th>나이</th><td th:text="${user.age}"></td></tr>
+					<tr><th>동물프로필</th><td th:text="${user.animalProfile}"></td></tr>
+					<tr><th>보유 쿠키</th><td th:text="${user.cookies}"></td></tr>
+					<tr><th>연락처 유형</th><td th:text="${user.contactType}"></td></tr>
+					<tr><th>연락처</th><td th:text="${user.contact}"></td></tr>
+					<tr><th>초대 코드</th><td th:text="${user.inviteCode == null or user.inviteCode == '' ? '-' : user.inviteCode}"></td></tr>
+					<tr><th>가입 완료 여부</th><td th:text="${user.isRegistered}"></td></tr>
+					<tr><th>소개서 등록 여부</th><td th:text="${user.hasIntroduction}"></td></tr>
+					<tr><th>프로필 완성 여부</th><td th:text="${user.isProfileCompleted}"></td></tr>
+					<tr><th>알림 전화번호</th><td th:text="${user.notificationPhone}"></td></tr>
+					<tr><th>무료 호감권 수</th><td th:text="${user.freeLikeCount}"></td></tr>
+					<tr><th>학생증</th><td><span th:text="${user.studentCardKey}"></span> <a th:if="${user.hasStudentCard()}" th:href="@{/dms-room/users/{id}/student-card(id=${user.id})}" target="_blank">보기</a></td></tr>
+					<tr><th>검수 여부</th><td th:text="${user.isChecked}"></td></tr>
+					<tr><th>차단 여부</th><td th:text="${user.blacklisted}"></td></tr>
+					<tr><th>다음 새로고침 가능 시간</th><td th:text="${user.refreshAvailableAt == null ? '-' : #temporals.format(user.refreshAvailableAt, 'M/d HH:mm')}"></td></tr>
+					<tr><th>가입일</th><td th:text="${user.createdAt == null ? '-' : #temporals.format(user.createdAt, 'M/d HH:mm')}"></td></tr>
+					<tr><th>수정일</th><td th:text="${user.updatedAt == null ? '-' : #temporals.format(user.updatedAt, 'M/d HH:mm')}"></td></tr>
+					<tr><th>블러 해제한 유저</th><td th:text="${user.myBlurs}"></td></tr>
+					<tr><th>받은 호감</th><td th:text="${user.myFans}"></td></tr>
+					<tr><th>보낸 호감</th><td th:text="${user.myTypes}"></td></tr>
+					<tr><th>매칭된 유저</th><td th:text="${user.myMatches}"></td></tr>
+					<tr><th>현재 노출 중인 유저</th><td th:text="${user.nowShows}"></td></tr>
+				</table>
+			</section>
 		</div>
 	</section>
 
-	<section class="dms-panel dms-panel-compact">
-		<h2>회원탈퇴</h2>
-		<form method="post"
-			  th:action="@{/dms-room/users/{id}/delete(id=${user.id})}"
-			  data-confirm="정말 이 유저를 회원탈퇴 처리할까요? 관련 정보가 모두 삭제됩니다."
-			  class="dms-form">
-			<button type="submit" class="dms-button dms-button-danger">회원탈퇴</button>
-		</form>
-	</section>
+	<section class="dms-two-columns">
+		<section class="dms-panel" th:if="${user.introduction != null}">
+			<h2>소개받은 Introduction</h2>
+			<table class="dms-detail-table">
+				<tr><th>id</th><td th:text="${user.introduction.id}"></td></tr>
+				<tr><th>소개자 id</th><td th:text="${user.introduction.introducerId == null ? '-' : user.introduction.introducerId}"></td></tr>
+				<tr><th>소개자 publicId</th><td th:text="${user.introduction.introducerPublicId == null ? '-' : user.introduction.introducerPublicId}"></td></tr>
+				<tr><th>소개자 닉네임</th><td th:text="${user.introduction.introducerNickname == null ? '-' : user.introduction.introducerNickname}"></td></tr>
+				<tr><th>linkCode</th><td th:text="${user.introduction.linkCode}"></td></tr>
+				<tr><th>Q1</th><td class="dms-text-cell" th:text="${user.introduction.q1}"></td></tr>
+				<tr><th>Q2</th><td class="dms-text-cell" th:text="${user.introduction.q2}"></td></tr>
+				<tr><th>Q3</th><td class="dms-text-cell" th:text="${user.introduction.q3}"></td></tr>
+			</table>
+		</section>
+		<section class="dms-panel" th:if="${user.introduction == null}">
+			<h2>소개받은 Introduction</h2>
+			<p class="dms-muted">연결된 Introduction이 없습니다.</p>
+		</section>
 
-	<section class="dms-panel dms-panel-compact">
-		<h2>소개팅 노출 목록</h2>
-		<form method="post"
-			  th:action="@{/dms-room/users/{id}/now-shows/refresh(id=${user.id})}"
-			  data-confirm="현재 노출 중인 유저 목록을 새로고침할까요?"
-			  class="dms-form">
-			<button type="submit" class="dms-button dms-button-primary">노출 목록 새로고침</button>
-		</form>
-	</section>
-
-	<section class="dms-panel" th:if="${user.profileImageUrl != null}">
-		<h2>프로필 사진</h2>
-		<a class="dms-profile-photo" th:href="${user.profileImageUrl}" target="_blank">
-			<img th:src="${user.profileImageUrl}" alt="프로필 사진">
-		</a>
-	</section>
-
-	<section class="dms-panel">
-		<h2>기본 정보</h2>
-		<table class="dms-detail-table">
-			<tr><th>id</th><td th:text="${user.id}"></td></tr>
-			<tr><th>publicId</th><td th:text="${user.publicId}"></td></tr>
-			<tr><th>카카오ID</th><td th:text="${user.kakaoId}"></td></tr>
-			<tr><th>이름</th><td th:text="${user.name}"></td></tr>
-			<tr><th>닉네임</th><td th:text="${user.nickname}"></td></tr>
-			<tr><th>성별</th><td th:text="${user.gender}"></td></tr>
-			<tr><th>출생년도</th><td th:text="${user.birthYear}"></td></tr>
-			<tr><th>나이</th><td th:text="${user.age}"></td></tr>
-			<tr><th>동물프로필</th><td th:text="${user.animalProfile}"></td></tr>
-			<tr><th>보유 쿠키</th><td th:text="${user.cookies}"></td></tr>
-			<tr><th>연락처 유형</th><td th:text="${user.contactType}"></td></tr>
-			<tr><th>연락처</th><td th:text="${user.contact}"></td></tr>
-			<tr><th>초대 코드</th><td th:text="${user.inviteCode == null or user.inviteCode == '' ? '-' : user.inviteCode}"></td></tr>
-			<tr><th>가입 완료 여부</th><td th:text="${user.isRegistered}"></td></tr>
-			<tr><th>소개서 등록 여부</th><td th:text="${user.hasIntroduction}"></td></tr>
-			<tr><th>프로필 완성 여부</th><td th:text="${user.isProfileCompleted}"></td></tr>
-			<tr><th>알림 전화번호</th><td th:text="${user.notificationPhone}"></td></tr>
-			<tr><th>무료 호감권 수</th><td th:text="${user.freeLikeCount}"></td></tr>
-			<tr><th>학생증</th><td><span th:text="${user.studentCardKey}"></span> <a th:if="${user.hasStudentCard()}" th:href="@{/dms-room/users/{id}/student-card(id=${user.id})}" target="_blank">보기</a></td></tr>
-			<tr><th>검수 여부</th><td th:text="${user.isChecked}"></td></tr>
-			<tr><th>차단 여부</th><td th:text="${user.blacklisted}"></td></tr>
-				<tr><th>다음 새로고침 가능 시간</th><td th:text="${user.refreshAvailableAt == null ? '-' : #temporals.format(user.refreshAvailableAt, 'M/d HH:mm')}"></td></tr>
-				<tr><th>가입일</th><td th:text="${user.createdAt == null ? '-' : #temporals.format(user.createdAt, 'M/d HH:mm')}"></td></tr>
-				<tr><th>수정일</th><td th:text="${user.updatedAt == null ? '-' : #temporals.format(user.updatedAt, 'M/d HH:mm')}"></td></tr>
-			<tr><th>블러 해제한 유저</th><td th:text="${user.myBlurs}"></td></tr>
-			<tr><th>받은 호감</th><td th:text="${user.myFans}"></td></tr>
-			<tr><th>보낸 호감</th><td th:text="${user.myTypes}"></td></tr>
-			<tr><th>매칭된 유저</th><td th:text="${user.myMatches}"></td></tr>
-			<tr><th>현재 노출 중인 유저</th><td th:text="${user.nowShows}"></td></tr>
-		</table>
-	</section>
-
-	<section class="dms-panel" th:if="${user.introduction != null}">
-		<h2>소개받은 Introduction</h2>
-		<table class="dms-detail-table">
-			<tr><th>id</th><td th:text="${user.introduction.id}"></td></tr>
-			<tr><th>소개자 id</th><td th:text="${user.introduction.introducerId == null ? '-' : user.introduction.introducerId}"></td></tr>
-			<tr><th>소개자 publicId</th><td th:text="${user.introduction.introducerPublicId == null ? '-' : user.introduction.introducerPublicId}"></td></tr>
-			<tr><th>소개자 닉네임</th><td th:text="${user.introduction.introducerNickname == null ? '-' : user.introduction.introducerNickname}"></td></tr>
-			<tr><th>linkCode</th><td th:text="${user.introduction.linkCode}"></td></tr>
-			<tr><th>Q1</th><td class="dms-text-cell" th:text="${user.introduction.q1}"></td></tr>
-			<tr><th>Q2</th><td class="dms-text-cell" th:text="${user.introduction.q2}"></td></tr>
-			<tr><th>Q3</th><td class="dms-text-cell" th:text="${user.introduction.q3}"></td></tr>
-		</table>
-	</section>
-	<section class="dms-panel" th:if="${user.introduction == null}">
-		<h2>소개받은 Introduction</h2>
-		<p class="dms-muted">연결된 Introduction이 없습니다.</p>
+		<section class="dms-panel" th:if="${user.card != null}">
+			<h2>Card 내용</h2>
+			<table class="dms-detail-table">
+				<tr><th>id</th><td th:text="${user.card.id}"></td></tr>
+				<tr><th>MBTI</th><td th:text="${user.card.mbti == null ? 'null' : user.card.mbti}"></td></tr>
+				<tr><th>연애 스타일</th><td class="dms-text-cell" th:text="${user.card.datingStyle == null ? 'null' : user.card.datingStyle}"></td></tr>
+				<tr><th>이상형</th><td class="dms-text-cell" th:text="${user.card.idealType == null ? 'null' : user.card.idealType}"></td></tr>
+			</table>
+		</section>
+		<section class="dms-panel" th:if="${user.card == null}">
+			<h2>Card 내용</h2>
+			<p class="dms-muted">null</p>
+		</section>
 	</section>
 </main>
 </body>
