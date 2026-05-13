@@ -1,6 +1,6 @@
-package com.domisa.domisa_backend.admin.controller;
+package com.domisa.domisa_backend.dms.controller;
 
-import com.domisa.domisa_backend.admin.service.DmsIntroductionService;
+import com.domisa.domisa_backend.dms.service.DmsIntroductionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

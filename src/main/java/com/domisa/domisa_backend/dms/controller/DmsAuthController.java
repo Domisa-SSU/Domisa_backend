@@ -1,7 +1,7 @@
-package com.domisa.domisa_backend.admin.controller;
+package com.domisa.domisa_backend.dms.controller;
 
-import com.domisa.domisa_backend.admin.service.DmsAuthService;
-import com.domisa.domisa_backend.admin.config.DmsSessionKeys;
+import com.domisa.domisa_backend.dms.service.DmsAuthService;
+import com.domisa.domisa_backend.dms.config.DmsSessionKeys;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;

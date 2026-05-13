@@ -1,11 +1,11 @@
-package com.domisa.domisa_backend.admin.service;
+package com.domisa.domisa_backend.dms.service;
 
 import com.domisa.domisa_backend.auth.blacklist.UserBlacklistService;
 import com.domisa.domisa_backend.auth.blacklist.entity.UserBlacklist;
 import com.domisa.domisa_backend.auth.blacklist.repository.UserBlacklistRepository;
-import com.domisa.domisa_backend.admin.dto.DmsUserDetailResponse;
-import com.domisa.domisa_backend.admin.dto.DmsUserListResponse;
-import com.domisa.domisa_backend.admin.dto.DmsUserStatsResponse;
+import com.domisa.domisa_backend.dms.dto.DmsUserDetailResponse;
+import com.domisa.domisa_backend.dms.dto.DmsUserListResponse;
+import com.domisa.domisa_backend.dms.dto.DmsUserStatsResponse;
 import com.domisa.domisa_backend.dating.service.DatingService;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;

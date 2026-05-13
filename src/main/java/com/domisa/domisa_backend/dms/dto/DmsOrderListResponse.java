@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.admin.dto;
+package com.domisa.domisa_backend.dms.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;

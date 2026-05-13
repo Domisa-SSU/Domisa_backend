@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.admin.config;
+package com.domisa.domisa_backend.dms.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

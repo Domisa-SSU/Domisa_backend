@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.admin.config;
+package com.domisa.domisa_backend.dms.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
