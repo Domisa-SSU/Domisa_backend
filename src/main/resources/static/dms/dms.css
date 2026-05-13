@@ -331,6 +331,21 @@ textarea {
 	font-size: 16px;
 }
 
+.dms-order-code-layout {
+	display: grid;
+	grid-template-columns: minmax(200px, 0.7fr) minmax(500px, 1.3fr);
+	gap: 14px;
+	align-items: start;
+}
+
+.dms-order-code-layout .dms-table {
+	background: #fff;
+}
+
+.dms-cookiecode-info {
+	padding: 10px;
+}
+
 .dms-code-list {
 	list-style: none;
 	padding: 0;
@@ -493,6 +508,10 @@ textarea {
 	}
 
 	.dms-stats-day-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.dms-order-code-layout {
 		grid-template-columns: 1fr;
 	}
 }

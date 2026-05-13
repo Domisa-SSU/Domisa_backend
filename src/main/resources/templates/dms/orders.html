@@ -31,33 +31,33 @@
 		<div><span>실패/취소</span><strong th:text="${page.stats.failedOrCanceledOrders}">0</strong></div>
 	</section>
 
-		<section class="dms-panel">
-			<h2>CookieCode 통계</h2>
-			<div class="dms-two-columns">
-				<table class="dms-table">
-					<thead><tr><th>상품</th><th>단가</th><th>주문 수</th><th>쿠키 수</th><th>전체 금액</th><th>결제 완료 금액</th></tr></thead>
-					<tbody>
-					<tr th:each="stat : ${page.cookieCodeStats}">
-						<td th:text="${stat.cookieCode}"></td>
-						<td th:text="${stat.unitDescription}"></td>
-						<td th:text="${stat.orderCount}"></td>
-						<td th:text="${stat.cookieAmount}"></td>
-						<td th:text="${stat.orderAmount}"></td>
-					<td th:text="${stat.paidOrderAmount}"></td>
-				</tr>
-				</tbody>
-			</table>
-				<div class="dms-panel dms-cookiecode-info">
-					<h3>CookieCode 정보</h3>
-					<ul class="dms-code-list">
-						<li><strong>COOKIE_5</strong> <span>2000원 / 5개</span></li>
-						<li><strong>COOKIE_10</strong> <span>4000원 / 10개</span></li>
-						<li><strong>COOKIE_30</strong> <span>5000원 / 30개</span></li>
-						<li><strong>COOKIE_60</strong> <span>9000원 / 60개</span></li>
-					</ul>
+			<section class="dms-panel">
+				<h2>CookieCode 통계</h2>
+				<div class="dms-order-code-layout">
+					<div class="dms-panel dms-cookiecode-info">
+						<h3>CookieCode 정보</h3>
+						<ul class="dms-code-list">
+							<li><strong>COOKIE_5</strong> <span>2000원 / 5개</span></li>
+							<li><strong>COOKIE_10</strong> <span>4000원 / 10개</span></li>
+							<li><strong>COOKIE_30</strong> <span>5000원 / 30개</span></li>
+							<li><strong>COOKIE_60</strong> <span>9000원 / 60개</span></li>
+						</ul>
+					</div>
+					<table class="dms-table">
+						<thead><tr><th>상품</th><th>단가</th><th>주문 수</th><th>쿠키 수</th><th>전체 금액</th><th>결제 완료 금액</th></tr></thead>
+						<tbody>
+						<tr th:each="stat : ${page.cookieCodeStats}">
+							<td th:text="${stat.cookieCode}"></td>
+							<td th:text="${stat.unitDescription}"></td>
+							<td th:text="${stat.orderCount}"></td>
+							<td th:text="${stat.cookieAmount}"></td>
+							<td th:text="${stat.orderAmount}"></td>
+							<td th:text="${stat.paidOrderAmount}"></td>
+						</tr>
+						</tbody>
+					</table>
 				</div>
-			</div>
-		</section>
+			</section>
 
 		<div class="dms-table-wrap">
 			<table class="dms-table">
