@@ -30,7 +30,7 @@ public class DmsOrderService {
 
 	@Transactional(readOnly = true)
 	public DmsOrderListResponse getOrders() {
-		List<CookieOrder> orders = cookieOrderRepository.findAllForDms(DMS_VISIBLE_ORDER_STATUSES);
+		List<CookieOrder> orders = cookieOrderRepository.findAllForDms(Arrays.asList(OrderStatus.values()));
 		return new DmsOrderListResponse(
 			buildStats(orders),
 			buildCookieCodeStats(orders),
