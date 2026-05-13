@@ -108,6 +108,21 @@ public class DmsUserController {
 		return "redirect:/dms-room/users";
 	}
 
+	@PostMapping("/{userId}/delete")
+	public String deleteUser(
+		@PathVariable Long userId,
+		RedirectAttributes redirectAttributes
+	) {
+		try {
+			dmsUserService.deleteUser(userId);
+			redirectAttributes.addFlashAttribute("message", "회원탈퇴 처리를 완료했습니다.");
+			return "redirect:/dms-room/users";
+		} catch (RuntimeException exception) {
+			redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+			return "redirect:/dms-room/users/" + userId;
+		}
+	}
+
 	private String redirectUsers(String checked, String status, Integer page) {
 		StringBuilder redirect = new StringBuilder("redirect:/dms-room/users");
 		String separator = "?";

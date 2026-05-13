@@ -14,6 +14,7 @@ import com.domisa.domisa_backend.payment.repository.CookieTransactionRepository;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
+import com.domisa.domisa_backend.user.service.UserService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public class DmsUserService {
 	private final UserBlacklistService userBlacklistService;
 	private final CookieTransactionRepository cookieTransactionRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
+	private final UserService userService;
 
 	@Transactional(readOnly = true)
 	public DmsUserListResponse getUsers(String checked, String status, Integer page) {
@@ -121,6 +123,10 @@ public class DmsUserService {
 	public int addCookiesToAll(long amount) {
 		validatePositiveAmount(amount);
 		return userRepository.addCookiesToAll(amount);
+	}
+
+	public void deleteUser(Long userId) {
+		userService.deleteUserById(userId);
 	}
 
 	@Transactional(readOnly = true)

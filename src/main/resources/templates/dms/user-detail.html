@@ -40,6 +40,16 @@
 		</div>
 	</section>
 
+	<section class="dms-panel dms-panel-compact">
+		<h2>회원탈퇴</h2>
+		<form method="post"
+			  th:action="@{/dms-room/users/{id}/delete(id=${user.id})}"
+			  data-confirm="정말 이 유저를 회원탈퇴 처리할까요? 관련 정보가 모두 삭제됩니다."
+			  class="dms-form">
+			<button type="submit" class="dms-button dms-button-danger">회원탈퇴</button>
+		</form>
+	</section>
+
 	<section class="dms-panel" th:if="${user.profileImageUrl != null}">
 		<h2>프로필 사진</h2>
 		<a class="dms-profile-photo" th:href="${user.profileImageUrl}" target="_blank">
