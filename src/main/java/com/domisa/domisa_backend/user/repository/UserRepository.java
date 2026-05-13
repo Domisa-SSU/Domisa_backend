@@ -60,12 +60,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@Query("""
 		select u
-		from User u
-		left join fetch u.profileImage
-		left join fetch u.card
-		left join fetch u.introduction
-		where u.id = :id
-		""")
+			from User u
+			left join fetch u.profileImage
+			left join fetch u.card
+			left join fetch u.introduction
+			where u.id = :id
+			""")
 	Optional<User> findDmsDetailById(@Param("id") Long id);
 
 	@Query("select count(u) from User u where u.isChecked = true")

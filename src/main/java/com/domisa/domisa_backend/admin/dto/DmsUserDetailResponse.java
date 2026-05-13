@@ -33,10 +33,23 @@ public record DmsUserDetailResponse(
 	List<Long> myTypes,
 	List<Long> myMatches,
 	List<Long> nowShows,
-	String profileImageUrl
+	String profileImageUrl,
+	IntroductionDetail introduction
 ) {
 
 	public boolean hasStudentCard() {
 		return studentCardKey != null && !studentCardKey.isBlank();
+	}
+
+	public record IntroductionDetail(
+		Long id,
+		Long introducerId,
+		String introducerPublicId,
+		String introducerNickname,
+		String linkCode,
+		String q1,
+		String q2,
+		String q3
+	) {
 	}
 }

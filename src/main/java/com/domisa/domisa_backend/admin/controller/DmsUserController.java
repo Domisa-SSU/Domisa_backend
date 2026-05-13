@@ -62,6 +62,11 @@ public class DmsUserController {
 		return "redirect:" + dmsUserService.getStudentCardPresignedUrl(userId);
 	}
 
+	@GetMapping("/{userId}/profile-image")
+	public String profileImage(@PathVariable Long userId) {
+		return "redirect:" + dmsUserService.getProfileImagePresignedUrl(userId);
+	}
+
 	@PostMapping("/{userId}/cookies/add")
 	public String addCookies(
 		@PathVariable Long userId,
@@ -121,6 +126,20 @@ public class DmsUserController {
 			redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
 			return "redirect:/dms-room/users/" + userId;
 		}
+	}
+
+	@PostMapping("/{userId}/now-shows/refresh")
+	public String refreshNowShows(
+		@PathVariable Long userId,
+		RedirectAttributes redirectAttributes
+	) {
+		try {
+			dmsUserService.refreshNowShows(userId);
+			redirectAttributes.addFlashAttribute("message", "현재 노출 중인 유저 목록을 새로고침했습니다.");
+		} catch (RuntimeException exception) {
+			redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+		}
+		return "redirect:/dms-room/users/" + userId;
 	}
 
 	private String redirectUsers(String checked, String status, Integer page) {
