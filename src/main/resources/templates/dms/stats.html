@@ -18,38 +18,38 @@
 </header>
 
 <main class="dms-page">
-	<h1>DMS 통계 (08:00 기준 1일)</h1>
+	<h1>DMS 통계</h1>
 	<p class="dms-muted">각 일차는 08:00부터 다음날 08:00까지입니다.</p>
 
-	<section class="dms-panel" th:each="day, stat : ${page.days}">
-		<h2 th:text="${stat.count + '일차 (' + day.label + ')'}"></h2>
-		<p class="dms-muted" th:text="${day.rangeText}"></p>
+	<div class="dms-stats-day-grid">
+		<section class="dms-panel" th:each="day : ${page.days}">
+			<h2 th:text="${day.label}"></h2>
+			<p class="dms-muted" th:text="${day.rangeText}"></p>
 
-		<div class="dms-stats">
-			<div><span>완료 유저(남)</span><strong th:text="${day.completedMaleUsers}">0</strong></div>
-			<div><span>완료 유저(여)</span><strong th:text="${day.completedFemaleUsers}">0</strong></div>
-			<div><span>완료 유저(총)</span><strong th:text="${day.completedTotalUsers}">0</strong></div>
-			<div><span>완료 주문 수</span><strong th:text="${day.completedOrderCount}">0</strong></div>
-			<div><span>완료 주문 금액</span><strong th:text="${day.completedOrderAmount}">0</strong></div>
-		</div>
+			<div class="dms-stats">
+				<div><span>완료 유저(남)</span><strong th:text="${day.completedMaleUsers}">0</strong></div>
+				<div><span>완료 유저(여)</span><strong th:text="${day.completedFemaleUsers}">0</strong></div>
+				<div><span>완료 유저(총)</span><strong th:text="${day.completedTotalUsers}">0</strong></div>
+				<div><span>완료 주문 수</span><strong th:text="${day.completedOrderCount}">0</strong></div>
+				<div><span>완료 주문 금액</span><strong th:text="${day.completedOrderAmount}">0</strong></div>
+			</div>
 
-		<table class="dms-table">
-			<thead>
-			<tr>
-				<th>CookieCode</th>
-				<th>단가</th>
-				<th>완료 주문 수</th>
-			</tr>
-			</thead>
-			<tbody>
-			<tr th:each="code : ${day.orderCodeStats}">
-				<td th:text="${code.cookieCode}"></td>
-				<td th:text="${code.unitDescription}"></td>
-				<td th:text="${code.completedOrderCount}"></td>
-			</tr>
-			</tbody>
-		</table>
-	</section>
+			<table class="dms-table">
+				<thead>
+				<tr>
+					<th>CookieCode</th>
+					<th>완료 주문 수</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="code : ${day.orderCodeStats}">
+					<td th:text="${code.cookieCode + '(' + code.unitDescription + ')'}"></td>
+					<td th:text="${code.completedOrderCount}"></td>
+				</tr>
+				</tbody>
+			</table>
+		</section>
+	</div>
 </main>
 </body>
 </html>
