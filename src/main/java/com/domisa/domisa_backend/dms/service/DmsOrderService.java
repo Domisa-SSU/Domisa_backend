@@ -7,6 +7,7 @@ import com.domisa.domisa_backend.payment.entity.CookieCode;
 import com.domisa.domisa_backend.payment.entity.CookieOrder;
 import com.domisa.domisa_backend.payment.entity.OrderStatus;
 import com.domisa.domisa_backend.payment.repository.CookieOrderRepository;
+import com.domisa.domisa_backend.payment.service.CookieOrderService;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,10 +28,14 @@ public class DmsOrderService {
 	);
 
 	private final CookieOrderRepository cookieOrderRepository;
+	private final CookieOrderService cookieOrderService;
 
 	@Transactional(readOnly = true)
-	public DmsOrderListResponse getOrders() {
-		List<CookieOrder> orders = cookieOrderRepository.findAllForDms(Arrays.asList(OrderStatus.values()));
+	public DmsOrderListResponse getOrders(OrderStatus statusFilter) {
+		List<OrderStatus> statuses = statusFilter == null
+			? Arrays.asList(OrderStatus.values())
+			: List.of(statusFilter);
+		List<CookieOrder> orders = cookieOrderRepository.findAllForDms(statuses);
 		return new DmsOrderListResponse(
 			buildStats(orders),
 			buildCookieCodeStats(orders),
@@ -42,6 +47,12 @@ public class DmsOrderService {
 	public void updateOrderStatus(Long orderId, OrderStatus status) {
 		CookieOrder order = cookieOrderRepository.findById(orderId)
 			.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+
+		boolean shouldExcludePayAction = order.getStatus() == OrderStatus.PENDING
+			&& (status == OrderStatus.PAID || status == OrderStatus.ALREADY_PROCESSED);
+		if (shouldExcludePayAction) {
+			cookieOrderService.excludePayActionOrderByOrderNumber(order.getOrderNumber());
+		}
 		order.updateStatusByAdmin(status);
 	}
 

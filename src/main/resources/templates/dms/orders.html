@@ -17,11 +17,23 @@
 	<form method="post" action="/dms-room/logout"><button type="submit">로그아웃</button></form>
 </header>
 
-<main class="dms-page">
-		<h1>주문 목록</h1>
-		<p class="dms-alert dms-alert-info" th:if="${message}" th:text="${message}"></p>
-		<p class="dms-alert dms-alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></p>
-		<section class="dms-stats">
+	<main class="dms-page">
+			<h1>주문 목록</h1>
+			<p class="dms-alert dms-alert-info" th:if="${message}" th:text="${message}"></p>
+			<p class="dms-alert dms-alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+			<section class="dms-toolbar">
+				<form method="get" action="/dms-room/orders" class="dms-inline-form" data-auto-submit="true">
+					<select name="status">
+						<option value="" th:selected="${selectedStatus == ''}">전체 상태</option>
+						<option th:each="status : ${statuses}"
+								th:value="${status.name()}"
+								th:selected="${selectedStatus == status.name()}"
+								th:text="${status.name()}"></option>
+					</select>
+					<a class="dms-button" href="/dms-room/orders">초기화</a>
+				</form>
+			</section>
+			<section class="dms-stats">
 		<div><span>총 주문 수</span><strong th:text="${page.stats.totalOrders}">0</strong></div>
 		<div><span>총 쿠키 수</span><strong th:text="${page.stats.totalCookieAmount}">0</strong></div>
 		<div><span>전체 주문 금액</span><strong th:text="${page.stats.totalOrderAmount}">0</strong></div>
@@ -82,12 +94,13 @@
 					<td th:text="${order.billingName}"></td>
 					<td th:text="${order.orderAmount}"></td>
 					<td th:text="${order.cookieCode}"></td>
-					<td th:text="${order.cookieAmount}"></td>
-					<td>
-						<form class="dms-inline-form" method="post" th:action="@{/dms-room/orders/{id}/status(id=${order.id})}">
-							<select name="status">
-								<option th:each="status : ${statuses}"
-										th:value="${status}"
+						<td th:text="${order.cookieAmount}"></td>
+						<td>
+							<form class="dms-inline-form" method="post" th:action="@{/dms-room/orders/{id}/status(id=${order.id})}">
+								<input type="hidden" name="filterStatus" th:value="${selectedStatus}">
+								<select name="status">
+									<option th:each="status : ${statuses}"
+											th:value="${status}"
 										th:selected="${status.name() == order.orderStatus}"
 										th:text="${status.name()}"></option>
 							</select>
