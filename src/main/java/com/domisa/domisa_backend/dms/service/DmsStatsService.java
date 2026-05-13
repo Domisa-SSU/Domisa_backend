@@ -4,8 +4,8 @@ import com.domisa.domisa_backend.dms.dto.DmsStatsResponse;
 import com.domisa.domisa_backend.payment.entity.CookieCode;
 import com.domisa.domisa_backend.payment.entity.CookieOrder;
 import com.domisa.domisa_backend.user.repository.UserRepository;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -21,9 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DmsStatsService {
 
-	private static final int DEFAULT_DAYS = 7;
 	private static final LocalTime DAY_BOUNDARY = LocalTime.of(8, 0);
 	private static final DateTimeFormatter RANGE_FORMAT = DateTimeFormatter.ofPattern("M/d HH:mm");
+	private static final LocalDate BASE_DAY = LocalDate.of(2026, 5, 13);
 
 	private final UserRepository userRepository;
 	private final DmsOrderService dmsOrderService;
@@ -31,20 +31,23 @@ public class DmsStatsService {
 	@Transactional(readOnly = true)
 	public DmsStatsResponse getStats() {
 		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime cycleStart = now.toLocalTime().isBefore(DAY_BOUNDARY)
-			? LocalDate.now().minusDays(1).atTime(DAY_BOUNDARY)
-			: LocalDate.now().atTime(DAY_BOUNDARY);
+		LocalDateTime day1Start = BASE_DAY.atTime(DAY_BOUNDARY);
+		LocalDateTime day2Start = day1Start.plusDays(1);
+		LocalDateTime day3Start = day2Start.plusDays(1);
+		LocalDateTime day4Start = day3Start.plusDays(1);
 
-		List<DmsStatsResponse.DayStat> dayStats = new ArrayList<>();
-		for (int i = DEFAULT_DAYS - 1; i >= 0; i--) {
-			LocalDateTime start = cycleStart.minusDays(i);
-			LocalDateTime end = start.plusDays(1);
-			dayStats.add(buildDayStat(start, end));
-		}
+		List<DmsStatsResponse.DayStat> dayStats = new ArrayList<>(4);
+		dayStats.add(buildDayStat("1일차 (2026-05-13)", day1Start, day2Start));
+		dayStats.add(buildDayStat("2일차 (2026-05-14)", day2Start, day3Start));
+		dayStats.add(buildDayStat("3일차 (2026-05-15)", day3Start, day4Start));
+		dayStats.add(buildDayStat("나머지 외 시간", day4Start, now));
 		return new DmsStatsResponse(dayStats);
 	}
 
-	private DmsStatsResponse.DayStat buildDayStat(LocalDateTime start, LocalDateTime end) {
+	private DmsStatsResponse.DayStat buildDayStat(String label, LocalDateTime start, LocalDateTime end) {
+		if (end.isBefore(start)) {
+			end = start;
+		}
 		long male = userRepository.countCompletedUsersByCreatedAtBetween(start, end, true);
 		long female = userRepository.countCompletedUsersByCreatedAtBetween(start, end, false);
 		long total = userRepository.countCompletedUsersByCreatedAtBetween(start, end, null);
@@ -65,15 +68,16 @@ public class DmsStatsService {
 		List<DmsStatsResponse.OrderCodeStat> orderCodeStats = Arrays.stream(CookieCode.values())
 			.map(code -> new DmsStatsResponse.OrderCodeStat(
 				code.name(),
-				code.getOrderAmount() + "원 / " + code.getCookieAmount() + "개",
+				code.getOrderAmount() + "원",
 				codeCounts.get(code)
 			))
 			.toList();
 
-		String dayLabel = start.toLocalDate().toString();
-		String rangeText = RANGE_FORMAT.format(start) + " ~ " + RANGE_FORMAT.format(end);
+		String rangeText = label.equals("나머지 외 시간")
+			? RANGE_FORMAT.format(start) + " 이후"
+			: RANGE_FORMAT.format(start) + " ~ " + RANGE_FORMAT.format(end);
 		return new DmsStatsResponse.DayStat(
-			dayLabel,
+			label,
 			rangeText,
 			male,
 			female,
