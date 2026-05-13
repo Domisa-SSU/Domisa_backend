@@ -20,18 +20,17 @@ public record DmsUserListResponse(
 	public record UserRow(
 		Long id,
 		String publicId,
-		String name,
 		String nickname,
 		String gender,
 		Long birthYear,
 		Long cookies,
+		Boolean isRegistered,
+		Boolean hasIntroduction,
+		Boolean isProfileCompleted,
 		Boolean isChecked,
 		boolean blacklisted,
-		String studentCardKey,
+		boolean hasProfileImage,
 		LocalDateTime createdAt
 	) {
-		public boolean hasStudentCard() {
-			return studentCardKey != null && !studentCardKey.isBlank();
-		}
 	}
 }

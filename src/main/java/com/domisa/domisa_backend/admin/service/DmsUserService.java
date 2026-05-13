@@ -6,12 +6,16 @@ import com.domisa.domisa_backend.auth.blacklist.repository.UserBlacklistReposito
 import com.domisa.domisa_backend.admin.dto.DmsUserDetailResponse;
 import com.domisa.domisa_backend.admin.dto.DmsUserListResponse;
 import com.domisa.domisa_backend.admin.dto.DmsUserStatsResponse;
+import com.domisa.domisa_backend.dating.service.DatingService;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.global.s3.service.S3ObjectUrlService;
+import com.domisa.domisa_backend.introduction.entity.Introduction;
 import com.domisa.domisa_backend.payment.entity.CookieTransaction;
 import com.domisa.domisa_backend.payment.repository.CookieTransactionRepository;
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
+import com.domisa.domisa_backend.profileimage.repository.ProfileImageRepository;
+import com.domisa.domisa_backend.profileimage.type.ProfileImageProcessingStatus;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import com.domisa.domisa_backend.user.service.UserService;
@@ -38,8 +42,10 @@ public class DmsUserService {
 	private final UserBlacklistRepository userBlacklistRepository;
 	private final UserBlacklistService userBlacklistService;
 	private final CookieTransactionRepository cookieTransactionRepository;
+	private final ProfileImageRepository profileImageRepository;
 	private final S3ObjectUrlService s3ObjectUrlService;
 	private final UserService userService;
+	private final DatingService datingService;
 
 	@Transactional(readOnly = true)
 	public DmsUserListResponse getUsers(String checked, String status, Integer page) {
@@ -57,9 +63,15 @@ public class DmsUserService {
 			);
 		}
 
-		Set<Long> blacklistedUserIds = findBlacklistedUserIds(userPage.getContent().stream().map(User::getId).toList());
+		List<Long> userIds = userPage.getContent().stream().map(User::getId).toList();
+		Set<Long> blacklistedUserIds = findBlacklistedUserIds(userIds);
+		Set<Long> profileImageUserIds = findProfileImageUserIds(userIds);
 		List<DmsUserListResponse.UserRow> rows = userPage.getContent().stream()
-			.map(user -> toUserRow(user, blacklistedUserIds.contains(user.getId())))
+			.map(user -> toUserRow(
+				user,
+				blacklistedUserIds.contains(user.getId()),
+				profileImageUserIds.contains(user.getId())
+			))
 			.toList();
 		int currentPage = userPage.getNumber() + 1;
 		int totalPages = Math.max(1, userPage.getTotalPages());
@@ -129,6 +141,10 @@ public class DmsUserService {
 		userService.deleteUserById(userId);
 	}
 
+	public void refreshNowShows(Long userId) {
+		datingService.refreshNowShowsByAdmin(userId);
+	}
+
 	@Transactional(readOnly = true)
 	public String getStudentCardPresignedUrl(Long userId) {
 		User user = getUser(userId);
@@ -137,6 +153,17 @@ public class DmsUserService {
 			throw new IllegalArgumentException("학생증 사진이 없습니다.");
 		}
 		return s3ObjectUrlService.buildPresignedGetUrl(studentCardKey);
+	}
+
+	@Transactional(readOnly = true)
+	public String getProfileImagePresignedUrl(Long userId) {
+		ProfileImage profileImage = profileImageRepository.findByUserId(userId)
+			.orElseThrow(() -> new IllegalArgumentException("프로필 사진이 없습니다."));
+		String url = s3ObjectUrlService.getProfileImagePresignedUrl(profileImage);
+		if (url == null) {
+			throw new IllegalArgumentException("프로필 사진이 없습니다.");
+		}
+		return url;
 	}
 
 	private DmsUserStatsResponse getStats() {
@@ -163,6 +190,16 @@ public class DmsUserService {
 			.collect(java.util.stream.Collectors.toCollection(HashSet::new));
 	}
 
+	private Set<Long> findProfileImageUserIds(Collection<Long> userIds) {
+		if (userIds.isEmpty()) {
+			return Set.of();
+		}
+		return new HashSet<>(profileImageRepository.findAvailableProfileImageUserIds(
+			userIds,
+			List.of(ProfileImageProcessingStatus.READY, ProfileImageProcessingStatus.COMPLETED)
+		));
+	}
+
 	private int normalizeRequestedPage(Integer page) {
 		if (page == null || page < 1) {
 			return 1;
@@ -180,18 +217,20 @@ public class DmsUserService {
 		return pageNumbers;
 	}
 
-	private DmsUserListResponse.UserRow toUserRow(User user, boolean blacklisted) {
+	private DmsUserListResponse.UserRow toUserRow(User user, boolean blacklisted, boolean hasProfileImage) {
 		return new DmsUserListResponse.UserRow(
 			user.getId(),
 			user.getPublicId(),
-			user.getName(),
 			user.getNickname(),
 			user.getGenderDisplay(),
 			user.getBirthYear(),
 			user.getCookieBalance(),
+			user.getIsRegistered(),
+			user.getHasIntroduction(),
+			user.getIsProfileCompleted(),
 			user.getIsChecked(),
 			blacklisted,
-			user.getStudentCardKey(),
+			hasProfileImage,
 			user.getCreatedAt()
 		);
 	}
@@ -227,7 +266,25 @@ public class DmsUserService {
 			copyList(user.getMyTypes()),
 			copyList(user.getMyMatches()),
 			copyList(user.getNowShows()),
-			buildProfileImageUrl(user.getProfileImage())
+			buildDmsProfileImageUrl(user),
+			toIntroductionDetail(user.getIntroduction())
+		);
+	}
+
+	private DmsUserDetailResponse.IntroductionDetail toIntroductionDetail(Introduction introduction) {
+		if (introduction == null) {
+			return null;
+		}
+		User introducer = introduction.getIntroducer();
+		return new DmsUserDetailResponse.IntroductionDetail(
+			introduction.getId(),
+			introducer == null ? null : introducer.getId(),
+			introducer == null ? null : introducer.getPublicId(),
+			introducer == null ? null : introducer.getNickname(),
+			introduction.getLinkCode(),
+			introduction.getQ1(),
+			introduction.getQ2(),
+			introduction.getQ3()
 		);
 	}
 
@@ -251,19 +308,16 @@ public class DmsUserService {
 		return description.length() > 100 ? description.substring(0, 100) : description;
 	}
 
-	private String buildProfileImageUrl(ProfileImage profileImage) {
-		if (profileImage == null) {
+	private String buildDmsProfileImageUrl(User user) {
+		ProfileImage profileImage = user.getProfileImage();
+		if (profileImage == null
+			|| profileImage.getProfileOriginKey() == null
+			|| profileImage.getProfileOriginKey().isBlank()
+			|| (profileImage.getProcessingStatus() != ProfileImageProcessingStatus.READY
+			&& profileImage.getProcessingStatus() != ProfileImageProcessingStatus.COMPLETED)) {
 			return null;
 		}
-		String objectKey = profileImage.getProfileOriginKey();
-		if (objectKey == null || objectKey.isBlank()) {
-			objectKey = profileImage.getProfileThumbnailKey();
-		}
-		return buildPresignedUrl(objectKey);
-	}
-
-	private String buildPresignedUrl(String objectKey) {
-		return objectKey == null || objectKey.isBlank() ? null : s3ObjectUrlService.buildPresignedGetUrl(objectKey);
+		return "/dms-room/users/" + user.getId() + "/profile-image";
 	}
 
 	private List<Long> copyList(List<Long> values) {

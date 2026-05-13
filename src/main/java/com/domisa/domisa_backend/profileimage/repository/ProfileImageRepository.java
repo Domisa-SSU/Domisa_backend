@@ -2,6 +2,7 @@ package com.domisa.domisa_backend.profileimage.repository;
 
 import com.domisa.domisa_backend.profileimage.entity.ProfileImage;
 import com.domisa.domisa_backend.profileimage.type.ProfileImageProcessingStatus;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,19 @@ public interface ProfileImageRepository extends JpaRepository<ProfileImage, Long
 	Optional<ProfileImage> findByUserId(Long userId);
 
 	void deleteByUserId(Long userId);
+
+	@Query("""
+		select p.user.id
+		from ProfileImage p
+		where p.user.id in :userIds
+			and p.processingStatus in :statuses
+			and p.profileOriginKey is not null
+			and p.profileOriginKey <> ''
+		""")
+	List<Long> findAvailableProfileImageUserIds(
+		@Param("userIds") Collection<Long> userIds,
+		@Param("statuses") Collection<ProfileImageProcessingStatus> statuses
+	);
 
 	@Query("""
 		select p.id

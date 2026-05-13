@@ -50,6 +50,16 @@
 		</form>
 	</section>
 
+	<section class="dms-panel dms-panel-compact">
+		<h2>소개팅 노출 목록</h2>
+		<form method="post"
+			  th:action="@{/dms-room/users/{id}/now-shows/refresh(id=${user.id})}"
+			  data-confirm="현재 노출 중인 유저 목록을 새로고침할까요?"
+			  class="dms-form">
+			<button type="submit" class="dms-button dms-button-primary">노출 목록 새로고침</button>
+		</form>
+	</section>
+
 	<section class="dms-panel" th:if="${user.profileImageUrl != null}">
 		<h2>프로필 사진</h2>
 		<a class="dms-profile-photo" th:href="${user.profileImageUrl}" target="_blank">
@@ -90,6 +100,24 @@
 			<tr><th>매칭된 유저</th><td th:text="${user.myMatches}"></td></tr>
 			<tr><th>현재 노출 중인 유저</th><td th:text="${user.nowShows}"></td></tr>
 		</table>
+	</section>
+
+	<section class="dms-panel" th:if="${user.introduction != null}">
+		<h2>소개받은 Introduction</h2>
+		<table class="dms-detail-table">
+			<tr><th>id</th><td th:text="${user.introduction.id}"></td></tr>
+			<tr><th>소개자 id</th><td th:text="${user.introduction.introducerId == null ? '-' : user.introduction.introducerId}"></td></tr>
+			<tr><th>소개자 publicId</th><td th:text="${user.introduction.introducerPublicId == null ? '-' : user.introduction.introducerPublicId}"></td></tr>
+			<tr><th>소개자 닉네임</th><td th:text="${user.introduction.introducerNickname == null ? '-' : user.introduction.introducerNickname}"></td></tr>
+			<tr><th>linkCode</th><td th:text="${user.introduction.linkCode}"></td></tr>
+			<tr><th>Q1</th><td class="dms-text-cell" th:text="${user.introduction.q1}"></td></tr>
+			<tr><th>Q2</th><td class="dms-text-cell" th:text="${user.introduction.q2}"></td></tr>
+			<tr><th>Q3</th><td class="dms-text-cell" th:text="${user.introduction.q3}"></td></tr>
+		</table>
+	</section>
+	<section class="dms-panel" th:if="${user.introduction == null}">
+		<h2>소개받은 Introduction</h2>
+		<p class="dms-muted">연결된 Introduction이 없습니다.</p>
 	</section>
 </main>
 </body>

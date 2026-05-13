@@ -366,6 +366,20 @@ public class DatingService {
 	}
 
 	@Transactional
+	public void refreshNowShowsByAdmin(Long userId) {
+		User user = userRepository.findWithProfileImageById(userId)
+			.orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+		if (!canHaveNowShows(user)) {
+			throw new GlobalException(GlobalErrorCode.PROFILE_NOT_COMPLETED);
+		}
+
+		refreshNowShows(user, LocalDateTime.now());
+		log.info("관리자가 소개팅 프로필 표시 목록을 갱신했습니다. userId={}, nowShowCount={}",
+			user.getId(), user.getNowShows().size());
+	}
+
+	@Transactional
 	public int refreshReadyNowShows() {
 		LocalDateTime now = LocalDateTime.now();
 		List<User> users = userRepository.findUsersReadyForNowShowRefresh(now);
