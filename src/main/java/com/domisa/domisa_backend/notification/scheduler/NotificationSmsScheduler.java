@@ -13,13 +13,18 @@ public class NotificationSmsScheduler {
 
 	private final NotificationSmsService notificationSmsService;
 
-	@Scheduled(cron = "0 20 18 * * *", zone = "Asia/Seoul")
-	public void sendUnreadNotificationSmsAt3pm() {
+	@Scheduled(cron = "0 0 12 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSms1() {
 		sendUnreadNotificationSms();
 	}
 
-	@Scheduled(cron = "0 0 19 * * *", zone = "Asia/Seoul")
-	public void sendUnreadNotificationSmsAt8Pm() {
+	@Scheduled(cron = "0 0 18 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSms2() {
+		sendUnreadNotificationSms();
+	}
+
+	@Scheduled(cron = "0 30 22 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSms3() {
 		sendUnreadNotificationSms();
 	}
 
