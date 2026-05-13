@@ -21,3 +21,18 @@ document.addEventListener("change", function (event) {
 		form.requestSubmit();
 	}
 });
+
+if (window.location.pathname.startsWith("/dms-room") && window.location.pathname !== "/dms-room/login") {
+	const keepAlive = function () {
+		fetch("/dms-room/session/ping", { method: "GET", credentials: "same-origin", cache: "no-store" })
+			.then(function (response) {
+				if (response.redirected) {
+					window.location.href = "/dms-room/login";
+				}
+			})
+			.catch(function () {
+			});
+	};
+
+	setInterval(keepAlive, 4 * 60 * 1000);
+}
