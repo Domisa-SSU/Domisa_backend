@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.admin.config;
+package com.domisa.domisa_backend.dms.config;
 
 public final class DmsSessionKeys {
 

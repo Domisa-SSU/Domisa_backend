@@ -1,8 +1,8 @@
-package com.domisa.domisa_backend.admin.service;
+package com.domisa.domisa_backend.dms.service;
 
-import com.domisa.domisa_backend.admin.dto.DmsOrderCookieCodeStatsResponse;
-import com.domisa.domisa_backend.admin.dto.DmsOrderListResponse;
-import com.domisa.domisa_backend.admin.dto.DmsOrderStatsResponse;
+import com.domisa.domisa_backend.dms.dto.DmsOrderCookieCodeStatsResponse;
+import com.domisa.domisa_backend.dms.dto.DmsOrderListResponse;
+import com.domisa.domisa_backend.dms.dto.DmsOrderStatsResponse;
 import com.domisa.domisa_backend.payment.entity.CookieCode;
 import com.domisa.domisa_backend.payment.entity.CookieOrder;
 import com.domisa.domisa_backend.payment.entity.OrderStatus;

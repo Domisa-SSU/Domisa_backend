@@ -1,6 +1,6 @@
-package com.domisa.domisa_backend.admin.service;
+package com.domisa.domisa_backend.dms.service;
 
-import com.domisa.domisa_backend.admin.config.DmsSessionKeys;
+import com.domisa.domisa_backend.dms.config.DmsSessionKeys;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 

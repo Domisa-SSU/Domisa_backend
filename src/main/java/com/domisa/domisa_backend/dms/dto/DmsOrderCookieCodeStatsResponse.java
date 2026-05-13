@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.admin.dto;
+package com.domisa.domisa_backend.dms.dto;
 
 public record DmsOrderCookieCodeStatsResponse(
 	String cookieCode,

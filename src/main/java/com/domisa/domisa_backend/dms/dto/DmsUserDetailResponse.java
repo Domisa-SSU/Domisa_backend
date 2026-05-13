@@ -1,4 +1,4 @@
-package com.domisa.domisa_backend.admin.dto;
+package com.domisa.domisa_backend.dms.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,7 +34,8 @@ public record DmsUserDetailResponse(
 	List<Long> myMatches,
 	List<Long> nowShows,
 	String profileImageUrl,
-	IntroductionDetail introduction
+	IntroductionDetail introduction,
+	CardDetail card
 ) {
 
 	public boolean hasStudentCard() {
@@ -50,6 +51,14 @@ public record DmsUserDetailResponse(
 		String q1,
 		String q2,
 		String q3
+	) {
+	}
+
+	public record CardDetail(
+		Long id,
+		String mbti,
+		String datingStyle,
+		String idealType
 	) {
 	}
 }

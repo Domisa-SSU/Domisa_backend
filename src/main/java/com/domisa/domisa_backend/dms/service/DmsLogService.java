@@ -1,6 +1,6 @@
-package com.domisa.domisa_backend.admin.service;
+package com.domisa.domisa_backend.dms.service;
 
-import com.domisa.domisa_backend.admin.dto.DmsLogResponse;
+import com.domisa.domisa_backend.dms.dto.DmsLogResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

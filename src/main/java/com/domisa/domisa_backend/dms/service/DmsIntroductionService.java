@@ -1,6 +1,6 @@
-package com.domisa.domisa_backend.admin.service;
+package com.domisa.domisa_backend.dms.service;
 
-import com.domisa.domisa_backend.admin.dto.DmsIntroductionResponse;
+import com.domisa.domisa_backend.dms.dto.DmsIntroductionResponse;
 import com.domisa.domisa_backend.global.exception.GlobalErrorCode;
 import com.domisa.domisa_backend.global.exception.GlobalException;
 import com.domisa.domisa_backend.introduction.entity.Introduction;
