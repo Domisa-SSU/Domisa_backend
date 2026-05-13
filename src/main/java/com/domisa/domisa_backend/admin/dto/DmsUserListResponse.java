@@ -8,12 +8,18 @@ public record DmsUserListResponse(
 	List<UserRow> users,
 	String checked,
 	String status,
+	String keyword,
+	boolean completedOnly,
 	int page,
 	int size,
 	int totalPages,
 	long totalElements,
 	boolean hasPrevious,
 	boolean hasNext,
+	boolean hasPreviousGroup,
+	boolean hasNextGroup,
+	int previousGroupPage,
+	int nextGroupPage,
 	List<Integer> pageNumbers
 ) {
 

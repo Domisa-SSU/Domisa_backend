@@ -9,6 +9,7 @@
 <body>
 <header class="dms-header">
 	<a href="/dms-room/users">유저 목록</a>
+	<a href="/dms-room/users/completed">완료 유저 목록</a>
 	<a href="/dms-room/orders">주문 목록</a>
 	<a href="/dms-room/introductions">Introduction 목록</a>
 	<a href="/dms-room/logs">서버 로그</a>
@@ -29,14 +30,15 @@
 
 	<section class="dms-panel">
 		<h2>CookieCode 통계</h2>
-		<table class="dms-table">
-			<thead><tr><th>상품</th><th>주문 수</th><th>쿠키 수</th><th>전체 금액</th><th>결제 완료 금액</th></tr></thead>
-			<tbody>
-			<tr th:each="stat : ${page.cookieCodeStats}">
-				<td th:text="${stat.cookieCode}"></td>
-				<td th:text="${stat.orderCount}"></td>
-				<td th:text="${stat.cookieAmount}"></td>
-				<td th:text="${stat.orderAmount}"></td>
+			<table class="dms-table">
+				<thead><tr><th>상품</th><th>단가</th><th>주문 수</th><th>쿠키 수</th><th>전체 금액</th><th>결제 완료 금액</th></tr></thead>
+				<tbody>
+				<tr th:each="stat : ${page.cookieCodeStats}">
+					<td th:text="${stat.cookieCode}"></td>
+					<td th:text="${stat.unitDescription}"></td>
+					<td th:text="${stat.orderCount}"></td>
+					<td th:text="${stat.cookieAmount}"></td>
+					<td th:text="${stat.orderAmount}"></td>
 				<td th:text="${stat.paidOrderAmount}"></td>
 			</tr>
 			</tbody>
@@ -51,11 +53,12 @@
 				<th>주문번호</th>
 				<th>유저</th>
 				<th>입금자명</th>
-				<th>금액</th>
-				<th>상품</th>
-				<th>쿠키 수</th>
-				<th>상태</th>
-				<th>주문일</th>
+					<th>금액</th>
+					<th>상품</th>
+					<th>단가</th>
+					<th>쿠키 수</th>
+					<th>상태</th>
+					<th>주문일</th>
 				<th>결제일</th>
 				<th>생성일</th>
 				<th>수정일</th>
@@ -66,20 +69,25 @@
 				<td th:text="${order.id}"></td>
 				<td th:text="${order.orderNumber}"></td>
 				<td><a th:href="@{/dms-room/users/{id}(id=${order.userId})}" th:text="${order.userPublicId}"></a></td>
-				<td th:text="${order.billingName}"></td>
-				<td th:text="${order.orderAmount}"></td>
-				<td th:text="${order.cookieCode}"></td>
-				<td th:text="${order.cookieAmount}"></td>
-				<td th:text="${order.orderStatus}"></td>
-				<td th:text="${order.orderDate}"></td>
-				<td th:text="${order.paidAt}"></td>
-				<td th:text="${order.createdAt}"></td>
-				<td th:text="${order.updatedAt}"></td>
-			</tr>
-			<tr th:if="${#lists.isEmpty(page.orders)}"><td colspan="12">주문이 없습니다.</td></tr>
-			</tbody>
-		</table>
-	</div>
+					<td th:text="${order.billingName}"></td>
+					<td th:text="${order.orderAmount}"></td>
+					<td th:text="${order.cookieCode}"></td>
+					<td th:text="${order.cookieUnitDescription}"></td>
+					<td th:text="${order.cookieAmount}"></td>
+					<td>
+						<span class="dms-badge"
+							  th:classappend="${order.orderStatus == 'PAID' or order.orderStatus == 'ALREADY_PROCESSED'} ? ' dms-order-status-paid' : (${order.orderStatus == 'PENDING'} ? ' dms-order-status-pending' : ' dms-order-status-failed')"
+							  th:text="${order.orderStatus}"></span>
+					</td>
+					<td th:text="${order.orderDate == null ? '-' : #temporals.format(order.orderDate, 'M/d HH:mm')}"></td>
+					<td th:text="${order.paidAt == null ? '-' : #temporals.format(order.paidAt, 'M/d HH:mm')}"></td>
+					<td th:text="${order.createdAt == null ? '-' : #temporals.format(order.createdAt, 'M/d HH:mm')}"></td>
+					<td th:text="${order.updatedAt == null ? '-' : #temporals.format(order.updatedAt, 'M/d HH:mm')}"></td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(page.orders)}"><td colspan="13">주문이 없습니다.</td></tr>
+				</tbody>
+			</table>
+		</div>
 </main>
 </body>
 </html>
