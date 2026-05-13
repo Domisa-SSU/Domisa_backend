@@ -7,7 +7,9 @@ import com.domisa.domisa_backend.payment.entity.CookieCode;
 import com.domisa.domisa_backend.payment.entity.CookieOrder;
 import com.domisa.domisa_backend.payment.entity.OrderStatus;
 import com.domisa.domisa_backend.payment.repository.CookieOrderRepository;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -19,16 +21,37 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DmsOrderService {
 
+	private static final List<OrderStatus> DMS_VISIBLE_ORDER_STATUSES = List.of(
+		OrderStatus.PAID,
+		OrderStatus.ALREADY_PROCESSED
+	);
+
 	private final CookieOrderRepository cookieOrderRepository;
 
 	@Transactional(readOnly = true)
 	public DmsOrderListResponse getOrders() {
-		List<CookieOrder> orders = cookieOrderRepository.findAllForDms();
+		List<CookieOrder> orders = cookieOrderRepository.findAllForDms(DMS_VISIBLE_ORDER_STATUSES);
 		return new DmsOrderListResponse(
 			buildStats(orders),
 			buildCookieCodeStats(orders),
 			orders.stream().map(this::toRow).toList()
 		);
+	}
+
+	@Transactional
+	public void updateOrderStatus(Long orderId, OrderStatus status) {
+		CookieOrder order = cookieOrderRepository.findById(orderId)
+			.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+		order.updateStatusByAdmin(status);
+	}
+
+	@Transactional(readOnly = true)
+	public List<CookieOrder> findCompletedOrdersBetween(LocalDateTime start, LocalDateTime end) {
+		return cookieOrderRepository.findAllByStatusesAndPaidAtBetween(DMS_VISIBLE_ORDER_STATUSES, start, end);
+	}
+
+	public Collection<OrderStatus> getEditableStatuses() {
+		return Arrays.asList(OrderStatus.values());
 	}
 
 	private DmsOrderStatsResponse buildStats(List<CookieOrder> orders) {
@@ -76,7 +99,6 @@ public class DmsOrderService {
 		CookieCode cookieCode = resolveCookieCode(order);
 		return new DmsOrderListResponse.OrderRow(
 			order.getId(),
-			order.getOrderNumber(),
 			order.getUser().getId(),
 			order.getUser().getPublicId(),
 			order.getBillingName(),
@@ -87,8 +109,7 @@ public class DmsOrderService {
 			order.getStatus().name(),
 			order.getOrderDate(),
 			order.getPaidAt(),
-			order.getCreatedAt(),
-			order.getUpdatedAt()
+			order.getOrderNumber()
 		);
 	}
 

@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class DatingService {
 
 	private static final Duration REFRESH_INTERVAL = Duration.ofHours(2);
 	private static final int MAX_DATING_PROFILE_COUNT = 8;
+	private static final int NOW_SHOW_RANDOM_POOL_MULTIPLIER = 6;
 
 	private final UserRepository userRepository;
 	private final IntroductionRepository introductionRepository;
@@ -452,19 +454,74 @@ public class DatingService {
 		if (user.getMyMatches() != null) {
 			excludedUserIds.addAll(user.getMyMatches());
 		}
-		if (excludedUserIds.isEmpty()) {
-			return userRepository.findRandomOppositeGenderUserIds(
+		int poolSize = MAX_DATING_PROFILE_COUNT * NOW_SHOW_RANDOM_POOL_MULTIPLIER;
+		List<Long> pool = excludedUserIds.isEmpty()
+			? getRandomPoolWithoutExclusions(user, poolSize)
+			: getRandomPoolWithExclusions(user, excludedUserIds, poolSize);
+		if (pool.isEmpty()) {
+			return Collections.emptyList();
+		}
+		Collections.shuffle(pool, ThreadLocalRandom.current());
+		return pool.stream()
+			.limit(MAX_DATING_PROFILE_COUNT)
+			.toList();
+	}
+
+	private List<Long> getRandomPoolWithoutExclusions(User user, int poolSize) {
+		long total = userRepository.countEligibleOppositeGenderUsers(user.getId(), user.getGender());
+		if (total < 1) {
+			return List.of();
+		}
+		int offset = randomOffset(total, poolSize);
+		List<Long> pool = new ArrayList<>(userRepository.findEligibleOppositeGenderUserIds(
+			user.getId(),
+			user.getGender(),
+			poolSize,
+			offset
+		));
+		if (pool.size() < poolSize && offset > 0) {
+			pool.addAll(userRepository.findEligibleOppositeGenderUserIds(
 				user.getId(),
 				user.getGender(),
-				MAX_DATING_PROFILE_COUNT
-			);
+				poolSize - pool.size(),
+				0
+			));
 		}
-		return userRepository.findRandomOppositeGenderUserIdsExcluding(
+		return pool;
+	}
+
+	private List<Long> getRandomPoolWithExclusions(User user, Set<Long> excludedUserIds, int poolSize) {
+		long total = userRepository.countEligibleOppositeGenderUsersExcluding(user.getId(), user.getGender(), excludedUserIds);
+		if (total < 1) {
+			return List.of();
+		}
+		int offset = randomOffset(total, poolSize);
+		List<Long> pool = new ArrayList<>(userRepository.findEligibleOppositeGenderUserIdsExcluding(
 			user.getId(),
 			user.getGender(),
 			excludedUserIds,
-			MAX_DATING_PROFILE_COUNT
-		);
+			poolSize,
+			offset
+		));
+		if (pool.size() < poolSize && offset > 0) {
+			pool.addAll(userRepository.findEligibleOppositeGenderUserIdsExcluding(
+				user.getId(),
+				user.getGender(),
+				excludedUserIds,
+				poolSize - pool.size(),
+				0
+			));
+		}
+		return pool;
+	}
+
+	private int randomOffset(long total, int poolSize) {
+		long maxOffset = Math.max(0L, total - poolSize);
+		if (maxOffset == 0L) {
+			return 0;
+		}
+		long bound = Math.min(Integer.MAX_VALUE, maxOffset + 1);
+		return ThreadLocalRandom.current().nextInt((int) bound);
 	}
 
 	private boolean isRefreshDue(LocalDateTime refreshAvailableAt, LocalDateTime now) {
