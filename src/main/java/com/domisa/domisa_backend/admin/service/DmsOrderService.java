@@ -82,6 +82,7 @@ public class DmsOrderService {
 			order.getBillingName(),
 			order.getOrderAmount(),
 			cookieCode == null ? "-" : cookieCode.name(),
+			cookieCode == null ? "-" : formatUnitDescription(cookieCode),
 			order.getCookieAmount(),
 			order.getStatus().name(),
 			order.getOrderDate(),
@@ -99,7 +100,11 @@ public class DmsOrderService {
 			.orElse(null);
 	}
 
-	private static class MutableCookieCodeStats {
+	private String formatUnitDescription(CookieCode code) {
+		return code.getOrderAmount() + "원에 " + code.getCookieAmount() + "개";
+	}
+
+	private class MutableCookieCodeStats {
 		private long orderCount;
 		private long cookieAmount;
 		private long orderAmount;
@@ -114,14 +119,15 @@ public class DmsOrderService {
 			}
 		}
 
-		private DmsOrderCookieCodeStatsResponse toResponse(CookieCode code) {
-			return new DmsOrderCookieCodeStatsResponse(
-				code.name(),
-				orderCount,
-				cookieAmount,
-				orderAmount,
-				paidOrderAmount
-			);
+			private DmsOrderCookieCodeStatsResponse toResponse(CookieCode code) {
+				return new DmsOrderCookieCodeStatsResponse(
+					code.name(),
+					formatUnitDescription(code),
+					orderCount,
+					cookieAmount,
+					orderAmount,
+					paidOrderAmount
+				);
 		}
 	}
 }

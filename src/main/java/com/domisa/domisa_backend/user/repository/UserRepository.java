@@ -30,6 +30,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			where (:checked is null or :checked = ''
 				or (:checked = 'true' and u.isChecked = true)
 				or (:checked = 'false' and (u.isChecked is null or u.isChecked = false)))
+			and (:keyword is null or :keyword = ''
+				or lower(u.publicId) like lower(concat('%', :keyword, '%'))
+				or lower(coalesce(u.name, '')) like lower(concat('%', :keyword, '%'))
+				or lower(coalesce(u.nickname, '')) like lower(concat('%', :keyword, '%'))
+				or lower(coalesce(u.notificationPhone, '')) like lower(concat('%', :keyword, '%'))
+				or str(u.id) like concat('%', :keyword, '%')
+				or str(u.kakaoId) like concat('%', :keyword, '%'))
+			and (:completedOnly = false
+				or (u.isRegistered = true and u.hasIntroduction = true and u.isProfileCompleted = true))
 			and (:status is null or :status = ''
 				or (:status = 'heaven' and not exists (
 					select 1 from UserBlacklist b where b.user = u
@@ -41,22 +50,37 @@ public interface UserRepository extends JpaRepository<User, Long> {
 				case when u.isChecked is null or u.isChecked = false then 0 else 1 end asc,
 				u.id desc
 			""",
-		countQuery = """
-			select count(u)
-			from User u
-			where (:checked is null or :checked = ''
-				or (:checked = 'true' and u.isChecked = true)
-				or (:checked = 'false' and (u.isChecked is null or u.isChecked = false)))
-			and (:status is null or :status = ''
-				or (:status = 'heaven' and not exists (
-					select 1 from UserBlacklist b where b.user = u
-				))
+			countQuery = """
+				select count(u)
+				from User u
+				where (:checked is null or :checked = ''
+					or (:checked = 'true' and u.isChecked = true)
+					or (:checked = 'false' and (u.isChecked is null or u.isChecked = false)))
+				and (:keyword is null or :keyword = ''
+					or lower(u.publicId) like lower(concat('%', :keyword, '%'))
+					or lower(coalesce(u.name, '')) like lower(concat('%', :keyword, '%'))
+					or lower(coalesce(u.nickname, '')) like lower(concat('%', :keyword, '%'))
+					or lower(coalesce(u.notificationPhone, '')) like lower(concat('%', :keyword, '%'))
+					or str(u.id) like concat('%', :keyword, '%')
+					or str(u.kakaoId) like concat('%', :keyword, '%'))
+				and (:completedOnly = false
+					or (u.isRegistered = true and u.hasIntroduction = true and u.isProfileCompleted = true))
+				and (:status is null or :status = ''
+					or (:status = 'heaven' and not exists (
+						select 1 from UserBlacklist b where b.user = u
+					))
 				or (:status = 'hell' and exists (
 					select 1 from UserBlacklist b where b.user = u
 				)))
-			"""
+				"""
 	)
-	Page<User> findAllForDms(@Param("checked") String checked, @Param("status") String status, Pageable pageable);
+	Page<User> findAllForDms(
+		@Param("checked") String checked,
+		@Param("status") String status,
+		@Param("keyword") String keyword,
+		@Param("completedOnly") boolean completedOnly,
+		Pageable pageable
+	);
 
 	@Query("""
 		select u
@@ -73,6 +97,54 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@Query("select count(u) from User u where u.isChecked is null or u.isChecked = false")
 	long countDmsUncheckedUsers();
+
+	@Query("""
+		select count(u)
+		from User u
+		where (:completedOnly = false
+			or (u.isRegistered = true and u.hasIntroduction = true and u.isProfileCompleted = true))
+		""")
+	long countForDms(@Param("completedOnly") boolean completedOnly);
+
+	@Query("""
+		select count(u)
+		from User u
+		where u.isChecked = true
+		and (:completedOnly = false
+			or (u.isRegistered = true and u.hasIntroduction = true and u.isProfileCompleted = true))
+		""")
+	long countDmsCheckedUsers(@Param("completedOnly") boolean completedOnly);
+
+	@Query("""
+		select count(u)
+		from User u
+		where (u.isChecked is null or u.isChecked = false)
+		and (:completedOnly = false
+			or (u.isRegistered = true and u.hasIntroduction = true and u.isProfileCompleted = true))
+		""")
+	long countDmsUncheckedUsers(@Param("completedOnly") boolean completedOnly);
+
+	@Query("""
+		select count(u)
+		from User u
+		where u.gender = :gender
+		and (:completedOnly = false
+			or (u.isRegistered = true and u.hasIntroduction = true and u.isProfileCompleted = true))
+		""")
+	long countByGenderForDms(@Param("gender") Boolean gender, @Param("completedOnly") boolean completedOnly);
+
+	@Query("""
+		select count(u)
+		from User u
+		where u.createdAt >= :start and u.createdAt < :end
+		and (:completedOnly = false
+			or (u.isRegistered = true and u.hasIntroduction = true and u.isProfileCompleted = true))
+		""")
+	long countByCreatedAtBetweenForDms(
+		@Param("start") LocalDateTime start,
+		@Param("end") LocalDateTime end,
+		@Param("completedOnly") boolean completedOnly
+	);
 
 	long countByGender(Boolean gender);
 

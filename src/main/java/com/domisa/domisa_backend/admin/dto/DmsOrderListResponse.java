@@ -17,6 +17,7 @@ public record DmsOrderListResponse(
 		String billingName,
 		Integer orderAmount,
 		String cookieCode,
+		String cookieUnitDescription,
 		Integer cookieAmount,
 		String orderStatus,
 		LocalDateTime orderDate,

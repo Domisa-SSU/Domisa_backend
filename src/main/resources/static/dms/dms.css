@@ -221,6 +221,11 @@ textarea {
 	text-align: center;
 }
 
+.dms-pagination-jump {
+	justify-content: center;
+	margin-top: 10px;
+}
+
 .dms-danger-zone {
 	margin-left: auto;
 }
@@ -273,6 +278,21 @@ textarea {
 }
 
 .dms-badge-danger {
+	background: #fee2e2;
+	color: #991b1b;
+}
+
+.dms-order-status-paid {
+	background: #dcfce7;
+	color: #166534;
+}
+
+.dms-order-status-pending {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.dms-order-status-failed {
 	background: #fee2e2;
 	color: #991b1b;
 }

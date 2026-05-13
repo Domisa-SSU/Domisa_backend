@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.util.UriUtils;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.nio.charset.StandardCharsets;
 
 @Controller
 @RequestMapping("/dms-room/users")
@@ -22,10 +24,27 @@ public class DmsUserController {
 	public String users(
 		@RequestParam(value = "checked", required = false) String checked,
 		@RequestParam(value = "status", required = false) String status,
+		@RequestParam(value = "q", required = false) String keyword,
 		@RequestParam(value = "page", required = false) Integer page,
 		Model model
 	) {
-		model.addAttribute("page", dmsUserService.getUsers(checked, status, page));
+		model.addAttribute("page", dmsUserService.getUsers(checked, status, keyword, page, false));
+		model.addAttribute("listPath", "/dms-room/users");
+		model.addAttribute("listTitle", "유저 목록");
+		return "dms/users";
+	}
+
+	@GetMapping("/completed")
+	public String completedUsers(
+		@RequestParam(value = "checked", required = false) String checked,
+		@RequestParam(value = "status", required = false) String status,
+		@RequestParam(value = "q", required = false) String keyword,
+		@RequestParam(value = "page", required = false) Integer page,
+		Model model
+	) {
+		model.addAttribute("page", dmsUserService.getUsers(checked, status, keyword, page, true));
+		model.addAttribute("listPath", "/dms-room/users/completed");
+		model.addAttribute("listTitle", "완료 유저 목록");
 		return "dms/users";
 	}
 
@@ -40,10 +59,12 @@ public class DmsUserController {
 		@PathVariable Long userId,
 		@RequestParam(value = "checked", required = false) String checked,
 		@RequestParam(value = "status", required = false) String status,
+		@RequestParam(value = "q", required = false) String keyword,
+		@RequestParam(value = "completedOnly", required = false, defaultValue = "false") boolean completedOnly,
 		@RequestParam(value = "page", required = false) Integer page
 	) {
 		dmsUserService.markHeaven(userId);
-		return redirectUsers(checked, status, page);
+		return redirectUsers(checked, status, keyword, completedOnly, page);
 	}
 
 	@PostMapping("/{userId}/hell")
@@ -51,10 +72,12 @@ public class DmsUserController {
 		@PathVariable Long userId,
 		@RequestParam(value = "checked", required = false) String checked,
 		@RequestParam(value = "status", required = false) String status,
+		@RequestParam(value = "q", required = false) String keyword,
+		@RequestParam(value = "completedOnly", required = false, defaultValue = "false") boolean completedOnly,
 		@RequestParam(value = "page", required = false) Integer page
 	) {
 		dmsUserService.markHell(userId);
-		return redirectUsers(checked, status, page);
+		return redirectUsers(checked, status, keyword, completedOnly, page);
 	}
 
 	@GetMapping("/{userId}/student-card")
@@ -142,20 +165,28 @@ public class DmsUserController {
 		return "redirect:/dms-room/users/" + userId;
 	}
 
-	private String redirectUsers(String checked, String status, Integer page) {
-		StringBuilder redirect = new StringBuilder("redirect:/dms-room/users");
+	private String redirectUsers(String checked, String status, String keyword, boolean completedOnly, Integer page) {
+		StringBuilder redirect = new StringBuilder(completedOnly ? "redirect:/dms-room/users/completed" : "redirect:/dms-room/users");
 		String separator = "?";
 		if (checked != null && !checked.isBlank()) {
-			redirect.append(separator).append("checked=").append(checked);
+			redirect.append(separator).append("checked=").append(encode(checked));
 			separator = "&";
 		}
 		if (status != null && !status.isBlank()) {
-			redirect.append(separator).append("status=").append(status);
+			redirect.append(separator).append("status=").append(encode(status));
+			separator = "&";
+		}
+		if (keyword != null && !keyword.isBlank()) {
+			redirect.append(separator).append("q=").append(encode(keyword.strip()));
 			separator = "&";
 		}
 		if (page != null && page > 1) {
 			redirect.append(separator).append("page=").append(page);
 		}
 		return redirect.toString();
+	}
+
+	private String encode(String value) {
+		return UriUtils.encodeQueryParam(value, StandardCharsets.UTF_8);
 	}
 }

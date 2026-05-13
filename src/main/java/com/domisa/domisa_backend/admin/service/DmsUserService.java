@@ -37,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DmsUserService {
 
 	private static final int DMS_USER_PAGE_SIZE = 20;
+	private static final int DMS_PAGE_GROUP_SIZE = 10;
 
 	private final UserRepository userRepository;
 	private final UserBlacklistRepository userBlacklistRepository;
@@ -48,17 +49,22 @@ public class DmsUserService {
 	private final DatingService datingService;
 
 	@Transactional(readOnly = true)
-	public DmsUserListResponse getUsers(String checked, String status, Integer page) {
+	public DmsUserListResponse getUsers(String checked, String status, String keyword, Integer page, boolean completedOnly) {
 		int requestedPage = normalizeRequestedPage(page);
+		String normalizedKeyword = normalizeKeyword(keyword);
 		Page<User> userPage = userRepository.findAllForDms(
 			checked,
 			status,
+			normalizedKeyword,
+			completedOnly,
 			PageRequest.of(requestedPage - 1, DMS_USER_PAGE_SIZE)
 		);
 		if (requestedPage > 1 && userPage.getTotalPages() > 0 && requestedPage > userPage.getTotalPages()) {
 			userPage = userRepository.findAllForDms(
 				checked,
 				status,
+				normalizedKeyword,
+				completedOnly,
 				PageRequest.of(userPage.getTotalPages() - 1, DMS_USER_PAGE_SIZE)
 			);
 		}
@@ -75,19 +81,31 @@ public class DmsUserService {
 			.toList();
 		int currentPage = userPage.getNumber() + 1;
 		int totalPages = Math.max(1, userPage.getTotalPages());
+		int currentGroupStart = ((currentPage - 1) / DMS_PAGE_GROUP_SIZE) * DMS_PAGE_GROUP_SIZE + 1;
+		int currentGroupEnd = Math.min(totalPages, currentGroupStart + DMS_PAGE_GROUP_SIZE - 1);
+		boolean hasPreviousGroup = currentGroupStart > 1;
+		boolean hasNextGroup = currentGroupEnd < totalPages;
+		int previousGroupPage = Math.max(1, currentGroupStart - DMS_PAGE_GROUP_SIZE);
+		int nextGroupPage = Math.min(totalPages, currentGroupStart + DMS_PAGE_GROUP_SIZE);
 
 		return new DmsUserListResponse(
-			getStats(),
+			getStats(completedOnly),
 			rows,
 			checked,
 			status,
+			normalizedKeyword,
+			completedOnly,
 			currentPage,
 			DMS_USER_PAGE_SIZE,
 			totalPages,
 			userPage.getTotalElements(),
 			currentPage > 1,
 			currentPage < totalPages,
-			buildPageNumbers(currentPage, totalPages)
+			hasPreviousGroup,
+			hasNextGroup,
+			previousGroupPage,
+			nextGroupPage,
+			buildPageNumbers(currentGroupStart, currentGroupEnd)
 		);
 	}
 
@@ -166,17 +184,17 @@ public class DmsUserService {
 		return url;
 	}
 
-	private DmsUserStatsResponse getStats() {
+	private DmsUserStatsResponse getStats(boolean completedOnly) {
 		LocalDate today = LocalDate.now();
 		LocalDateTime start = today.atStartOfDay();
 		LocalDateTime end = today.plusDays(1).atStartOfDay();
 		return new DmsUserStatsResponse(
-			userRepository.count(),
-			userRepository.countDmsCheckedUsers(),
-			userRepository.countDmsUncheckedUsers(),
-			userRepository.countByGender(true),
-			userRepository.countByGender(false),
-			userRepository.countByCreatedAtBetween(start, end)
+			userRepository.countForDms(completedOnly),
+			userRepository.countDmsCheckedUsers(completedOnly),
+			userRepository.countDmsUncheckedUsers(completedOnly),
+			userRepository.countByGenderForDms(true, completedOnly),
+			userRepository.countByGenderForDms(false, completedOnly),
+			userRepository.countByCreatedAtBetweenForDms(start, end, completedOnly)
 		);
 	}
 
@@ -207,9 +225,15 @@ public class DmsUserService {
 		return page;
 	}
 
-	private List<Integer> buildPageNumbers(int currentPage, int totalPages) {
-		int start = Math.max(1, currentPage - 2);
-		int end = Math.min(totalPages, currentPage + 2);
+	private String normalizeKeyword(String keyword) {
+		if (keyword == null) {
+			return null;
+		}
+		String normalized = keyword.strip();
+		return normalized.isEmpty() ? null : normalized;
+	}
+
+	private List<Integer> buildPageNumbers(int start, int end) {
 		List<Integer> pageNumbers = new ArrayList<>();
 		for (int page = start; page <= end; page++) {
 			pageNumbers.add(page);
