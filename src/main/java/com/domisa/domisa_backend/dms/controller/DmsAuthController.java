@@ -43,12 +43,14 @@ public class DmsAuthController {
 			model.addAttribute("errorMessage", "관리자 ID 또는 비밀번호가 올바르지 않습니다.");
 			return "dms/login";
 		}
+		response.addHeader("Set-Cookie", dmsAuthService.buildAuthCookieHeader());
 		return "redirect:/dms-room/users";
 	}
 
 	@PostMapping("/logout")
-	public String logout(HttpSession session) {
+	public String logout(HttpSession session, HttpServletResponse response) {
 		dmsAuthService.logout(session);
+		response.addHeader("Set-Cookie", dmsAuthService.buildClearAuthCookieHeader());
 		return "redirect:/dms-room/login";
 	}
 
