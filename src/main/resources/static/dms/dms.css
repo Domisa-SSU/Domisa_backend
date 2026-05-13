@@ -326,6 +326,29 @@ textarea {
 	max-width: 760px;
 }
 
+.dms-cookiecode-info h3 {
+	margin: 0 0 10px;
+	font-size: 16px;
+}
+
+.dms-code-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: grid;
+	gap: 8px;
+}
+
+.dms-code-list li {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 8px 10px;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	background: #f9fafb;
+}
+
 .dms-two-columns {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

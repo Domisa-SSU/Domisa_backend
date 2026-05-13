@@ -11,7 +11,6 @@ public record DmsOrderListResponse(
 
 	public record OrderRow(
 		Long id,
-		String orderNumber,
 		Long userId,
 		String userPublicId,
 		String billingName,
@@ -22,8 +21,7 @@ public record DmsOrderListResponse(
 		String orderStatus,
 		LocalDateTime orderDate,
 		LocalDateTime paidAt,
-		LocalDateTime createdAt,
-		LocalDateTime updatedAt
+		String orderNumber
 	) {
 	}
 }

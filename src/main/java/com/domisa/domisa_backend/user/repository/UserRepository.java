@@ -150,6 +150,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
+	@Query("""
+		select count(u)
+		from User u
+		where u.createdAt >= :start and u.createdAt < :end
+		and u.isRegistered = true
+		and u.hasIntroduction = true
+		and u.isProfileCompleted = true
+		and (:gender is null or u.gender = :gender)
+		""")
+	long countCompletedUsersByCreatedAtBetween(
+		@Param("start") LocalDateTime start,
+		@Param("end") LocalDateTime end,
+		@Param("gender") Boolean gender
+	);
+
 	@Modifying
 	@Query("update User u set u.cookies = u.cookies + :amount")
 	int addCookiesToAll(@Param("amount") long amount);
@@ -227,6 +242,32 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@org.springframework.data.jpa.repository.Query(
 		value = """
+			SELECT COUNT(*)
+			FROM users u
+			WHERE u.id != :userId
+			AND u.is_registered = true
+			AND EXISTS (
+				SELECT 1
+				FROM introductions i
+				WHERE i.participant_id = u.id
+			)
+			AND NOT EXISTS (
+				SELECT 1
+				FROM user_blacklists b
+				WHERE b.user_id = u.id
+			)
+			AND u.is_profile_completed = true
+			AND u.gender <> :gender
+			""",
+		nativeQuery = true
+	)
+	long countEligibleOppositeGenderUsers(
+		@org.springframework.data.repository.query.Param("userId") Long userId,
+		@org.springframework.data.repository.query.Param("gender") Boolean gender
+	);
+
+	@org.springframework.data.jpa.repository.Query(
+		value = """
 			SELECT u.id FROM users u
 			WHERE u.id != :userId
 			AND u.is_registered = true
@@ -242,14 +283,45 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			)
 			AND u.is_profile_completed = true
 			AND u.gender <> :gender
-			ORDER BY RAND()
-			LIMIT :limit
+			ORDER BY u.id DESC
+			LIMIT :limit OFFSET :offset
 			""",
 		nativeQuery = true
 	)
-	List<Long> findRandomOppositeGenderUserIds(@org.springframework.data.repository.query.Param("userId") Long userId,
+	List<Long> findEligibleOppositeGenderUserIds(
+		@org.springframework.data.repository.query.Param("userId") Long userId,
 		@org.springframework.data.repository.query.Param("gender") Boolean gender,
-		@org.springframework.data.repository.query.Param("limit") int limit);
+		@org.springframework.data.repository.query.Param("limit") int limit,
+		@org.springframework.data.repository.query.Param("offset") int offset
+	);
+
+	@org.springframework.data.jpa.repository.Query(
+		value = """
+			SELECT COUNT(*)
+			FROM users u
+			WHERE u.id != :userId
+			AND u.is_registered = true
+			AND EXISTS (
+				SELECT 1
+				FROM introductions i
+				WHERE i.participant_id = u.id
+			)
+			AND NOT EXISTS (
+				SELECT 1
+				FROM user_blacklists b
+				WHERE b.user_id = u.id
+			)
+			AND u.is_profile_completed = true
+			AND u.gender <> :gender
+			AND u.id NOT IN (:excludedUserIds)
+			""",
+		nativeQuery = true
+	)
+	long countEligibleOppositeGenderUsersExcluding(
+		@org.springframework.data.repository.query.Param("userId") Long userId,
+		@org.springframework.data.repository.query.Param("gender") Boolean gender,
+		@org.springframework.data.repository.query.Param("excludedUserIds") Collection<Long> excludedUserIds
+	);
 
 	@org.springframework.data.jpa.repository.Query(
 		value = """
@@ -269,16 +341,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			AND u.is_profile_completed = true
 			AND u.gender <> :gender
 			AND u.id NOT IN (:excludedUserIds)
-			ORDER BY RAND()
-			LIMIT :limit
+			ORDER BY u.id DESC
+			LIMIT :limit OFFSET :offset
 			""",
 		nativeQuery = true
 	)
-	List<Long> findRandomOppositeGenderUserIdsExcluding(
+	List<Long> findEligibleOppositeGenderUserIdsExcluding(
 		@org.springframework.data.repository.query.Param("userId") Long userId,
 		@org.springframework.data.repository.query.Param("gender") Boolean gender,
 		@org.springframework.data.repository.query.Param("excludedUserIds") Collection<Long> excludedUserIds,
-		@org.springframework.data.repository.query.Param("limit") int limit
+		@org.springframework.data.repository.query.Param("limit") int limit,
+		@org.springframework.data.repository.query.Param("offset") int offset
 	);
 
 	@Query("""

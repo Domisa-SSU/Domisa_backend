@@ -21,9 +21,23 @@ public interface CookieOrderRepository extends JpaRepository<CookieOrder, Long> 
 		select o
 		from CookieOrder o
 		join fetch o.user
+		where o.status in :statuses
 		order by o.createdAt desc, o.id desc
 		""")
-	List<CookieOrder> findAllForDms();
+	List<CookieOrder> findAllForDms(@Param("statuses") Collection<OrderStatus> statuses);
+
+	@Query("""
+		select o
+		from CookieOrder o
+		where o.status in :statuses
+		and o.paidAt >= :start
+		and o.paidAt < :end
+		""")
+	List<CookieOrder> findAllByStatusesAndPaidAtBetween(
+		@Param("statuses") Collection<OrderStatus> statuses,
+		@Param("start") java.time.LocalDateTime start,
+		@Param("end") java.time.LocalDateTime end
+	);
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	List<CookieOrder> findByUserIdAndStatusIn(Long userId, Collection<OrderStatus> statuses);

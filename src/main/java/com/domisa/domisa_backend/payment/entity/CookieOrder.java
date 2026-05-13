@@ -141,6 +141,20 @@ public class CookieOrder {
 		this.status = OrderStatus.CANCELED;
 	}
 
+	public void updateStatusByAdmin(OrderStatus status) {
+		if (status == null) {
+			throw new IllegalArgumentException("상태 값이 비어 있습니다.");
+		}
+		this.status = status;
+		if (status == OrderStatus.PAID || status == OrderStatus.ALREADY_PROCESSED) {
+			if (this.paidAt == null) {
+				this.paidAt = LocalDateTime.now();
+			}
+		} else if (status == OrderStatus.PENDING || status == OrderStatus.FAILED || status == OrderStatus.CANCELED) {
+			this.payactionProcessingDate = null;
+		}
+	}
+
 	@PrePersist
 	void onCreate() {
 		LocalDateTime now = LocalDateTime.now();
