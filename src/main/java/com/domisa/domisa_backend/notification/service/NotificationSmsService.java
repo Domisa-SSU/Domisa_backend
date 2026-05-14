@@ -26,6 +26,11 @@ public class NotificationSmsService {
 		도미사럽에서 바로 확인해보세요
 		https://domisalove.me/
 		""".strip();
+	private static final String ALL_USERS_MESSAGE = """
+		(광고)숭실대 백커플 만들기 성공!
+		"현재 324쌍이 매칭됐어요 ♥
+		"https://domisalove.me/
+		""".strip();
 
 	private final NotificationRepository notificationRepository;
 	private final UserRepository userRepository;
@@ -73,6 +78,24 @@ public class NotificationSmsService {
 			log.info("읽지 않은 알림 SMS를 동보 발송했습니다. count={}", phones.size());
 		} catch (RuntimeException exception) {
 			log.warn("읽지 않은 알림 SMS 동보 발송에 실패했습니다. count={}, reason={}", phones.size(), exception.getMessage());
+		}
+	}
+
+	@Transactional(readOnly = true)
+	public void sendAllUsersSms() {
+		List<String> phones = userRepository.findAllNotificationPhones();
+		log.info("전체 유저 SMS 대상 전화번호를 조회했습니다. count={}", phones.size());
+		if (phones.isEmpty()) {
+			log.info("전체 유저 SMS 발송 대상 전화번호가 없습니다.");
+			return;
+		}
+
+		try {
+			log.info("전체 유저 SMS 동보 발송을 요청합니다. count={}, phones={}", phones.size(), maskPhones(phones));
+			smsService.sendAll(phones, ALL_USERS_MESSAGE);
+			log.info("전체 유저 SMS를 동보 발송했습니다. count={}", phones.size());
+		} catch (RuntimeException exception) {
+			log.warn("전체 유저 SMS 동보 발송에 실패했습니다. count={}, reason={}", phones.size(), exception.getMessage());
 		}
 	}
 

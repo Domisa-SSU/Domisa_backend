@@ -381,6 +381,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	)
 	List<String> findBlacklistedNormalizedNotificationPhones(@Param("phones") Collection<String> phones);
 
+	@Query("""
+		select u.notificationPhone
+		from User u
+		where u.notificationPhone is not null
+		and u.notificationPhone <> ''
+		""")
+	List<String> findAllNotificationPhones();
+
 	@Modifying
 	@Query(value = "delete from user_my_blurs where user_id = :userId or target_user_id = :userId", nativeQuery = true)
 	void deleteBlurRelations(@Param("userId") Long userId);
