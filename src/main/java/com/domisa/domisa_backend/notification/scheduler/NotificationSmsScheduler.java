@@ -13,23 +13,48 @@ public class NotificationSmsScheduler {
 
 	private final NotificationSmsService notificationSmsService;
 
-	@Scheduled(cron = "0 0 11 * * *", zone = "Asia/Seoul")
+	@Scheduled(cron = "0 0 1 * * *", zone = "Asia/Seoul")
 	public void sendUnreadNotificationSms1() {
 		sendUnreadNotificationSms();
 	}
 
-	@Scheduled(cron = "0 0 15 * * *", zone = "Asia/Seoul")
+	@Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
 	public void sendUnreadNotificationSms2() {
 		sendUnreadNotificationSms();
 	}
 
-	@Scheduled(cron = "0 0 20 * * *", zone = "Asia/Seoul")
+	@Scheduled(cron = "0 0 11 * * *", zone = "Asia/Seoul")
 	public void sendUnreadNotificationSms3() {
 		sendUnreadNotificationSms();
 	}
 
-	@Scheduled(cron = "0 30 22 * * *", zone = "Asia/Seoul")
+	@Scheduled(cron = "0 0 13 * * *", zone = "Asia/Seoul")
 	public void sendUnreadNotificationSms4() {
+		sendUnreadNotificationSms();
+	}
+
+	@Scheduled(cron = "0 0 15 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSms5() {
+		sendUnreadNotificationSms();
+	}
+
+	@Scheduled(cron = "0 0 17 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSms6() {
+		sendUnreadNotificationSms();
+	}
+
+	@Scheduled(cron = "0 0 19 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSms7() {
+		sendUnreadNotificationSms();
+	}
+
+	@Scheduled(cron = "0 0 21 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSms8() {
+		sendUnreadNotificationSms();
+	}
+
+	@Scheduled(cron = "0 0 23 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSms9() {
 		sendUnreadNotificationSms();
 	}
 
