@@ -3,6 +3,7 @@ package com.domisa.domisa_backend.notification.service;
 import com.domisa.domisa_backend.notification.entity.Notification;
 import com.domisa.domisa_backend.notification.repository.NotificationRepository;
 import com.domisa.domisa_backend.notification.type.NotificationType;
+import com.domisa.domisa_backend.dating.service.DatingService;
 import com.domisa.domisa_backend.sms.service.SmsService;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
@@ -28,13 +29,14 @@ public class NotificationSmsService {
 		""".strip();
 	private static final String ALL_USERS_MESSAGE = """
 		(광고)숭실대 백커플 만들기 성공!
-		"현재 324쌍이 매칭됐어요 ♥
-		"https://domisalove.me/
+		현재 {}쌍이 매칭됐어요 ♥
+		https://domisalove.me/
 		""".strip();
 
 	private final NotificationRepository notificationRepository;
 	private final UserRepository userRepository;
 	private final SmsService smsService;
+	private final DatingService datingService;
 
 	@Transactional(readOnly = true)
 	public void sendUnreadNotificationSms() {
@@ -83,6 +85,16 @@ public class NotificationSmsService {
 
 	@Transactional(readOnly = true)
 	public void sendAllUsersSms() {
+		long matchCount = datingService.getMatchCount().matchCount();
+		String message = buildAllUsersMessage(matchCount);
+		sendAllUsersSms(message);
+	}
+
+	@Transactional(readOnly = true)
+	public void sendAllUsersSms(String message) {
+		if (message == null || message.isBlank()) {
+			throw new IllegalArgumentException("message는 필수입니다.");
+		}
 		List<String> phones = userRepository.findAllNotificationPhones();
 		log.info("전체 유저 SMS 대상 전화번호를 조회했습니다. count={}", phones.size());
 		if (phones.isEmpty()) {
@@ -92,11 +104,15 @@ public class NotificationSmsService {
 
 		try {
 			log.info("전체 유저 SMS 동보 발송을 요청합니다. count={}, phones={}", phones.size(), maskPhones(phones));
-			smsService.sendAll(phones, ALL_USERS_MESSAGE);
+			smsService.sendAll(phones, message);
 			log.info("전체 유저 SMS를 동보 발송했습니다. count={}", phones.size());
 		} catch (RuntimeException exception) {
 			log.warn("전체 유저 SMS 동보 발송에 실패했습니다. count={}, reason={}", phones.size(), exception.getMessage());
 		}
+	}
+
+	private String buildAllUsersMessage(long matchCount) {
+		return ALL_USERS_MESSAGE.replace("{}", String.valueOf(matchCount));
 	}
 
 	private String buildMessage(Set<NotificationType> types) {

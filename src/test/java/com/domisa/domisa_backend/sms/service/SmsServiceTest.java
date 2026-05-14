@@ -1,15 +1,12 @@
 package com.domisa.domisa_backend.sms.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.domisa.domisa_backend.sms.client.BizgoClient;
 import com.domisa.domisa_backend.sms.config.BizgoProperties;
 import com.domisa.domisa_backend.sms.dto.SmsRequest;
-import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
@@ -24,17 +21,12 @@ class SmsServiceTest {
 	@Mock
 	private BizgoClient bizgoClient;
 
-	@Mock
-	private UserRepository userRepository;
-
 	@Test
 	void sendBuildsSmsOmniRequest() {
 		SmsService smsService = new SmsService(
 			bizgoClient,
-			new BizgoProperties("https://mars.ibapi.kr", "test-api-key", "02-1234-5678"),
-			userRepository
+			new BizgoProperties("https://mars.ibapi.kr", "test-api-key", "02-1234-5678")
 		);
-		when(userRepository.findBlacklistedNormalizedNotificationPhones(anyCollection())).thenReturn(List.of());
 		ArgumentCaptor<SmsRequest> requestCaptor = ArgumentCaptor.forClass(SmsRequest.class);
 
 		smsService.send("010-1234-5678", " 안녕하세요 ");
@@ -52,10 +44,8 @@ class SmsServiceTest {
 	void sendAllSplitsDestinationsBy200() {
 		SmsService smsService = new SmsService(
 			bizgoClient,
-			new BizgoProperties("https://mars.ibapi.kr", "test-api-key", "0212345678"),
-			userRepository
+			new BizgoProperties("https://mars.ibapi.kr", "test-api-key", "0212345678")
 		);
-		when(userRepository.findBlacklistedNormalizedNotificationPhones(anyCollection())).thenReturn(List.of());
 		List<String> phones = IntStream.rangeClosed(1, 201)
 			.mapToObj(number -> "0101234%04d".formatted(number))
 			.toList();
@@ -72,17 +62,14 @@ class SmsServiceTest {
 	}
 
 	@Test
-	void sendAllFiltersBlacklistedPhonesWithBulkLookup() {
+	void sendAllSkipsInvalidPhoneAndKeepsValidPhones() {
 		SmsService smsService = new SmsService(
 			bizgoClient,
-			new BizgoProperties("https://mars.ibapi.kr", "test-api-key", "0212345678"),
-			userRepository
+			new BizgoProperties("https://mars.ibapi.kr", "test-api-key", "0212345678")
 		);
-		when(userRepository.findBlacklistedNormalizedNotificationPhones(anyCollection()))
-			.thenReturn(List.of("01011111111"));
 		ArgumentCaptor<SmsRequest> requestCaptor = ArgumentCaptor.forClass(SmsRequest.class);
 
-		smsService.sendAll(List.of("010-1111-1111", "010-2222-2222"), "안녕하세요");
+		smsService.sendAll(List.of("invalid", "010-2222-2222"), "안녕하세요");
 
 		verify(bizgoClient).send(requestCaptor.capture());
 		SmsRequest request = requestCaptor.getValue();

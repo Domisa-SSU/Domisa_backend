@@ -6,11 +6,9 @@ import com.domisa.domisa_backend.sms.dto.Destination;
 import com.domisa.domisa_backend.sms.dto.MessageFlow;
 import com.domisa.domisa_backend.sms.dto.Sms;
 import com.domisa.domisa_backend.sms.dto.SmsRequest;
-import com.domisa.domisa_backend.user.repository.UserRepository;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,24 +24,29 @@ public class SmsService {
 
 	private final BizgoClient bizgoClient;
 	private final BizgoProperties bizgoProperties;
-	private final UserRepository userRepository;
 
 	public void send(String phone, String message) {
 		sendAll(List.of(phone), message);
 	}
 
 	public void sendAll(Collection<String> phones, String message) {
+		sendAll(phones, message, null);
+	}
+
+	public void sendAll(Collection<String> phones, String message, Map<String, String> replaceWords) {
 		if (phones == null || phones.isEmpty()) {
 			throw new IllegalArgumentException("phones는 필수입니다.");
 		}
 
 		List<String> normalizedPhones = phones.stream()
-			.map(this::normalizePhone)
+			.map(this::normalizePhoneOrNull)
+			.filter(phone -> phone != null && !phone.isBlank())
+			.distinct()
 			.toList();
-		Set<String> blacklistedPhones = findBlacklistedPhones(normalizedPhones);
-		normalizedPhones = normalizedPhones.stream()
-			.filter(phone -> isNotBlacklistedPhone(phone, blacklistedPhones))
-			.toList();
+		if (normalizedPhones.isEmpty()) {
+			log.info("유효한 SMS 발송 대상 전화번호가 없습니다.");
+			return;
+		}
 		String normalizedMessage = normalizeMessage(message);
 		String senderNumber = normalizeSenderNumber(bizgoProperties.senderNumber());
 		log.info("SMS 발송 요청을 준비했습니다. totalCount={}, sender={}, messageLength={}, phones={}",
@@ -56,29 +59,20 @@ public class SmsService {
 		for (int start = 0; start < normalizedPhones.size(); start += MAX_DESTINATION_COUNT) {
 			int end = Math.min(start + MAX_DESTINATION_COUNT, normalizedPhones.size());
 			int batchNumber = (start / MAX_DESTINATION_COUNT) + 1;
-			sendBatch(normalizedPhones.subList(start, end), senderNumber, normalizedMessage, batchNumber);
+			sendBatch(normalizedPhones.subList(start, end), senderNumber, normalizedMessage, batchNumber, replaceWords);
 		}
 	}
 
-	private Set<String> findBlacklistedPhones(List<String> phones) {
-		if (phones.isEmpty()) {
-			return Set.of();
-		}
-		return new HashSet<>(userRepository.findBlacklistedNormalizedNotificationPhones(phones));
-	}
-
-	private boolean isNotBlacklistedPhone(String phone, Set<String> blacklistedPhones) {
-		if (!blacklistedPhones.contains(phone)) {
-			return true;
-		}
-		log.info("SMS 발송 대상에서 블랙리스트 유저 전화번호를 제외했습니다. phone={}", maskPhone(phone));
-		return false;
-	}
-
-	private void sendBatch(List<String> phones, String senderNumber, String message, int batchNumber) {
+	private void sendBatch(
+		List<String> phones,
+		String senderNumber,
+		String message,
+		int batchNumber,
+		Map<String, String> replaceWords
+	) {
 		SmsRequest request = new SmsRequest(
 			phones.stream()
-				.map(Destination::new)
+				.map(phone -> new Destination(phone, replaceWords))
 				.toList(),
 			List.of(new MessageFlow(new Sms(senderNumber, message)))
 		);
@@ -97,6 +91,15 @@ public class SmsService {
 			throw new IllegalArgumentException("phone 형식이 올바르지 않습니다.");
 		}
 		return normalizedPhone;
+	}
+
+	private String normalizePhoneOrNull(String phone) {
+		try {
+			return normalizePhone(phone);
+		} catch (IllegalArgumentException exception) {
+			log.warn("SMS 발송 대상 전화번호를 제외했습니다. reason={}, rawPhone={}", exception.getMessage(), maskPhone(phone));
+			return null;
+		}
 	}
 
 	private String normalizeSenderNumber(String senderNumber) {

@@ -386,6 +386,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 		from User u
 		where u.notificationPhone is not null
 		and u.notificationPhone <> ''
+		and not exists (
+			select 1 from UserBlacklist b where b.user = u
+		)
 		""")
 	List<String> findAllNotificationPhones();
 
