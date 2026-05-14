@@ -58,6 +58,15 @@ public class NotificationSmsScheduler {
 		sendUnreadNotificationSms();
 	}
 
+	@Scheduled(cron = "0 0 18 * * *", zone = "Asia/Seoul")
+	public void sendAllUsersSms() {
+		try {
+			notificationSmsService.sendAllUsersSms();
+		} catch (Exception exception) {
+			log.error("전체 유저 SMS 스케줄러 실행 중 예외가 발생했습니다.", exception);
+		}
+	}
+
 	public void sendUnreadNotificationSms() {
 		try {
 			notificationSmsService.sendUnreadNotificationSms();
