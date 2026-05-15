@@ -39,14 +39,27 @@
 					<option value="true" th:selected="${page.checked == 'true'}">체크 완료</option>
 					<option value="false" th:selected="${page.checked == 'false'}">체크 미완료</option>
 				</select>
-			<select name="status">
+				<select name="status">
 				<option value="" th:selected="${page.status == null or page.status == ''}">전체 상태</option>
 					<option value="heaven" th:selected="${page.status == 'heaven'}">천국</option>
 					<option value="hell" th:selected="${page.status == 'hell'}">지옥</option>
 				</select>
+				<select name="gender">
+					<option value="" th:selected="${page.gender == null or page.gender == ''}">전체 성별</option>
+					<option value="male" th:selected="${page.gender == 'male'}">남</option>
+					<option value="female" th:selected="${page.gender == 'female'}">여</option>
+				</select>
+				<select name="birthYearSort">
+					<option value="" th:selected="${page.birthYearSort == null or page.birthYearSort == ''}">출생연도 정렬 없음</option>
+					<option value="asc" th:selected="${page.birthYearSort == 'asc'}">출생연도 오름차순</option>
+					<option value="desc" th:selected="${page.birthYearSort == 'desc'}">출생연도 내림차순</option>
+				</select>
 				<input type="text" name="q" maxlength="60" placeholder="ID, publicId, 닉네임, 이름, 연락처 검색" th:value="${page.keyword}">
 				<a class="dms-button" th:href="${page.completedOnly} ? @{/dms-room/users/completed} : @{/dms-room/users}">초기화</a>
 			</form>
+
+		<a class="dms-button"
+		   th:href="@{/dms-room/users/excel(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, completedOnly=${page.completedOnly})}">엑셀 다운로드</a>
 
 		<form method="post" action="/dms-room/users/cookies/add-all" class="dms-inline-form dms-danger-zone" data-confirm="전체 유저에게 쿠키를 지급할까요?">
 			<input type="number" name="amount" min="1" placeholder="전체 지급 수량" required>
@@ -94,6 +107,8 @@
 						<form method="post" th:action="@{/dms-room/users/{id}/heaven(id=${user.id})}">
 							<input type="hidden" name="checked" th:value="${page.checked}">
 							<input type="hidden" name="status" th:value="${page.status}">
+							<input type="hidden" name="gender" th:value="${page.gender}">
+							<input type="hidden" name="birthYearSort" th:value="${page.birthYearSort}">
 							<input type="hidden" name="q" th:value="${page.keyword}">
 							<input type="hidden" name="completedOnly" th:value="${page.completedOnly}">
 							<input type="hidden" name="page" th:value="${page.page}">
@@ -102,6 +117,8 @@
 						<form method="post" th:action="@{/dms-room/users/{id}/hell(id=${user.id})}" data-confirm="이 유저를 지옥 처리할까요?">
 							<input type="hidden" name="checked" th:value="${page.checked}">
 							<input type="hidden" name="status" th:value="${page.status}">
+							<input type="hidden" name="gender" th:value="${page.gender}">
+							<input type="hidden" name="birthYearSort" th:value="${page.birthYearSort}">
 							<input type="hidden" name="q" th:value="${page.keyword}">
 							<input type="hidden" name="completedOnly" th:value="${page.completedOnly}">
 							<input type="hidden" name="page" th:value="${page.page}">
@@ -121,26 +138,28 @@
 		<nav class="dms-pagination" th:if="${page.totalPages > 1}">
 			<a class="dms-button dms-button-small"
 			   th:if="${page.hasPreviousGroup}"
-			   th:href="${page.completedOnly} ? @{/dms-room/users/completed(checked=${page.checked}, status=${page.status}, q=${page.keyword}, page=${page.previousGroupPage})} : @{/dms-room/users(checked=${page.checked}, status=${page.status}, q=${page.keyword}, page=${page.previousGroupPage})}">이전 10페이지</a>
+			   th:href="${page.completedOnly} ? @{/dms-room/users/completed(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, page=${page.previousGroupPage})} : @{/dms-room/users(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, page=${page.previousGroupPage})}">이전 10페이지</a>
 			<a class="dms-button dms-button-small"
 			   th:if="${page.hasPrevious}"
-			   th:href="${page.completedOnly} ? @{/dms-room/users/completed(checked=${page.checked}, status=${page.status}, q=${page.keyword}, page=${page.page - 1})} : @{/dms-room/users(checked=${page.checked}, status=${page.status}, q=${page.keyword}, page=${page.page - 1})}">이전</a>
+			   th:href="${page.completedOnly} ? @{/dms-room/users/completed(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, page=${page.page - 1})} : @{/dms-room/users(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, page=${page.page - 1})}">이전</a>
 			<span th:each="pageNumber : ${page.pageNumbers}">
 				<a class="dms-button dms-button-small"
 				   th:classappend="${pageNumber == page.page} ? ' dms-button-primary'"
-				   th:href="${page.completedOnly} ? @{/dms-room/users/completed(checked=${page.checked}, status=${page.status}, q=${page.keyword}, page=${pageNumber})} : @{/dms-room/users(checked=${page.checked}, status=${page.status}, q=${page.keyword}, page=${pageNumber})}"
+				   th:href="${page.completedOnly} ? @{/dms-room/users/completed(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, page=${pageNumber})} : @{/dms-room/users(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, page=${pageNumber})}"
 				   th:text="${pageNumber}"></a>
 			</span>
 			<a class="dms-button dms-button-small"
 			   th:if="${page.hasNext}"
-			   th:href="${page.completedOnly} ? @{/dms-room/users/completed(checked=${page.checked}, status=${page.status}, q=${page.keyword}, page=${page.page + 1})} : @{/dms-room/users(checked=${page.checked}, status=${page.status}, q=${page.keyword}, page=${page.page + 1})}">다음</a>
+			   th:href="${page.completedOnly} ? @{/dms-room/users/completed(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, page=${page.page + 1})} : @{/dms-room/users(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, page=${page.page + 1})}">다음</a>
 			<a class="dms-button dms-button-small"
 			   th:if="${page.hasNextGroup}"
-			   th:href="${page.completedOnly} ? @{/dms-room/users/completed(checked=${page.checked}, status=${page.status}, q=${page.keyword}, page=${page.nextGroupPage})} : @{/dms-room/users(checked=${page.checked}, status=${page.status}, q=${page.keyword}, page=${page.nextGroupPage})}">다음 10페이지</a>
+			   th:href="${page.completedOnly} ? @{/dms-room/users/completed(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, page=${page.nextGroupPage})} : @{/dms-room/users(checked=${page.checked}, status=${page.status}, gender=${page.gender}, birthYearSort=${page.birthYearSort}, q=${page.keyword}, page=${page.nextGroupPage})}">다음 10페이지</a>
 		</nav>
 		<form method="get" th:action="${page.completedOnly} ? @{/dms-room/users/completed} : @{/dms-room/users}" class="dms-inline-form dms-pagination-jump">
 			<input type="hidden" name="checked" th:value="${page.checked}">
 			<input type="hidden" name="status" th:value="${page.status}">
+			<input type="hidden" name="gender" th:value="${page.gender}">
+			<input type="hidden" name="birthYearSort" th:value="${page.birthYearSort}">
 			<input type="hidden" name="q" th:value="${page.keyword}">
 			<input type="number" name="page" min="1" th:attr="max=${page.totalPages}" placeholder="페이지 번호" required>
 			<button type="submit" class="dms-button dms-button-small">이동</button>

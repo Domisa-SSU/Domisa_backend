@@ -46,8 +46,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 				or (:status = 'hell' and exists (
 					select 1 from UserBlacklist b where b.user = u
 				)))
+			and (:genderFilter is null or :genderFilter = ''
+				or (:genderFilter = 'male' and u.gender = true)
+				or (:genderFilter = 'female' and u.gender = false))
 			order by
 				case when u.isChecked is null or u.isChecked = false then 0 else 1 end asc,
+				case when :birthYearSort = 'asc' and u.birthYear is null then 1 else 0 end asc,
+				case when :birthYearSort = 'asc' then u.birthYear end asc,
+				case when :birthYearSort = 'desc' and u.birthYear is null then 1 else 0 end asc,
+				case when :birthYearSort = 'desc' then u.birthYear end desc,
 				u.id desc
 			""",
 			countQuery = """
@@ -72,14 +79,63 @@ public interface UserRepository extends JpaRepository<User, Long> {
 				or (:status = 'hell' and exists (
 					select 1 from UserBlacklist b where b.user = u
 				)))
+				and (:genderFilter is null or :genderFilter = ''
+					or (:genderFilter = 'male' and u.gender = true)
+					or (:genderFilter = 'female' and u.gender = false))
 				"""
 	)
 	Page<User> findAllForDms(
 		@Param("checked") String checked,
 		@Param("status") String status,
+		@Param("genderFilter") String genderFilter,
+		@Param("birthYearSort") String birthYearSort,
 		@Param("keyword") String keyword,
 		@Param("completedOnly") boolean completedOnly,
 		Pageable pageable
+	);
+
+	@Query(
+		value = """
+			select u
+			from User u
+			where (:checked is null or :checked = ''
+				or (:checked = 'true' and u.isChecked = true)
+				or (:checked = 'false' and (u.isChecked is null or u.isChecked = false)))
+			and (:keyword is null or :keyword = ''
+				or lower(u.publicId) like lower(concat('%', :keyword, '%'))
+				or lower(coalesce(u.name, '')) like lower(concat('%', :keyword, '%'))
+				or lower(coalesce(u.nickname, '')) like lower(concat('%', :keyword, '%'))
+				or lower(coalesce(u.notificationPhone, '')) like lower(concat('%', :keyword, '%'))
+				or str(u.id) like concat('%', :keyword, '%')
+				or str(u.kakaoId) like concat('%', :keyword, '%'))
+			and (:completedOnly = false
+				or (u.isRegistered = true and u.hasIntroduction = true and u.isProfileCompleted = true))
+			and (:status is null or :status = ''
+				or (:status = 'heaven' and not exists (
+					select 1 from UserBlacklist b where b.user = u
+				))
+				or (:status = 'hell' and exists (
+					select 1 from UserBlacklist b where b.user = u
+				)))
+			and (:genderFilter is null or :genderFilter = ''
+				or (:genderFilter = 'male' and u.gender = true)
+				or (:genderFilter = 'female' and u.gender = false))
+			order by
+				case when u.isChecked is null or u.isChecked = false then 0 else 1 end asc,
+				case when :birthYearSort = 'asc' and u.birthYear is null then 1 else 0 end asc,
+				case when :birthYearSort = 'asc' then u.birthYear end asc,
+				case when :birthYearSort = 'desc' and u.birthYear is null then 1 else 0 end asc,
+				case when :birthYearSort = 'desc' then u.birthYear end desc,
+				u.id desc
+			"""
+	)
+	List<User> findAllForDmsExport(
+		@Param("checked") String checked,
+		@Param("status") String status,
+		@Param("genderFilter") String genderFilter,
+		@Param("birthYearSort") String birthYearSort,
+		@Param("keyword") String keyword,
+		@Param("completedOnly") boolean completedOnly
 	);
 
 	@Query("""

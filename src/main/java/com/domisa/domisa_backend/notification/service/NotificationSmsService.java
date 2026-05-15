@@ -3,7 +3,6 @@ package com.domisa.domisa_backend.notification.service;
 import com.domisa.domisa_backend.notification.entity.Notification;
 import com.domisa.domisa_backend.notification.repository.NotificationRepository;
 import com.domisa.domisa_backend.notification.type.NotificationType;
-import com.domisa.domisa_backend.dating.service.DatingService;
 import com.domisa.domisa_backend.sms.service.SmsService;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
@@ -28,15 +27,15 @@ public class NotificationSmsService {
 		https://domisalove.me/
 		""".strip();
 	private static final String ALL_USERS_MESSAGE = """
-		(광고)숭실대 백커플 만들기 성공!
-		현재 {}쌍이 매칭됐어요 ♥
+		(광고) 숭실대 백커플 기념선물
+		쿠키2개 지급♥
+		서비스 종료까지 12시간
 		https://domisalove.me/
 		""".strip();
 
 	private final NotificationRepository notificationRepository;
 	private final UserRepository userRepository;
 	private final SmsService smsService;
-	private final DatingService datingService;
 
 	@Transactional(readOnly = true)
 	public void sendUnreadNotificationSms() {
@@ -85,9 +84,7 @@ public class NotificationSmsService {
 
 	@Transactional(readOnly = true)
 	public void sendAllUsersSms() {
-		long matchCount = datingService.getMatchCount().matchCount();
-		String message = buildAllUsersMessage(matchCount);
-		sendAllUsersSms(message);
+		sendAllUsersSms(ALL_USERS_MESSAGE);
 	}
 
 	@Transactional(readOnly = true)
@@ -109,10 +106,6 @@ public class NotificationSmsService {
 		} catch (RuntimeException exception) {
 			log.warn("전체 유저 SMS 동보 발송에 실패했습니다. count={}, reason={}", phones.size(), exception.getMessage());
 		}
-	}
-
-	private String buildAllUsersMessage(long matchCount) {
-		return ALL_USERS_MESSAGE.replace("{}", String.valueOf(matchCount));
 	}
 
 	private String buildMessage(Set<NotificationType> types) {

@@ -8,6 +8,8 @@ public record DmsUserListResponse(
 	List<UserRow> users,
 	String checked,
 	String status,
+	String gender,
+	String birthYearSort,
 	String keyword,
 	boolean completedOnly,
 	int page,
