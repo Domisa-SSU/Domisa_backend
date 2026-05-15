@@ -20,6 +20,8 @@ import com.domisa.domisa_backend.profileimage.type.ProfileImageProcessingStatus;
 import com.domisa.domisa_backend.user.entity.User;
 import com.domisa.domisa_backend.user.repository.UserRepository;
 import com.domisa.domisa_backend.user.service.UserService;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,6 +30,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -50,12 +56,24 @@ public class DmsUserService {
 	private final DatingService datingService;
 
 	@Transactional(readOnly = true)
-	public DmsUserListResponse getUsers(String checked, String status, String keyword, Integer page, boolean completedOnly) {
+	public DmsUserListResponse getUsers(
+		String checked,
+		String status,
+		String gender,
+		String birthYearSort,
+		String keyword,
+		Integer page,
+		boolean completedOnly
+	) {
 		int requestedPage = normalizeRequestedPage(page);
 		String normalizedKeyword = normalizeKeyword(keyword);
+		String normalizedGender = normalizeGenderFilter(gender);
+		String normalizedBirthYearSort = normalizeBirthYearSort(birthYearSort);
 		Page<User> userPage = userRepository.findAllForDms(
 			checked,
 			status,
+			normalizedGender,
+			normalizedBirthYearSort,
 			normalizedKeyword,
 			completedOnly,
 			PageRequest.of(requestedPage - 1, DMS_USER_PAGE_SIZE)
@@ -64,6 +82,8 @@ public class DmsUserService {
 			userPage = userRepository.findAllForDms(
 				checked,
 				status,
+				normalizedGender,
+				normalizedBirthYearSort,
 				normalizedKeyword,
 				completedOnly,
 				PageRequest.of(userPage.getTotalPages() - 1, DMS_USER_PAGE_SIZE)
@@ -94,6 +114,8 @@ public class DmsUserService {
 			rows,
 			checked,
 			status,
+			normalizedGender,
+			normalizedBirthYearSort,
 			normalizedKeyword,
 			completedOnly,
 			currentPage,
@@ -108,6 +130,77 @@ public class DmsUserService {
 			nextGroupPage,
 			buildPageNumbers(currentGroupStart, currentGroupEnd)
 		);
+	}
+
+	@Transactional(readOnly = true)
+	public byte[] exportUsersExcel(
+		String checked,
+		String status,
+		String gender,
+		String birthYearSort,
+		String keyword,
+		boolean completedOnly
+	) {
+		String normalizedKeyword = normalizeKeyword(keyword);
+		String normalizedGender = normalizeGenderFilter(gender);
+		String normalizedBirthYearSort = normalizeBirthYearSort(birthYearSort);
+		List<User> users = userRepository.findAllForDmsExport(
+			checked,
+			status,
+			normalizedGender,
+			normalizedBirthYearSort,
+			normalizedKeyword,
+			completedOnly
+		);
+		Set<Long> userIds = users.stream().map(User::getId).collect(java.util.stream.Collectors.toSet());
+		Set<Long> blacklistedUserIds = findBlacklistedUserIds(userIds);
+		Set<Long> profileImageUserIds = findProfileImageUserIds(userIds);
+		try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+			Sheet sheet = workbook.createSheet("users");
+			int rowIndex = 0;
+			Row header = sheet.createRow(rowIndex++);
+			String[] columns = {
+				"ID", "Public ID", "카카오 ID", "이름", "닉네임", "성별", "출생연도", "쿠키", "연락처 타입", "연락처",
+				"알림 전화번호", "초대코드", "가입", "소개서", "프로필완료", "체크완료", "블랙리스트", "프로필사진유무",
+				"무료 좋아요 수", "학생증 키", "생성일시", "수정일시"
+			};
+			for (int i = 0; i < columns.length; i++) {
+				header.createCell(i).setCellValue(columns[i]);
+			}
+			for (User user : users) {
+				Row row = sheet.createRow(rowIndex++);
+				int col = 0;
+				row.createCell(col++).setCellValue(stringValue(user.getId()));
+				row.createCell(col++).setCellValue(stringValue(user.getPublicId()));
+				row.createCell(col++).setCellValue(stringValue(user.getKakaoId()));
+				row.createCell(col++).setCellValue(stringValue(user.getName()));
+				row.createCell(col++).setCellValue(stringValue(user.getNickname()));
+				row.createCell(col++).setCellValue(stringValue(user.getGenderDisplay()));
+				row.createCell(col++).setCellValue(stringValue(user.getBirthYear()));
+				row.createCell(col++).setCellValue(stringValue(user.getCookieBalance()));
+				row.createCell(col++).setCellValue(user.getContactType() == null ? "" : user.getContactType().name());
+				row.createCell(col++).setCellValue(stringValue(user.getContact()));
+				row.createCell(col++).setCellValue(stringValue(user.getNotificationPhone()));
+				row.createCell(col++).setCellValue(stringValue(user.getInviteCode()));
+				row.createCell(col++).setCellValue(booleanValue(user.getIsRegistered()));
+				row.createCell(col++).setCellValue(booleanValue(user.getHasIntroduction()));
+				row.createCell(col++).setCellValue(booleanValue(user.getIsProfileCompleted()));
+				row.createCell(col++).setCellValue(booleanValue(user.getIsChecked()));
+				row.createCell(col++).setCellValue(blacklistedUserIds.contains(user.getId()) ? "Y" : "N");
+				row.createCell(col++).setCellValue(profileImageUserIds.contains(user.getId()) ? "Y" : "N");
+				row.createCell(col++).setCellValue(stringValue(user.getFreeLikeCount()));
+				row.createCell(col++).setCellValue(stringValue(user.getStudentCardKey()));
+				row.createCell(col++).setCellValue(stringValue(user.getCreatedAt()));
+				row.createCell(col++).setCellValue(stringValue(user.getUpdatedAt()));
+			}
+			for (int i = 0; i < columns.length; i++) {
+				sheet.autoSizeColumn(i);
+			}
+			workbook.write(outputStream);
+			return outputStream.toByteArray();
+		} catch (IOException exception) {
+			throw new IllegalStateException("엑셀 파일 생성에 실패했습니다.", exception);
+		}
 	}
 
 	@Transactional(readOnly = true)
@@ -232,6 +325,28 @@ public class DmsUserService {
 		}
 		String normalized = keyword.strip();
 		return normalized.isEmpty() ? null : normalized;
+	}
+
+	private String normalizeGenderFilter(String gender) {
+		if ("male".equals(gender) || "female".equals(gender)) {
+			return gender;
+		}
+		return null;
+	}
+
+	private String normalizeBirthYearSort(String birthYearSort) {
+		if ("asc".equals(birthYearSort) || "desc".equals(birthYearSort)) {
+			return birthYearSort;
+		}
+		return null;
+	}
+
+	private String stringValue(Object value) {
+		return value == null ? "" : String.valueOf(value);
+	}
+
+	private String booleanValue(Boolean value) {
+		return Boolean.TRUE.equals(value) ? "Y" : "N";
 	}
 
 	private List<Integer> buildPageNumbers(int start, int end) {
