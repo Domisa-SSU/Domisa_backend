@@ -28,8 +28,7 @@ public class NotificationSmsService {
 		""".strip();
 	private static final String ALL_USERS_MESSAGE = """
 		(광고) 솔로개발자가 문자종료를
-		깜빡했어요. 이벤트 10시간 연장!
-		진짜 마지막.
+		깜빡했어요.. 그런김에 하루 연장!
 		https://domisalove.me/
 		""".strip();
 
