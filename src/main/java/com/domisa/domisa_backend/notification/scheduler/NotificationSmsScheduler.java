@@ -23,18 +23,23 @@ public class NotificationSmsScheduler {
 		sendUnreadNotificationSms();
 	}
 
-	@Scheduled(cron = "0 0 17 * * *", zone = "Asia/Seoul")
+	@Scheduled(cron = "0 0 16 * * *", zone = "Asia/Seoul")
 	public void sendUnreadNotificationSms6() {
 		sendUnreadNotificationSms();
 	}
 
-	@Scheduled(cron = "0 0 19 * * *", zone = "Asia/Seoul")
+	@Scheduled(cron = "0 0 18 * * *", zone = "Asia/Seoul")
 	public void sendUnreadNotificationSms7() {
 		sendUnreadNotificationSms();
 	}
 
-	@Scheduled(cron = "0 0 21 * * *", zone = "Asia/Seoul")
-	public void sendUnreadNotificationSms8() { sendUnreadNotificationSms(); }
+	@Scheduled(cron = "0 0 20 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSms8() {
+		sendUnreadNotificationSms();
+	}
+
+	@Scheduled(cron = "0 0 22 * * *", zone = "Asia/Seoul")
+	public void sendUnreadNotificationSms9() { sendUnreadNotificationSms(); }
 
 	@Scheduled(cron = "0 0 14 * * *", zone = "Asia/Seoul")
 	public void sendAllUsersSms() {
