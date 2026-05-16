@@ -22,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationSmsService {
 
 	private static final String UNREAD_NOTIFICATION_MESSAGE = """
-		누군가 나에게 호감을 보냈어요 ♥
-		도미사럽에서 바로 확인해보세요
+		솔로개발자가 무료쿠키쏜다 ♥
+		호감을 받은 당신에게 보내는 쿠키6개
 		https://domisalove.me/
 		""".strip();
 	private static final String ALL_USERS_MESSAGE = """
