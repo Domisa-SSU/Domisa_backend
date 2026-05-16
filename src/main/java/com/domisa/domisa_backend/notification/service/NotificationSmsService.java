@@ -27,9 +27,8 @@ public class NotificationSmsService {
 		https://domisalove.me/
 		""".strip();
 	private static final String ALL_USERS_MESSAGE = """
-		(광고) 숭실대 백커플 기념선물
-		쿠키2개 지급♥
-		서비스 종료까지 12시간
+		(광고) 솔로개발자가 문자종료를
+		깜빡했어요.. 그런김에 하루 연장!
 		https://domisalove.me/
 		""".strip();
 

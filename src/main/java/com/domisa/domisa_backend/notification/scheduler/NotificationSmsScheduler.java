@@ -43,7 +43,7 @@ public class NotificationSmsScheduler {
 		sendUnreadNotificationSms();
 	}
 
-	@Scheduled(cron = "0 0 19 * * *", zone = "Asia/Seoul")
+	@Scheduled(cron = "0 0 14 * * *", zone = "Asia/Seoul")
 	public void sendAllUsersSms() {
 		try {
 			notificationSmsService.sendAllUsersSms();
