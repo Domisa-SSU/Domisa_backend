@@ -12,43 +12,43 @@ import org.springframework.stereotype.Component;
 public class NotificationSmsScheduler {
 
 	private final NotificationSmsService notificationSmsService;
-
-	@Scheduled(cron = "0 0 11 * * *", zone = "Asia/Seoul")
-	public void sendUnreadNotificationSms3() {
-		sendUnreadNotificationSms();
-	}
-
-	@Scheduled(cron = "0 0 13 * * *", zone = "Asia/Seoul")
-	public void sendUnreadNotificationSms4() {
-		sendUnreadNotificationSms();
-	}
-
-	@Scheduled(cron = "0 0 16 * * *", zone = "Asia/Seoul")
-	public void sendUnreadNotificationSms6() {
-		sendUnreadNotificationSms();
-	}
-
-	@Scheduled(cron = "0 0 18 * * *", zone = "Asia/Seoul")
-	public void sendUnreadNotificationSms7() {
-		sendUnreadNotificationSms();
-	}
-
-	@Scheduled(cron = "0 0 20 * * *", zone = "Asia/Seoul")
-	public void sendUnreadNotificationSms8() {
-		sendUnreadNotificationSms();
-	}
-
-	@Scheduled(cron = "0 0 22 * * *", zone = "Asia/Seoul")
-	public void sendUnreadNotificationSms9() { sendUnreadNotificationSms(); }
-
-	@Scheduled(cron = "0 0 14 * * *", zone = "Asia/Seoul")
-	public void sendAllUsersSms() {
-		try {
-			notificationSmsService.sendAllUsersSms();
-		} catch (Exception exception) {
-			log.error("전체 유저 SMS 스케줄러 실행 중 예외가 발생했습니다.", exception);
-		}
-	}
+//
+//	@Scheduled(cron = "0 0 11 * * *", zone = "Asia/Seoul")
+//	public void sendUnreadNotificationSms3() {
+//		sendUnreadNotificationSms();
+//	}
+//
+//	@Scheduled(cron = "0 0 13 * * *", zone = "Asia/Seoul")
+//	public void sendUnreadNotificationSms4() {
+//		sendUnreadNotificationSms();
+//	}
+//
+//	@Scheduled(cron = "0 0 16 * * *", zone = "Asia/Seoul")
+//	public void sendUnreadNotificationSms6() {
+//		sendUnreadNotificationSms();
+//	}
+//
+//	@Scheduled(cron = "0 0 18 * * *", zone = "Asia/Seoul")
+//	public void sendUnreadNotificationSms7() {
+//		sendUnreadNotificationSms();
+//	}
+//
+//	@Scheduled(cron = "0 0 20 * * *", zone = "Asia/Seoul")
+//	public void sendUnreadNotificationSms8() {
+//		sendUnreadNotificationSms();
+//	}
+//
+//	@Scheduled(cron = "0 0 22 * * *", zone = "Asia/Seoul")
+//	public void sendUnreadNotificationSms9() { sendUnreadNotificationSms(); }
+//
+//	@Scheduled(cron = "0 0 14 * * *", zone = "Asia/Seoul")
+//	public void sendAllUsersSms() {
+//		try {
+//			notificationSmsService.sendAllUsersSms();
+//		} catch (Exception exception) {
+//			log.error("전체 유저 SMS 스케줄러 실행 중 예외가 발생했습니다.", exception);
+//		}
+//	}
 
 	public void sendUnreadNotificationSms() {
 		try {
